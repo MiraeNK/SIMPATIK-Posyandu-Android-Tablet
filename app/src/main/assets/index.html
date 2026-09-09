@@ -1810,24 +1810,36 @@
         
         // Local Registry Database & Server Switcher
         selectedProviderView: 'supabase', // 'supabase', 'personal', 'offline'
-        registryConfig: JSON.parse(localStorage.getItem('SIMPATIK_REGISTRY_CONFIG') || 'null') || {
-          activeProvider: 'supabase_cloud', // 'supabase_cloud', 'personal_server', 'json_offline'
-          supabase: {
-            url: 'https://tolumulfmtioogzqnrhb.supabase.co',
-            anonKey: '',
-            status: 'Tersedia'
-          },
-          personalServer: {
-            host: '10.0.2.2',
-            port: '5432',
-            dbName: 'posyandu_db',
-            username: 'postgres',
-            password: '',
-            apiEndpoint: 'http://10.0.2.2:8000/api/posyandu',
-            status: 'Siap Konfigurasi'
-          },
-          lastSyncTime: 'Belum pernah sinkronisasi'
-        }, // 'login', 'portal', 'home', 'list', 'form', 'history', 'register', 'nutrition_detail', 'settings'
+        registryConfig: (() => {
+          const cfg = JSON.parse(localStorage.getItem('SIMPATIK_REGISTRY_CONFIG') || 'null');
+          if (cfg) {
+            if (!cfg.supabase || !cfg.supabase.anonKey) {
+              if (!cfg.supabase) cfg.supabase = {};
+              cfg.supabase.url = cfg.supabase.url || 'https://tolumulfmtioogzqnrhb.supabase.co';
+              cfg.supabase.anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvbHVtdWxmbXRpb29nenFucmhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5MTc1NDYsImV4cCI6MjEwNDQ5MzU0Nn0.rw8mfSW3h1a_AXEfzTu2l2ywJmKsJKq9Lkx6G-oFrHQ';
+              cfg.supabase.status = 'Online & Terhubung';
+            }
+            return cfg;
+          }
+          return {
+            activeProvider: 'supabase_cloud', // 'supabase_cloud', 'personal_server', 'json_offline'
+            supabase: {
+              url: 'https://tolumulfmtioogzqnrhb.supabase.co',
+              anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvbHVtdWxmbXRpb29nenFucmhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5MTc1NDYsImV4cCI6MjEwNDQ5MzU0Nn0.rw8mfSW3h1a_AXEfzTu2l2ywJmKsJKq9Lkx6G-oFrHQ',
+              status: 'Online & Terhubung'
+            },
+            personalServer: {
+              host: '10.0.2.2',
+              port: '5432',
+              dbName: 'posyandu_db',
+              username: 'postgres',
+              password: '',
+              apiEndpoint: 'http://10.0.2.2:8000/api/posyandu',
+              status: 'Siap Konfigurasi'
+            },
+            lastSyncTime: 'Belum pernah sinkronisasi'
+          };
+        })(), // 'login', 'portal', 'home', 'list', 'form', 'history', 'register', 'nutrition_detail', 'settings'
         
         // Data Login
         loginData: { username: '', password: '' },

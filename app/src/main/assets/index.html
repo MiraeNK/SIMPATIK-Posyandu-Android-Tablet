@@ -2289,11 +2289,16 @@
       },
       bukaKartuKontrolDariDetail(anak) {
         this.activeAnak = anak;
-        this.selectedYear = '2026';
-        if (anak.riwayat && anak.riwayat['2026']) {
+        if (anak.riwayat && anak.riwayat['2026'] && Object.keys(anak.riwayat['2026']).length > 0) {
+          this.selectedYear = '2026';
           const bulanAda = Object.keys(anak.riwayat['2026']).map(Number).sort((a,b) => b - a);
           this.selectedMonthIndex = bulanAda.length > 0 ? bulanAda[0] : new Date().getMonth();
+        } else if (anak.riwayat && anak.riwayat['2025'] && Object.keys(anak.riwayat['2025']).length > 0) {
+          this.selectedYear = '2025';
+          const bulanAda = Object.keys(anak.riwayat['2025']).map(Number).sort((a,b) => b - a);
+          this.selectedMonthIndex = bulanAda.length > 0 ? bulanAda[0] : new Date().getMonth();
         } else {
+          this.selectedYear = '2026';
           this.selectedMonthIndex = new Date().getMonth();
         }
         this.previousView = 'nutrition_detail';
@@ -2432,11 +2437,16 @@
           this.metode = anak.umurBulan >= 24 ? 'berdiri' : 'terlentang';
           this.setView('form');
         } else {
-          this.selectedYear = '2026';
-          if (anak.riwayat && anak.riwayat['2026']) {
+          if (anak.riwayat && anak.riwayat['2026'] && Object.keys(anak.riwayat['2026']).length > 0) {
+            this.selectedYear = '2026';
             const bulanAda = Object.keys(anak.riwayat['2026']).map(Number).sort((a,b) => b - a);
             this.selectedMonthIndex = bulanAda.length > 0 ? bulanAda[0] : new Date().getMonth();
+          } else if (anak.riwayat && anak.riwayat['2025'] && Object.keys(anak.riwayat['2025']).length > 0) {
+            this.selectedYear = '2025';
+            const bulanAda = Object.keys(anak.riwayat['2025']).map(Number).sort((a,b) => b - a);
+            this.selectedMonthIndex = bulanAda.length > 0 ? bulanAda[0] : new Date().getMonth();
           } else {
+            this.selectedYear = '2026';
             this.selectedMonthIndex = new Date().getMonth();
           }
           this.previousView = 'list';

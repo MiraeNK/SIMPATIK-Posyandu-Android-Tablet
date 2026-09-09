@@ -1,0 +1,146 @@
+[
+  {
+    "id_periode": "7a008270-cf72-565f-8b18-0be5042519a2",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 1,
+    "nama_bulan": "Januari",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-01-15"
+  },
+  {
+    "id_periode": "54cbe077-8a41-5bbb-a5a1-67fc850aecf8",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 10,
+    "nama_bulan": "Oktober",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-10-15"
+  },
+  {
+    "id_periode": "9559ad8c-32ab-59f3-a3f2-24640128e3d2",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 11,
+    "nama_bulan": "November",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-11-15"
+  },
+  {
+    "id_periode": "af0042a9-f671-55cc-83d5-3c1988a3f125",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 12,
+    "nama_bulan": "Desember",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-12-15"
+  },
+  {
+    "id_periode": "0f2f4efe-6141-5069-86ae-1e3b86bf5e0d",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 2,
+    "nama_bulan": "Februari",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-02-15"
+  },
+  {
+    "id_periode": "256cad0a-6bec-5e85-8717-0254c74aceea",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 3,
+    "nama_bulan": "Maret",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-03-15"
+  },
+  {
+    "id_periode": "57fdbe4b-25e6-5e66-a71a-59a04b746b34",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 4,
+    "nama_bulan": "April",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-04-15"
+  },
+  {
+    "id_periode": "7488b798-65d7-5319-8568-53d39e083334",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 5,
+    "nama_bulan": "Mei",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-05-15"
+  },
+  {
+    "id_periode": "9ea40cb6-9fb6-54b4-8dec-2d152474b8ab",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 6,
+    "nama_bulan": "Juni",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-06-15"
+  },
+  {
+    "id_periode": "0539b438-e817-50de-bfb0-a22328421704",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 8,
+    "nama_bulan": "Agustus",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-08-15"
+  },
+  {
+    "id_periode": "27a8529a-88f9-57b2-9c3f-4c499c39cdbd",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 9,
+    "nama_bulan": "September",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-09-15"
+  },
+  {
+    "id_periode": "f15ad5d1-5351-50ff-80c6-6b82212984cf",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 4,
+    "nama_bulan": "April",
+    "tahun": 2026,
+    "tanggal_ukur": "2026-04-15"
+  },
+  {
+    "id_periode": "cd553b7e-db3b-5516-9348-a4be71ba8cc6",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 2,
+    "nama_bulan": "Februari",
+    "tahun": 2026,
+    "tanggal_ukur": "2026-02-15"
+  },
+  {
+    "id_periode": "7727f86d-7fa7-509a-be27-578467be71bf",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 1,
+    "nama_bulan": "Januari",
+    "tahun": 2026,
+    "tanggal_ukur": "2026-01-15"
+  },
+  {
+    "id_periode": "483ff882-dbea-5009-a234-717ab524a604",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 3,
+    "nama_bulan": "Maret",
+    "tahun": 2026,
+    "tanggal_ukur": "2026-03-15"
+  },
+  {
+    "id_periode": "c6367922-67d8-59f0-b47a-394d06acb336",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 5,
+    "nama_bulan": "Mei",
+    "tahun": 2026,
+    "tanggal_ukur": "2026-05-15"
+  },
+  {
+    "id_periode": "9b301d4d-3806-547a-93a3-1c80b75f4b90",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 6,
+    "nama_bulan": "Juni",
+    "tahun": 2026,
+    "tanggal_ukur": "2026-06-15"
+  },
+  {
+    "id_periode": "6051d5ea-7bf4-5f80-812c-80626d55894a",
+    "id_posyandu": "aba9c19c-b2f0-5d31-87ab-d138873c5ff7",
+    "bulan": 7,
+    "nama_bulan": "Juli",
+    "tahun": 2025,
+    "tanggal_ukur": "2025-07-15"
+  }
+]

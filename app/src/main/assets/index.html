@@ -2119,14 +2119,36 @@
             if (rows.length < 1000) break;
             offset += 1000;
           }
+
+          // 3. Ambil hasil evaluasi status_gizi dari Supabase
+          let rawStat = [];
+          offset = 0;
+          while (true) {
+            const rStat = await fetch(url + '/rest/v1/status_gizi?select=*&offset=' + offset + '&limit=1000', { headers });
+            if (!rStat.ok) break; // Opsional jika tabel belum siap
+            const rows = await rStat.json();
+            rawStat = rawStat.concat(rows);
+            if (rows.length < 1000) break;
+            offset += 1000;
+          }
+          const statMap = {};
+          rawStat.forEach(s => { statMap[s.id_pengukuran] = s; });
           
-          // 3. Transformasi relasional Supabase ke struktur reactive daftarAnak
+          // 4. Transformasi relasional Supabase ke struktur reactive daftarAnak
           const anakMap = {};
           rawAnak.forEach(a => {
+            const words = (a.nama_anak || '').trim().split(/\s+/);
+            const inisial = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : (words[0] ? words[0].slice(0, 2).toUpperCase() : 'NA');
+            const birth = new Date(a.tgl_lahir);
+            const now = new Date('2026-09-09');
+            const umurBulan = Math.max(0, (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth()));
+
             anakMap[a.nik] = {
               id: a.nik,
               nik: a.nik,
               nama: a.nama_anak,
+              inisial: inisial,
+              umurBulan: umurBulan,
               tglLahir: a.tgl_lahir,
               jk: a.jk,
               namaOrtu: a.nama_ortu || 'N/A',
@@ -2137,24 +2159,51 @@
               pbLahir: a.pb_lahir || 'N/A',
               bukuKia: a.buku_kia || 'N/A',
               imd: a.imd || 'N/A',
+              statusGizi: 'normal',
+              tbU: 'Normal',
+              pbTerakhir: 'N/A',
+              sudahDiukur: false,
               riwayat: {}
             };
           });
           
+          // Urutkan pengukuran berdasarkan tanggal
+          rawPeng.sort((x, y) => new Date(x.tanggal_ukur) - new Date(y.tanggal_ukur));
+
           rawPeng.forEach(p => {
             if (anakMap[p.nik] && p.tanggal_ukur) {
               const d = new Date(p.tanggal_ukur);
               const thn = d.getFullYear().toString();
               const bln = d.getMonth().toString();
               if (!anakMap[p.nik].riwayat[thn]) anakMap[p.nik].riwayat[thn] = {};
+              
+              const st = statMap[p.id_pengukuran] || {};
+              const tbuVal = st.indeks_tbu || 'Normal';
+
               anakMap[p.nik].riwayat[thn][bln] = {
                 bb: (p.bb_kg || '0').replace(',', '.'),
                 pb: (p.panjang_tinggi_cm || '0').replace(',', '.'),
                 lila: p.lila || 'N/A',
                 lika: p.lika || 'N/A',
                 caraUkur: p.jenis_ukur || 'Terlentang',
-                statusKehadiran: p.status_kehadiran || 'Hadir'
+                statusKehadiran: p.status_kehadiran || 'Hadir',
+                tbU: tbuVal
               };
+
+              anakMap[p.nik].pbTerakhir = (p.panjang_tinggi_cm || '0').replace(',', '.');
+              if (tbuVal) {
+                anakMap[p.nik].tbU = tbuVal;
+                const s = tbuVal.toLowerCase();
+                if (s.includes('sangat pendek') || s.includes('severely')) {
+                  anakMap[p.nik].statusGizi = 'sangat_pendek';
+                } else if (s.includes('pendek') || s.includes('stunted')) {
+                  anakMap[p.nik].statusGizi = 'pendek';
+                } else if (s.includes('risiko') || s.includes('borderline')) {
+                  anakMap[p.nik].statusGizi = 'risiko_pendek';
+                } else {
+                  anakMap[p.nik].statusGizi = 'normal';
+                }
+              }
             }
           });
           
@@ -2167,7 +2216,7 @@
             this.cloudSyncStatus = 'Tersinkron';
             this.simpanRegistryConfig();
             if (showNotification) {
-              alert("[Full Retrieve Supabase Berhasil!]\n\nBerhasil memuat " + list.length + " balita dan " + rawPeng.length + " catatan riwayat timbangan langsung dari Supabase Cloud.\n\nData tersimpan aman di cache offline tablet.");
+              alert("[Full Retrieve Supabase Berhasil!]\n\nBerhasil memuat " + list.length + " balita dan " + rawPeng.length + " catatan pengukuran riil langsung dari Supabase Cloud.\n\nData tersimpan aman di cache offline tablet.");
             }
             return true;
           }

@@ -18,7 +18,6 @@
 
 <!-- Vue 3 & Real Database -->
 <script src="vue.js"></script>
-<script src="data_balita.js"></script>
 
 <style>
   *, *::before, *::after { box-sizing: border-box; }
@@ -1162,8 +1161,11 @@
                       <button @click="ujiKoneksiSupabase" class="btn-outline" style="padding:12px 18px; border-radius:12px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px;">
                         <i class="ph-bold ph-broadcast" style="font-size:18px;"></i> Uji Koneksi (Test Ping)
                       </button>
-                      <button @click="sinkronkanKeProvider('supabase_cloud')" class="btn-primary" style="padding:12px 20px; border-radius:12px; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px;">
-                        <i class="ph-bold ph-cloud-arrow-up" style="font-size:18px;"></i> Sinkronkan 131 Balita ke Supabase
+                      <button @click="muatDataDariSupabase(true)" class="btn-primary" style="padding:12px 20px; border-radius:12px; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px; background:#0F6E44; border-color:#0F6E44;">
+                        <i class="ph-bold ph-cloud-arrow-down" style="font-size:18px;"></i> <span v-if="!isLoadingSupabase">Tarik Data dari Cloud (Full Retrieve)</span><span v-else>Mengunduh dari Cloud...</span>
+                      </button>
+                      <button @click="sinkronkanKeProvider('supabase_cloud')" class="btn-outline" style="padding:12px 18px; border-radius:12px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px;">
+                        <i class="ph-bold ph-cloud-arrow-up" style="font-size:18px;"></i> Unggah ke Supabase
                       </button>
                     </div>
                   </div>
@@ -1771,33 +1773,27 @@
 
   window.vm = createApp({
     data() {
-      // Gunakan Database Riil Posyandu (131 Balita) jika tersedia
-      let initialAnak = (typeof window.REAL_DATA_BALITA !== 'undefined' && Array.isArray(window.REAL_DATA_BALITA) && window.REAL_DATA_BALITA.length > 0)
-        ? window.REAL_DATA_BALITA
-        : DUMMY_ANAK;
-      const DATA_VERSION = 'v2_na_clean';
+      // Muat data dari penyimpanan lokal (Cache Offline-First)
+      let initialAnak = [];
       try {
-        const savedVersion = localStorage.getItem('SIMPATIK_DATA_VERSION');
         const saved = localStorage.getItem('SIMPATIK_DATA_ANAK');
-        if (saved && savedVersion === DATA_VERSION) {
+        if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 15) {
+          if (Array.isArray(parsed) && parsed.length > 0) {
             initialAnak = parsed;
-          } else if (typeof window.REAL_DATA_BALITA !== 'undefined') {
-            initialAnak = window.REAL_DATA_BALITA;
-            localStorage.setItem('SIMPATIK_DATA_ANAK', JSON.stringify(initialAnak));
           }
-        } else {
-          // Sync fresh dataset with clean "N/A" formatting
-          localStorage.setItem('SIMPATIK_DATA_ANAK', JSON.stringify(initialAnak));
-          localStorage.setItem('SIMPATIK_DATA_VERSION', DATA_VERSION);
         }
       } catch (e) {
         console.error("Gagal load data lokal:", e);
       }
+      if (initialAnak.length === 0) {
+        initialAnak = DUMMY_ANAK;
+      }
 
       return {
-        view: 'home', // 'login', 'portal', 'home', 'list', 'form', 'history', 'register', 'nutrition_detail', 'settings'
+        view: 'home',
+        isLoadingSupabase: false,
+        cloudSyncStatus: 'Siap', // 'login', 'portal', 'home', 'list', 'form', 'history', 'register', 'nutrition_detail', 'settings'
         
         // Manajemen Akun & Hak Akses (RBAC)
         currentUser: JSON.parse(localStorage.getItem('SIMPATIK_CURRENT_USER') || 'null') || {
@@ -2092,6 +2088,100 @@
         const namaProv = prov === 'supabase_cloud' ? 'Supabase Cloud (Sementara)' : (prov === 'personal_server' ? 'Server Personal / Docker PostgreSQL' : 'JSON LocalStorage (Offline-First)');
         alert('[Local Registry Diperbarui]\n\nTarget basis data aktif berhasil dialihkan ke:\n👉 ' + namaProv);
       },
+      async muatDataDariSupabase(showNotification = false) {
+        const url = (this.registryConfig && this.registryConfig.supabase && this.registryConfig.supabase.url) || 'https://tolumulfmtioogzqnrhb.supabase.co';
+        const key = this.registryConfig && this.registryConfig.supabase && this.registryConfig.supabase.anonKey;
+        if (!key) {
+          if (showNotification) alert("Kunci Anon Key Supabase belum diisi!");
+          return false;
+        }
+        this.isLoadingSupabase = true;
+        this.cloudSyncStatus = 'Mengunduh...';
+        try {
+          const headers = {
+            'apikey': key,
+            'Authorization': 'Bearer ' + key
+          };
+          
+          // 1. Ambil master data anak dari Supabase
+          const rAnak = await fetch(url + '/rest/v1/anak?select=*&order=nama_anak.asc', { headers });
+          if (!rAnak.ok) throw new Error('Gagal memuat data anak (HTTP ' + rAnak.status + ')');
+          const rawAnak = await rAnak.json();
+          
+          // 2. Ambil seluruh riwayat pengukuran dengan pagination
+          let rawPeng = [];
+          let offset = 0;
+          while (true) {
+            const rPeng = await fetch(url + '/rest/v1/pengukuran?select=*&offset=' + offset + '&limit=1000', { headers });
+            if (!rPeng.ok) throw new Error('Gagal memuat riwayat pengukuran (HTTP ' + rPeng.status + ')');
+            const rows = await rPeng.json();
+            rawPeng = rawPeng.concat(rows);
+            if (rows.length < 1000) break;
+            offset += 1000;
+          }
+          
+          // 3. Transformasi relasional Supabase ke struktur reactive daftarAnak
+          const anakMap = {};
+          rawAnak.forEach(a => {
+            anakMap[a.nik] = {
+              id: a.nik,
+              nik: a.nik,
+              nama: a.nama_anak,
+              tglLahir: a.tgl_lahir,
+              jk: a.jk,
+              namaOrtu: a.nama_ortu || 'N/A',
+              nikOrtu: a.nik_ortu || 'N/A',
+              rt: a.rt || '01',
+              anakKe: a.anak_ke || 'N/A',
+              bbLahir: a.bb_lahir || 'N/A',
+              pbLahir: a.pb_lahir || 'N/A',
+              bukuKia: a.buku_kia || 'N/A',
+              imd: a.imd || 'N/A',
+              riwayat: {}
+            };
+          });
+          
+          rawPeng.forEach(p => {
+            if (anakMap[p.nik] && p.tanggal_ukur) {
+              const d = new Date(p.tanggal_ukur);
+              const thn = d.getFullYear().toString();
+              const bln = d.getMonth().toString();
+              if (!anakMap[p.nik].riwayat[thn]) anakMap[p.nik].riwayat[thn] = {};
+              anakMap[p.nik].riwayat[thn][bln] = {
+                bb: (p.bb_kg || '0').replace(',', '.'),
+                pb: (p.panjang_tinggi_cm || '0').replace(',', '.'),
+                lila: p.lila || 'N/A',
+                lika: p.lika || 'N/A',
+                caraUkur: p.jenis_ukur || 'Terlentang',
+                statusKehadiran: p.status_kehadiran || 'Hadir'
+              };
+            }
+          });
+          
+          const list = Object.values(anakMap);
+          if (list.length > 0) {
+            this.daftarAnak = list;
+            localStorage.setItem('SIMPATIK_DATA_ANAK', JSON.stringify(list));
+            this.registryConfig.lastSyncTime = new Date().toLocaleString('id-ID');
+            this.registryConfig.supabase.status = 'Online & Sinkron';
+            this.cloudSyncStatus = 'Tersinkron';
+            this.simpanRegistryConfig();
+            if (showNotification) {
+              alert("[Full Retrieve Supabase Berhasil!]\n\nBerhasil memuat " + list.length + " balita dan " + rawPeng.length + " catatan riwayat timbangan langsung dari Supabase Cloud.\n\nData tersimpan aman di cache offline tablet.");
+            }
+            return true;
+          }
+        } catch (err) {
+          console.error("Gagal retrieve dari Supabase:", err);
+          this.cloudSyncStatus = 'Offline';
+          if (showNotification) {
+            alert("[Galat Jaringan Supabase]\n\n" + err.message + "\n\nAplikasi tetap berjalan normal menggunakan data lokal.");
+          }
+        } finally {
+          this.isLoadingSupabase = false;
+        }
+        return false;
+      },
       async ujiKoneksiSupabase() {
         const url = this.registryConfig.supabase.url;
         const key = this.registryConfig.supabase.anonKey;
@@ -2201,6 +2291,39 @@
             : DUMMY_ANAK;
           this.daftarAnak = JSON.parse(JSON.stringify(sourceData));
           localStorage.setItem('SIMPATIK_DATA_ANAK', JSON.stringify(this.daftarAnak));
+          
+          // Kirim data pengukuran baru ke Supabase Cloud (Background Push)
+          if (this.registryConfig && this.registryConfig.activeProvider === 'supabase_cloud' && this.registryConfig.supabase && this.registryConfig.supabase.anonKey) {
+            const url = this.registryConfig.supabase.url;
+            const key = this.registryConfig.supabase.anonKey;
+            const payloadPengukuran = [{
+              id_pengukuran: 'ukur_' + Date.now(),
+              nik: this.activeAnak.nik,
+              id_periode: 'periode_' + yearStr + '_' + (new Date().getMonth() + 1),
+              tanggal_ukur: new Date().toISOString().split('T')[0],
+              bb_kg: this.formVals.bb,
+              panjang_tinggi_cm: this.formVals.pb,
+              jenis_ukur: 'Terlentang',
+              lila: this.formVals.lila || 'N/A',
+              lika: this.formVals.lika || 'N/A',
+              ntob: 'N',
+              status_kehadiran: 'Hadir'
+            }];
+            fetch(url + '/rest/v1/pengukuran', {
+              method: 'POST',
+              headers: {
+                'apikey': key,
+                'Authorization': 'Bearer ' + key,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+              },
+              body: JSON.stringify(payloadPengukuran)
+            }).then(() => {
+              console.log('Pengukuran berhasil disinkronkan ke Supabase');
+            }).catch(e => {
+              console.warn('Sync offline: Pengukuran akan dikirim saat koneksi tersedia', e);
+            });
+          }
           alert(`Data berhasil direset ke database balita riil Posyandu (${this.daftarAnak.length} balita)!`);
         }
       },
@@ -2340,7 +2463,13 @@
         }
         this.setView('list');
       }
-    }
+    },
+    mounted() {
+      // Auto-retrieve data dari Supabase Cloud saat aplikasi dibuka
+      if (this.registryConfig && this.registryConfig.activeProvider === 'supabase_cloud') {
+        this.muatDataDariSupabase(false);
+      }
+    },
   }).mount('#app')
 </script>
 </body>

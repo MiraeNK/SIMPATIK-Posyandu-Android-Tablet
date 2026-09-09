@@ -1810,24 +1810,36 @@
         
         // Local Registry Database & Server Switcher
         selectedProviderView: 'supabase', // 'supabase', 'personal', 'offline'
-        registryConfig: JSON.parse(localStorage.getItem('SIMPATIK_REGISTRY_CONFIG') || 'null') || {
-          activeProvider: 'supabase_cloud', // 'supabase_cloud', 'personal_server', 'json_offline'
-          supabase: {
-            url: 'https://project.supabase.co',
-            anonKey: '',
-            status: 'Tersedia'
-          },
-          personalServer: {
-            host: '10.0.2.2',
-            port: '5432',
-            dbName: 'posyandu_db',
-            username: 'postgres',
-            password: '',
-            apiEndpoint: 'http://10.0.2.2:8000/api/posyandu',
-            status: 'Siap Konfigurasi'
-          },
-          lastSyncTime: 'Belum pernah sinkronisasi'
-        }, // 'login', 'portal', 'home', 'list', 'form', 'history', 'register', 'nutrition_detail', 'settings'
+        registryConfig: (() => {
+          const cfg = JSON.parse(localStorage.getItem('SIMPATIK_REGISTRY_CONFIG') || 'null');
+          if (cfg) {
+            if (!cfg.supabase || !cfg.supabase.anonKey) {
+              if (!cfg.supabase) cfg.supabase = {};
+              cfg.supabase.url = cfg.supabase.url || 'https://project.supabase.co';
+              cfg.supabase.anonKey = 'SUPABASE_KEY_DIHAPUS';
+              cfg.supabase.status = 'Online & Terhubung';
+            }
+            return cfg;
+          }
+          return {
+            activeProvider: 'supabase_cloud', // 'supabase_cloud', 'personal_server', 'json_offline'
+            supabase: {
+              url: 'https://project.supabase.co',
+              anonKey: 'SUPABASE_KEY_DIHAPUS',
+              status: 'Online & Terhubung'
+            },
+            personalServer: {
+              host: '10.0.2.2',
+              port: '5432',
+              dbName: 'posyandu_db',
+              username: 'postgres',
+              password: '',
+              apiEndpoint: 'http://10.0.2.2:8000/api/posyandu',
+              status: 'Siap Konfigurasi'
+            },
+            lastSyncTime: 'Belum pernah sinkronisasi'
+          };
+        })(), // 'login', 'portal', 'home', 'list', 'form', 'history', 'register', 'nutrition_detail', 'settings'
         
         // Data Login
         loginData: { username: '', password: '' },

@@ -21,23 +21,23 @@
 
 <style>
   *, *::before, *::after { box-sizing: border-box; }
-  html, body { 
+  html, body {
     width: 100%;
     height: 100%;
-    margin: 0; 
+    margin: 0;
     padding: 0;
-    background: #EDEFEA; 
-    color: #16211C; 
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif; 
-    font-size: 18px; 
-    line-height: 1.5; 
-    font-feature-settings: "tnum" 1, "lnum" 1; 
-    -webkit-font-smoothing: antialiased; 
+    background: #EDEFEA;
+    color: #16211C;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 18px;
+    line-height: 1.5;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    -webkit-font-smoothing: antialiased;
     overflow: hidden;
   }
   button { font-family: inherit; cursor: pointer; transition: background 0.2s, transform 0.1s; border: none; }
   button:active { transform: scale(0.98); }
-  
+
   /* Root Vue App: Native Full Screen */
   #app {
     position: fixed;
@@ -73,7 +73,7 @@
   <div v-if="view === 'login'" style="flex:1; display:flex; background:#FFFFFF;">
         <!-- Bagian Kiri: Form & Selector Role -->
         <div style="width:50%; padding:50px 70px; display:flex; flex-direction:column; justify-content:center; overflow-y:auto;">
-          
+
           <div style="display:flex; align-items:center; gap:16px; margin-bottom:28px;">
             <div style="width:48px; height:48px; background:#E9F3EC; border-radius:14px; display:flex; align-items:center; justify-content:center;">
               <i class="ph-fill ph-shield-check" style="font-size:30px; color:#0F6E44;"></i>
@@ -86,7 +86,7 @@
 
           <h1 style="font-size:36px; font-weight:800; color:#16211C; margin:0 0 8px; letter-spacing:-0.02em;">Selamat Datang</h1>
           <p style="font-size:16px; color:#4A5750; margin:0 0 24px;">Pilih peran pengguna dan masuk ke dalam sistem.</p>
-          
+
           <!-- Role Selector Tabs (Kader vs Admin) -->
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px; background:#F6F7F5; padding:6px; border-radius:16px; border:1px solid #DCE0DA;">
             <button @click="loginRole = 'kader'"
@@ -116,51 +116,46 @@
           <div style="display:flex; flex-direction:column; gap:18px; margin-bottom:24px;">
             <div>
               <label style="font-size:14px; font-weight:700; color:#16211C; margin-bottom:6px; display:block;">
-                {{ loginRole === 'kader' ? 'Nama Pengguna / NIK Kader' : 'Username Administrator' }}
+                {{ loginRole === 'kader' ? 'Nama Pengguna / Email Kader' : 'Username / Email Administrator' }}
               </label>
-              <input type="text" v-model="loginData.username" :placeholder="loginRole === 'kader' ? 'Contoh: kader atau NIK Ibu Sri' : 'Contoh: admin'" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
+              <input type="text" v-model="loginData.username" :placeholder="loginRole === 'kader' ? 'Contoh: kader atau kader@posyandu.id' : 'Contoh: admin atau admin@posyandu.id'" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
             </div>
             <div>
               <label style="font-size:14px; font-weight:700; color:#16211C; margin-bottom:6px; display:block;">
-                {{ loginRole === 'kader' ? 'Kata Sandi / PIN Kader' : 'Kata Sandi / PIN Admin' }}
+                {{ loginRole === 'kader' ? 'Kata Sandi Kader' : 'Kata Sandi Administrator' }}
               </label>
-              <input type="password" v-model="loginData.password" :placeholder="loginRole === 'kader' ? 'PIN Kader (1234)' : 'Password Admin (admin)'" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" @keyup.enter="doLogin" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
+              <input type="password" v-model="loginData.password" :placeholder="loginRole === 'kader' ? 'Masukkan kata sandi kader' : 'Masukkan kata sandi admin'" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" @keyup.enter="doLogin" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
             </div>
           </div>
-          
-          <button @click="doLogin" class="btn-primary" style="width:100%; padding:18px; border-radius:14px; font-size:17px; font-weight:800; box-shadow:0 10px 20px rgba(15,110,68,0.2); margin-bottom:20px;">
-            Masuk sebagai {{ loginRole === 'kader' ? 'Kader' : 'Administrator' }}
-          </button>
 
-          <!-- Quick 1-Click Login (Demo) -->
-          <div style="border-top:1px solid #DCE0DA; padding-top:16px;">
-            <div style="font-size:12px; font-weight:700; color:#4A5750; margin-bottom:10px; text-align:center;">ATAU MASUK CEPAT (1-KLIK DEMO)</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-              <button @click="doQuickLogin('kader')" class="btn-outline" style="padding:12px; border-radius:12px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px; border-color:#A3D9B5; background:#F0F9F4; color:#0F6E44;">
-                <i class="ph-bold ph-user-check" style="font-size:16px;"></i> Ibu Sri (Kader)
-              </button>
-              <button @click="doQuickLogin('admin')" class="btn-outline" style="padding:12px; border-radius:12px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px; border-color:#C4B5FD; background:#F5F3FF; color:#7C3AED;">
-                <i class="ph-bold ph-shield-star" style="font-size:16px;"></i> Admin (Akses Penuh)
-              </button>
-            </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; font-size:13px; color:#4A5750;">
+            <span style="display:flex; align-items:center; gap:6px;">
+              <span style="width:8px; height:8px; border-radius:50%; background:#14713D; display:inline-block; box-shadow:0 0 6px #14713D;"></span>
+              Autentikasi Server Database Cloud
+            </span>
+            <span style="color:#0F6E44; font-weight:700;">Sesi Aktif &amp; Terverifikasi</span>
           </div>
+          <button @click="doLogin" class="btn-primary" :disabled="isLoggingIn" style="width:100%; padding:18px; border-radius:14px; font-size:17px; font-weight:800; box-shadow:0 10px 20px rgba(15,110,68,0.2); display:flex; align-items:center; justify-content:center; gap:10px;">
+            <i v-if="isLoggingIn" class="ph-bold ph-spinner ph-spin" style="font-size:22px;"></i>
+            <span>{{ isLoggingIn ? 'Memverifikasi ke Server...' : 'Masuk sebagai ' + (loginRole === 'kader' ? 'Kader' : 'Administrator') }}</span>
+          </button>
         </div>
 
-        <!-- Bagian Kanan: Art / Ilustrasi -->
+        <!-- Bagian Kanan: Art / Ilustrasi Floating 3D Icons -->
         <div style="width:50%; background:linear-gradient(135deg, #0F6E44 0%, #0B5334 100%); position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px;">
           <!-- Abstract Background Art -->
           <div style="position:absolute; inset:0; opacity:0.05; background:url('https://www.transparenttextures.com/patterns/cubes.png');"></div>
-          
+
           <!-- Composition of Icons -->
           <div style="position:relative; z-index:1; text-align:center;">
              <div style="width:360px; height:360px; background:rgba(255,255,255,0.1); border-radius:100px; display:flex; align-items:center; justify-content:center; margin:0 auto 60px; position:relative; backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2);">
                 <i class="ph-fill ph-baby" style="font-size:180px; color:#FFFFFF;"></i>
-                
+
                 <!-- Floating Element 1 -->
                 <div style="position:absolute; top:-20px; right:-20px; width:100px; height:100px; background:#EAAA08; border-radius:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); transform:rotate(15deg);">
                    <i class="ph-bold ph-scales" style="font-size:50px; color:#16211C;"></i>
                 </div>
-                
+
                 <!-- Floating Element 2 -->
                 <div style="position:absolute; bottom:-30px; left:-30px; width:120px; height:120px; background:#FFFFFF; border-radius:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); transform:rotate(-10deg);">
                    <i class="ph-fill ph-first-aid" style="font-size:60px; color:#0F6E44;"></i>
@@ -171,7 +166,7 @@
                    <i class="ph-bold ph-heart" style="font-size:30px; color:#FFFFFF;"></i>
                 </div>
              </div>
-             
+
              <h2 style="font-size:36px; font-weight:800; color:#FFFFFF; margin:0 0 16px; letter-spacing:-0.02em;">Aplikasi Posyandu Digital</h2>
              <p style="font-size:20px; color:rgba(255,255,255,0.8); margin:0; line-height:1.6;">Otomatisasi pencatatan dan deteksi<br>stunting medis yang terintegrasi.</p>
           </div>
@@ -179,69 +174,72 @@
       </div>
 
       <!-- ================== PORTAL VIEW (MENU UTAMA) ================== -->
-      <div v-if="view === 'portal'" style="flex:1; display:flex; flex-direction:column; background:#F6F7F5; position:relative; overflow:hidden;">
-        
+      <div v-if="view === 'portal'" style="flex:1; display:flex; flex-direction:column; background:#F6F7F5; position:relative; overflow-y:auto; box-sizing:border-box;">
+
         <!-- Header -->
-        <header style="padding:40px 60px 20px; display:flex; justify-content:space-between; align-items:flex-end;">
+        <header style="padding:28px 56px 14px; display:flex; justify-content:space-between; align-items:flex-end; flex-shrink:0;">
           <div>
-            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-              <span v-if="currentUser.role === 'admin'" style="background:#EDE9FE; color:#6D28D9; border:1px solid #C4B5FD; padding:4px 10px; border-radius:8px; font-size:13px; font-weight:800; display:inline-flex; align-items:center; gap:6px;">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+              <span v-if="currentUser && currentUser.role === 'admin'" style="background:#EDE9FE; color:#6D28D9; border:1px solid #C4B5FD; padding:4px 12px; border-radius:8px; font-size:13px; font-weight:800; display:inline-flex; align-items:center; gap:6px;">
                 <i class="ph-bold ph-shield-star"></i> Administrator Sistem
               </span>
-              <span v-else style="background:#E9F3EC; color:#0F6E44; border:1px solid #A3D9B5; padding:4px 10px; border-radius:8px; font-size:13px; font-weight:800; display:inline-flex; align-items:center; gap:6px;">
+              <span v-else style="background:#E9F3EC; color:#0F6E44; border:1px solid #A3D9B5; padding:4px 12px; border-radius:8px; font-size:13px; font-weight:800; display:inline-flex; align-items:center; gap:6px;">
                 <i class="ph-bold ph-user-check"></i> Kader Posyandu
               </span>
+              <span style="font-size:13px; color:#4A5750; font-weight:600;">Posyandu Melati &bull; Sesi 2026</span>
             </div>
-            <h1 style="font-size:42px; font-weight:800; color:#16211C; margin:0 0 10px; letter-spacing:-0.02em;">Selamat Datang, {{ currentUser.name }}</h1>
-            <p style="font-size:20px; color:#4A5750; margin:0;">Pilih layanan posyandu yang akan Anda lakukan hari ini.</p>
+            <h1 style="font-size:38px; font-weight:800; color:#16211C; margin:0 0 6px; letter-spacing:-0.02em;">Selamat Datang, {{ currentUser ? currentUser.name : 'Kader Posyandu' }}</h1>
+            <p style="font-size:18px; color:#4A5750; margin:0;">Pilih modul layanan posyandu yang akan Anda lakukan hari ini.</p>
           </div>
           <div style="display:flex; align-items:center; gap:14px;">
-            <button @click="bukaPengaturan('portal')" class="btn-outline" style="padding:14px 22px; border-radius:14px; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px;">
+            <button @click="bukaPengaturan('portal')" class="btn-outline" style="padding:14px 22px; border-radius:14px; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; cursor:pointer; touch-action:manipulation;">
               <i class="ph-bold ph-gear" style="font-size:20px;"></i> Pengaturan
             </button>
-            <button @click="doLogout" class="btn-outline" style="padding:14px 22px; border-radius:14px; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; color:#B42318; border-color:#FDA29B;">
+            <button @click="doLogout" class="btn-outline" style="padding:14px 22px; border-radius:14px; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; color:#B42318; border-color:#FDA29B; cursor:pointer; touch-action:manipulation;">
               <i class="ph-bold ph-sign-out" style="font-size:20px;"></i> Keluar
             </button>
           </div>
         </header>
 
-        <div style="flex:1; display:flex; padding:40px 60px; gap:40px;">
+        <!-- Modul Cards: Spacious, enlarged, and generous bottom padding so it never hugs the Android taskbar -->
+        <div style="flex:1; display:flex; padding:18px 56px 56px; gap:36px; align-items:stretch; min-height:420px; box-sizing:border-box;">
+
           <!-- Modul Pendaftaran -->
-          <div style="flex:1; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:32px; padding:40px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, box-shadow 0.2s; cursor:pointer; position:relative; overflow:hidden;"
+          <div style="flex:1; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:32px; padding:44px 42px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.15s, box-shadow 0.2s; cursor:pointer; position:relative; overflow:hidden; touch-action:manipulation; user-select:none; box-shadow:0 8px 24px rgba(0,0,0,0.03);"
                @click="setView('register')"
-               onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 24px 48px rgba(0,0,0,0.06)'"
-               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-            <div style="position:absolute; top:-20px; right:-20px; opacity:0.04;">
-               <i class="ph-fill ph-identification-card" style="font-size:300px;"></i>
+               onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 24px 48px rgba(0,0,0,0.08)'"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.03)'">
+            <div style="position:absolute; top:-20px; right:-20px; opacity:0.04; pointer-events:none;">
+               <i class="ph-fill ph-identification-card" style="font-size:320px;"></i>
             </div>
-            <div style="position:relative; z-index:1;">
-              <div style="width:80px; height:80px; background:#E9F3EC; border-radius:24px; display:flex; align-items:center; justify-content:center; margin-bottom:30px;">
-                <i class="ph-fill ph-identification-card" style="font-size:40px; color:#0F6E44;"></i>
+            <div style="position:relative; z-index:1; pointer-events:none;">
+              <div style="width:84px; height:84px; background:#E9F3EC; border-radius:26px; display:flex; align-items:center; justify-content:center; margin-bottom:28px;">
+                <i class="ph-fill ph-identification-card" style="font-size:44px; color:#0F6E44;"></i>
               </div>
-              <h2 style="font-size:34px; font-weight:800; color:#16211C; margin:0 0 16px; line-height:1.2;">Pendaftaran<br>Balita Baru</h2>
-              <p style="font-size:20px; color:#4A5750; line-height:1.6; margin:0;">Tambahkan data balita yang baru pertama kali mendaftar atau pindahan dari posyandu lain ke dalam sistem.</p>
+              <h2 style="font-size:36px; font-weight:800; color:#16211C; margin:0 0 16px; line-height:1.2;">Pendaftaran<br>Balita Baru</h2>
+              <p style="font-size:20px; color:#4A5750; line-height:1.6; margin:0;">Tambahkan data balita yang baru mendaftar atau pindahan dari posyandu lain ke dalam database cloud.</p>
             </div>
-            <div style="position:relative; z-index:1; margin-top:40px; display:flex; align-items:center; gap:12px; color:#0F6E44; font-size:20px; font-weight:800;">
+            <div style="position:relative; z-index:1; margin-top:36px; display:flex; align-items:center; gap:12px; color:#0F6E44; font-size:21px; font-weight:800; pointer-events:none;">
               Buka Modul Pendaftaran <i class="ph-bold ph-arrow-right"></i>
             </div>
           </div>
 
           <!-- Modul Pencatatan -->
-          <div style="flex:1; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:32px; padding:40px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, box-shadow 0.2s; cursor:pointer; position:relative; overflow:hidden;"
+          <div style="flex:1; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:32px; padding:44px 42px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.15s, box-shadow 0.2s; cursor:pointer; position:relative; overflow:hidden; touch-action:manipulation; user-select:none; box-shadow:0 8px 24px rgba(0,0,0,0.03);"
                @click="setView('home')"
-               onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 24px 48px rgba(0,0,0,0.06)'"
-               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-            <div style="position:absolute; top:-20px; right:-20px; opacity:0.04;">
-               <i class="ph-fill ph-scales" style="font-size:300px;"></i>
+               onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 24px 48px rgba(0,0,0,0.08)'"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.03)'">
+            <div style="position:absolute; top:-20px; right:-20px; opacity:0.04; pointer-events:none;">
+               <i class="ph-fill ph-scales" style="font-size:320px;"></i>
             </div>
-            <div style="position:relative; z-index:1;">
-              <div style="width:80px; height:80px; background:#E3EAF7; border-radius:24px; display:flex; align-items:center; justify-content:center; margin-bottom:30px;">
-                <i class="ph-fill ph-scales" style="font-size:40px; color:#1E4ED8;"></i>
+            <div style="position:relative; z-index:1; pointer-events:none;">
+              <div style="width:84px; height:84px; background:#E3EAF7; border-radius:26px; display:flex; align-items:center; justify-content:center; margin-bottom:28px;">
+                <i class="ph-fill ph-scales" style="font-size:44px; color:#1E4ED8;"></i>
               </div>
-              <h2 style="font-size:34px; font-weight:800; color:#16211C; margin:0 0 16px; line-height:1.2;">Pengukuran &<br>Pencatatan</h2>
-              <p style="font-size:20px; color:#4A5750; line-height:1.6; margin:0;">Masuk ke dashboard untuk mendata hasil ukur bulanan (Berat Badan, Tinggi, LILA, LIKA) dan mengecek status gizi.</p>
+              <h2 style="font-size:36px; font-weight:800; color:#16211C; margin:0 0 16px; line-height:1.2;">Pengukuran &amp;<br>Pencatatan</h2>
+              <p style="font-size:20px; color:#4A5750; line-height:1.6; margin:0;">Dashboard penimbangan bulanan (BB, TB, LILA, LIKA), evaluasi stunting klinis, dan riwayat KMS balita.</p>
             </div>
-            <div style="position:relative; z-index:1; margin-top:40px; display:flex; align-items:center; gap:12px; color:#1E4ED8; font-size:20px; font-weight:800;">
+            <div style="position:relative; z-index:1; margin-top:36px; display:flex; align-items:center; gap:12px; color:#1E4ED8; font-size:21px; font-weight:800; pointer-events:none;">
               Buka Modul Pengukuran <i class="ph-bold ph-arrow-right"></i>
             </div>
           </div>
@@ -250,7 +248,7 @@
 
       <!-- ================== REGISTRATION VIEW ================== -->
       <div v-if="view === 'register'" style="flex:1; display:flex; flex-direction:column; background:#EDEFEA; overflow-y:auto;">
-        
+
         <header style="background:#FFFFFF; padding:20px 30px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; gap:24px; flex-shrink:0; position:sticky; top:0; z-index:10;">
           <button @click="setView('portal')" class="btn-outline" style="width:60px; height:60px; border-radius:16px; display:flex; align-items:center; justify-content:center;">
             <i class="ph-bold ph-arrow-left" style="font-size:28px;"></i>
@@ -266,13 +264,13 @@
 
         <main style="padding:40px; display:flex; justify-content:center;">
           <div style="background:#FFFFFF; width:100%; max-width:960px; border-radius:24px; border:1px solid #DCE0DA; padding:40px; box-shadow:0 12px 30px rgba(0,0,0,0.03);">
-            
+
             <h3 style="font-size:22px; font-weight:800; color:#16211C; margin:0 0 24px; border-bottom:2px dashed #DCE0DA; padding-bottom:16px;">Identitas Balita</h3>
-            
+
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:40px;">
               <div>
-                <label style="font-size:16px; font-weight:700; color:#16211C; margin-bottom:8px; display:block;">NIK Balita (Opsional)</label>
-                <input type="text" v-model="regData.nik" placeholder="16 digit angka dari KK" style="width:100%; padding:18px; border-radius:14px; border:2px solid #DCE0DA; background:#F6F7F5; font-size:18px; font-family:inherit; outline:none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
+                <label style="font-size:16px; font-weight:700; color:#16211C; margin-bottom:8px; display:block;">NIK Balita <span style="color:#B42318;">*</span></label>
+                <input type="text" inputmode="numeric" maxlength="16" v-model="regData.nik" placeholder="16 digit angka dari KK" style="width:100%; padding:18px; border-radius:14px; border:2px solid #DCE0DA; background:#F6F7F5; font-size:18px; font-family:inherit; outline:none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
               </div>
               <div>
                 <label style="font-size:16px; font-weight:700; color:#16211C; margin-bottom:8px; display:block;">Nama Lengkap Balita <span style="color:#B42318;">*</span></label>
@@ -310,14 +308,14 @@
                 </select>
               </div>
             </div>
-            
+
           </div>
         </main>
       </div>
 
       <!-- ================== HOME VIEW (DASHBOARD PENGUKURAN) ================== -->
       <div v-if="view === 'home'" style="flex:1; display:flex; flex-direction:column; background:#F6F7F5; overflow-y:auto;">
-        
+
         <!-- Navbar -->
         <header style="background:#FFFFFF; padding:20px 30px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
           <div style="display:flex; align-items:center; gap:16px;">
@@ -344,60 +342,112 @@
         </header>
 
         <main style="padding:24px 32px 28px; display:flex; flex-direction:column; gap:20px;">
-          
-          <!-- Quick Actions -->
+
+          <!-- Quick Actions: Responsive touch handling for Tablet -->
           <div style="display:grid; grid-template-columns:2fr 1fr; gap:18px;">
-            <button @click="goToList('record')" class="btn-primary" style="border-radius:20px; padding:22px 26px; text-align:left; display:flex; align-items:center; justify-content:space-between; transition: transform 0.2s; box-shadow:0 12px 24px rgba(15,110,68,0.15);" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
-              <div>
+            <button type="button" @click="goToList('record')" class="btn-primary" style="border-radius:20px; padding:22px 26px; text-align:left; display:flex; align-items:center; justify-content:space-between; transition: transform 0.15s, box-shadow 0.2s; box-shadow:0 12px 24px rgba(15,110,68,0.15); cursor:pointer; touch-action:manipulation; user-select:none;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+              <div style="pointer-events:none;">
                 <div style="font-size:30px; font-weight:800; margin-bottom:4px; letter-spacing:-0.02em;">Mulai Pencatatan</div>
                 <div style="font-size:17px; font-weight:500; opacity:0.9;">Pengukuran BB, TB, LILA, dan LIKA balita</div>
               </div>
-              <div style="width:64px; height:64px; background:rgba(255,255,255,0.2); border-radius:18px; display:flex; align-items:center; justify-content:center;">
+              <div style="pointer-events:none; width:64px; height:64px; background:rgba(255,255,255,0.2); border-radius:18px; display:flex; align-items:center; justify-content:center;">
                 <i class="ph-bold ph-arrow-right" style="font-size:36px;"></i>
               </div>
             </button>
-            <button @click="goToList('history')" class="btn-outline" style="border-radius:20px; padding:22px 26px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; background:#FFFFFF;">
-              <div style="width:50px; height:50px; background:#E9F3EC; border-radius:14px; display:flex; align-items:center; justify-content:center; margin-bottom:10px;">
+            <button type="button" @click="goToList('history')" class="btn-outline" style="border-radius:20px; padding:22px 26px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; background:#FFFFFF; cursor:pointer; touch-action:manipulation; user-select:none; transition:transform 0.15s, box-shadow 0.15s; border:1px solid #DCE0DA;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 24px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+              <div style="pointer-events:none; width:50px; height:50px; background:#E9F3EC; border-radius:14px; display:flex; align-items:center; justify-content:center; margin-bottom:10px;">
                 <i class="ph-bold ph-files" style="font-size:28px; color:#0F6E44;"></i>
               </div>
-              <div>
-                <div style="font-size:22px; font-weight:800; margin-bottom:2px; letter-spacing:-0.01em;">Kartu Kontrol</div>
-                <div style="font-size:15px; color:#4A5750; font-weight:500;">Riwayat bulanan balita</div>
+              <div style="pointer-events:none;">
+                <div style="font-size:22px; font-weight:800; margin-bottom:2px; letter-spacing:-0.01em; color:#16211C; display:flex; align-items:center; gap:6px;">
+                  Kartu Kontrol <i class="ph-bold ph-caret-right" style="font-size:18px; color:#0F6E44;"></i>
+                </div>
+                <div style="font-size:15px; color:#4A5750; font-weight:500;">Riwayat bulanan &amp; KMS balita</div>
               </div>
             </button>
           </div>
 
-          <!-- Dashboard Stats -->
-          <div>
-            <h2 style="font-size:22px; font-weight:800; margin:0 0 12px 0; color:#16211C; letter-spacing:-0.01em;">Ringkasan Kegiatan Hari Ini</h2>
-            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
-              <div style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:18px; padding:18px 22px; display:flex; align-items:center; gap:18px;">
-                <div style="width:58px; height:58px; background:#F6F7F5; border-radius:16px; display:flex; align-items:center; justify-content:center;">
-                  <i class="ph-bold ph-users-three" style="font-size:32px; color:#4A5750;"></i>
+          <!-- Dashboard Stats: SKDN Parameters & Real Calculation -->
+          <div style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:24px 28px; box-shadow:0 4px 16px rgba(0,0,0,0.02);">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; background:#E9F3EC; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                  <i class="ph-bold ph-chart-donut" style="font-size:22px; color:#0F6E44;"></i>
                 </div>
                 <div>
-                  <div style="font-size:15px; font-weight:600; color:#4A5750; margin-bottom:2px;">Total Sasaran Balita</div>
-                  <div style="font-size:30px; font-weight:800; color:#16211C;">{{ daftarAnak.length }} <span style="font-size:17px; font-weight:600; color:#4A5750;">anak</span></div>
+                  <h2 style="font-size:22px; font-weight:800; margin:0; color:#16211C; letter-spacing:-0.01em;">Ringkasan Kegiatan Posyandu (SKDN)</h2>
+                  <div style="font-size:14px; color:#4A5750; font-weight:600;">Monitoring sasaran dan partisipasi penimbangan balita</div>
                 </div>
+                <button type="button" @click="bukaModalPanduanSKDN = true" style="background:#F6F7F5; color:#0F6E44; border:1px solid #A3D9B5; padding:6px 12px; border-radius:10px; font-size:13px; font-weight:800; display:inline-flex; align-items:center; gap:6px; cursor:pointer; touch-action:manipulation;">
+                  <i class="ph-bold ph-info" style="font-size:16px;"></i> Panduan Parameter SKDN
+                </button>
               </div>
-              <div style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:18px; padding:18px 22px; display:flex; align-items:center; gap:18px;">
-                <div style="width:58px; height:58px; background:#E9F3EC; border-radius:16px; display:flex; align-items:center; justify-content:center;">
-                  <i class="ph-bold ph-check-square-offset" style="font-size:32px; color:#14713D;"></i>
-                </div>
-                <div>
-                  <div style="font-size:15px; font-weight:600; color:#4A5750; margin-bottom:2px;">Sudah Diukur</div>
-                  <div style="font-size:30px; font-weight:800; color:#14713D;">{{ anakDiukur }} <span style="font-size:17px; font-weight:600; color:#4A5750;">anak</span></div>
-                </div>
+
+              <!-- Sesi Selector -->
+              <div style="display:flex; align-items:center; gap:10px; background:#F6F7F5; border:1px solid #DCE0DA; padding:6px 16px; border-radius:12px;">
+                <span style="font-size:13px; font-weight:700; color:#4A5750;"><i class="ph-bold ph-calendar"></i> Sesi Penimbangan:</span>
+                <select v-model="sesiAktifMode" style="border:none; background:transparent; font-size:14px; font-weight:800; color:#0F6E44; outline:none; cursor:pointer; font-family:inherit;">
+                  <option value="terakhir">Sesi Terakhir Tercatat (Juni 2026)</option>
+                  <option value="berjalan">Sesi Berjalan (September 2026 / Hari Ini)</option>
+                </select>
               </div>
-              <div style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:18px; padding:18px 22px; display:flex; align-items:center; gap:18px;">
-                <div style="width:58px; height:58px; background:#FEF3F2; border-radius:16px; display:flex; align-items:center; justify-content:center;">
-                  <i class="ph-bold ph-clock" style="font-size:32px; color:#B42318;"></i>
+            </div>
+
+            <!-- 4 Grid Cards SKDN -->
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;">
+
+              <!-- Total Sasaran (S) -->
+              <div style="background:#F9FAF8; border:1px solid #DCE0DA; border-radius:18px; padding:18px 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:13px; font-weight:800; color:#4A5750; background:#EDEFEA; padding:2px 8px; border-radius:6px;">SASARAN (S)</span>
+                  <i class="ph-bold ph-users-three" style="font-size:22px; color:#4A5750;"></i>
                 </div>
-                <div>
-                  <div style="font-size:15px; font-weight:600; color:#4A5750; margin-bottom:2px;">Belum Diukur</div>
-                  <div style="font-size:30px; font-weight:800; color:#B42318;">{{ anakBelum }} <span style="font-size:17px; font-weight:600; color:#4A5750;">anak</span></div>
+                <div style="font-size:32px; font-weight:800; color:#16211C; line-height:1.1;">
+                  {{ totalSasaran }} <span style="font-size:16px; font-weight:600; color:#4A5750;">anak</span>
                 </div>
+                <div style="font-size:12px; color:#4A5750; margin-top:6px; line-height:1.4;">Total balita terdaftar di wilayah Posyandu (RT 01 - 05)</div>
               </div>
+
+              <!-- Sudah Diukur (D) -->
+              <div style="background:#F0F9F4; border:1px solid #A3D9B5; border-radius:18px; padding:18px 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:13px; font-weight:800; color:#14713D; background:#E9F3EC; padding:2px 8px; border-radius:6px;">DITIMBANG (D)</span>
+                  <i class="ph-bold ph-check-square-offset" style="font-size:22px; color:#14713D;"></i>
+                </div>
+                <div style="font-size:32px; font-weight:800; color:#14713D; line-height:1.1;">
+                  {{ anakDiukur }} <span style="font-size:16px; font-weight:600; color:#14713D;">anak</span>
+                </div>
+                <div style="font-size:12px; color:#14713D; margin-top:6px; line-height:1.4;">Balita yang telah hadir &amp; diukur pada sesi ini</div>
+              </div>
+
+              <!-- Belum Diukur (S - D) -->
+              <div style="background:#FEF3F2; border:1px solid #FECDCA; border-radius:18px; padding:18px 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:13px; font-weight:800; color:#B42318; background:#FEE4E2; padding:2px 8px; border-radius:6px;">BELUM DIUKUR</span>
+                  <i class="ph-bold ph-clock" style="font-size:22px; color:#B42318;"></i>
+                </div>
+                <div style="font-size:32px; font-weight:800; color:#B42318; line-height:1.1;">
+                  {{ anakBelum }} <span style="font-size:16px; font-weight:600; color:#B42318;">anak</span>
+                </div>
+                <div style="font-size:12px; color:#B42318; margin-top:6px; line-height:1.4;">Target sweeping &amp; jemput bola kader</div>
+              </div>
+
+              <!-- Cakupan (D/S) -->
+              <div style="background:#F6F7F5; border:1px solid #DCE0DA; border-radius:18px; padding:18px 20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:13px; font-weight:800; color:#1E4ED8; background:#E3EAF7; padding:2px 8px; border-radius:6px;">CAKUPAN (D/S)</span>
+                  <span style="font-size:11px; font-weight:800; color:#14713D;">Target: ≥ 80%</span>
+                </div>
+                <div style="font-size:32px; font-weight:800; color:#16211C; line-height:1.1;">
+                  {{ persenCakupan }}%
+                </div>
+                <div style="width:100%; height:8px; background:#DCE0DA; border-radius:4px; overflow:hidden; margin-top:8px;">
+                  <div :style="{ width: Math.min(100, persenCakupan) + '%', background: persenCakupan >= 80 ? '#14713D' : (persenCakupan >= 50 ? '#F79009' : '#D92D20') }" style="height:100%; transition:width 0.5s;"></div>
+                </div>
+                <div style="font-size:11px; color:#4A5750; margin-top:6px;">Tingkat partisipasi masyarakat Posyandu</div>
+              </div>
+
             </div>
           </div>
 
@@ -469,7 +519,7 @@
 
       <!-- ================== NUTRITION DETAIL VIEW (TAB / SCREEN BARU DETAILING) ================== -->
       <div v-if="view === 'nutrition_detail'" style="flex:1; display:flex; flex-direction:column; background:#F6F7F5; overflow-y:auto;">
-        
+
         <!-- Header -->
         <header style="background:#FFFFFF; padding:20px 32px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; position:sticky; top:0; z-index:10;">
           <div style="display:flex; align-items:center; gap:20px;">
@@ -516,10 +566,10 @@
         </div>
 
         <main style="padding:24px 32px 28px; display:flex; flex-direction:column; gap:24px;">
-          
+
           <!-- Baris 1: Ringkasan Klinis & Tabel Penentuan Ambang Batas Gizi -->
           <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:24px;">
-            
+
             <!-- Card SOP Klinis -->
             <div :style="{ background: detailMeta.bgAlert, borderColor: detailMeta.borderAlert }" style="border:2px solid; border-radius:20px; padding:24px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 16px rgba(0,0,0,0.03);">
               <div>
@@ -604,7 +654,7 @@
 
           <!-- Baris 2: Dashboard Detailing Tabel Anak -->
           <div style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:28px; box-shadow:0 4px 16px rgba(0,0,0,0.03);">
-            
+
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #DCE0DA; padding-bottom:16px;">
               <div>
                 <h3 style="margin:0; font-size:22px; font-weight:800; color:#16211C;">
@@ -644,7 +694,7 @@
                    style="display:grid; grid-template-columns:2.2fr 1fr 1.3fr 1.6fr 1.3fr 1.6fr; padding:16px 20px; align-items:center; transition:background 0.15s;"
                    onmouseover="this.style.background='#F9FAF8'"
                    onmouseout="this.style.background='#FFFFFF'">
-                
+
                 <!-- Kolom 1: Nama & Inisial -->
                 <div style="display:flex; align-items:center; gap:14px;">
                   <div :style="{ background: detailMeta.bgPill, color: detailMeta.warnaText }" style="width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; flex-shrink:0;">
@@ -700,7 +750,7 @@
 
       <!-- ================== SETTINGS VIEW (PENGATURAN SISTEM & DATABASE) ================== -->
       <div v-if="view === 'settings'" style="flex:1; display:flex; flex-direction:column; background:#F6F7F5; overflow-y:auto;">
-        
+
         <!-- Header -->
         <header style="background:#FFFFFF; padding:20px 32px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; position:sticky; top:0; z-index:10;">
           <div style="display:flex; align-items:center; gap:20px;">
@@ -739,7 +789,7 @@
             <i class="ph-bold ph-buildings" style="font-size:22px;"></i> Profil Posyandu &amp; Kader
           </button>
 
-          <button @click="tabPengaturan = 'database'"
+          <button v-if="currentUser && currentUser.role === 'admin'" @click="tabPengaturan = 'database'"
                   :style="{
                     borderBottom: tabPengaturan === 'database' ? '4px solid #0F6E44' : '4px solid transparent',
                     color: tabPengaturan === 'database' ? '#0F6E44' : '#4A5750',
@@ -748,20 +798,17 @@
                   style="padding:18px 6px; background:none; font-size:16px; display:flex; align-items:center; gap:10px; cursor:pointer;">
             <i class="ph-bold ph-database" style="font-size:22px;"></i>
             <span>Local Registry &amp; API Database</span>
-            <span v-if="currentUser.role !== 'admin'" style="background:#FEF3F2; color:#B42318; border:1px solid #FECDCA; font-size:11px; padding:2px 8px; border-radius:6px; font-weight:800; display:inline-flex; align-items:center; gap:4px;">
-              <i class="ph-bold ph-lock"></i> Terkunci
-            </span>
-            <span v-else style="background:#EDE9FE; color:#6D28D9; border:1px solid #C4B5FD; font-size:11px; padding:2px 8px; border-radius:6px; font-weight:800; display:inline-flex; align-items:center; gap:4px;">
+            <span style="background:#EDE9FE; color:#6D28D9; border:1px solid #C4B5FD; font-size:11px; padding:2px 8px; border-radius:6px; font-weight:800; display:inline-flex; align-items:center; gap:4px;">
               <i class="ph-bold ph-shield-star"></i> Admin
             </span>
           </button>
         </div>
 
         <main style="padding:24px 32px 28px; display:flex; flex-direction:column; gap:24px;">
-          
+
           <!-- TAB 1: RUMUS & STANDAR ANTROPOMETRI -->
           <div v-if="tabPengaturan === 'rumus'" style="display:flex; flex-direction:column; gap:28px;">
-            
+
             <!-- Card 1: Penjelasan Rumus Matematika Cole's LMS -->
             <div style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:32px; box-shadow:0 4px 16px rgba(0,0,0,0.03);">
               <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
@@ -812,7 +859,7 @@
               <div style="margin-top:24px;">
                 <h4 style="font-size:18px; font-weight:800; color:#16211C; margin:0 0 14px;">Pilihan Standar Acuan Baku Nasional / Global:</h4>
                 <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
-                  
+
                   <!-- Standar 1: Permenkes 2020 / WHO 2006 (Default) -->
                   <div @click="rumusAktif.standar = 'who_permenkes_2020'"
                        :style="{
@@ -935,7 +982,7 @@
           <!-- TAB 2: PROFIL POSYANDU & KADER -->
           <div v-if="tabPengaturan === 'profil'" style="display:flex; flex-direction:column; gap:28px;">
             <div style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:32px; box-shadow:0 4px 16px rgba(0,0,0,0.03);">
-              
+
               <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
                 <div style="width:48px; height:48px; background:#E9F3EC; border-radius:14px; display:flex; align-items:center; justify-content:center;">
                   <i class="ph-bold ph-buildings" style="font-size:28px; color:#0F6E44;"></i>
@@ -970,7 +1017,7 @@
               </div>
 
               <h4 style="font-size:18px; font-weight:800; color:#16211C; margin:0 0 16px; border-top:2px dashed #DCE0DA; padding-top:24px;">Identitas Kader Penanggung Jawab</h4>
-              
+
               <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px; margin-bottom:32px;">
                 <div>
                   <label style="font-size:15px; font-weight:700; color:#16211C; margin-bottom:8px; display:block;">Nama Lengkap Kader</label>
@@ -995,11 +1042,11 @@
             </div>
           </div>
 
-          <!-- TAB 3: DATABASE & LOCAL REGISTRY -->
-          <div v-if="tabPengaturan === 'database'" style="display:flex; flex-direction:column; gap:28px;">
-            
+          <!-- TAB 3: DATABASE & LOCAL REGISTRY (KHUSUS ADMINISTRATOR) -->
+          <div v-if="tabPengaturan === 'database' && currentUser && currentUser.role === 'admin'" style="display:flex; flex-direction:column; gap:28px;">
+
             <!-- TAMPILAN TERKUNCI JIKA LOGIN SEBAGAI KADER -->
-            <div v-if="currentUser.role !== 'admin'" style="background:#FFFFFF; border:2px dashed #DCE0DA; border-radius:24px; padding:48px 32px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; max-width:680px; margin:20px auto; box-shadow:0 4px 16px rgba(0,0,0,0.03);">
+            <div v-if="false" style="display:none;">
               <div style="width:80px; height:80px; background:#FEF3F2; border-radius:24px; display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
                 <i class="ph-bold ph-lock-key" style="font-size:40px; color:#D92D20;"></i>
               </div>
@@ -1007,7 +1054,7 @@
               <p style="font-size:16px; color:#4A5750; line-height:1.6; margin:0 0 28px;">
                 Tab konfigurasi endpoint API server, Supabase Cloud, dan migrasi basis data hanya dapat diakses oleh <strong>Administrator Sistem</strong>. Kader Posyandu dapat menggunakan sistem pencatatan normal tanpa perlu mengubah pengaturan teknis ini.
               </p>
-              
+
               <div style="background:#F6F7F5; border:1px solid #DCE0DA; border-radius:18px; padding:24px; width:100%; text-align:left; margin-bottom:20px;">
                 <label style="font-size:14px; font-weight:700; color:#16211C; margin-bottom:8px; display:block;">Masukkan PIN / Kata Sandi Administrator:</label>
                 <div style="display:flex; gap:12px;">
@@ -1017,7 +1064,7 @@
                   </button>
                 </div>
               </div>
-              
+
               <div style="font-size:14px; color:#4A5750;">
                 Atau <a href="javascript:void(0)" @click="doLogout" style="color:#0F6E44; font-weight:800; text-decoration:underline;">Ganti Akun ke Administrator</a> melalui halaman login.
               </div>
@@ -1025,7 +1072,7 @@
 
             <!-- TAMPILAN FULL LOCAL REGISTRY UNTUK ADMINISTRATOR -->
             <div v-else style="display:flex; flex-direction:column; gap:24px;">
-              
+
               <!-- 1. Top Banner: Active Database Status -->
               <div style="background:linear-gradient(135deg, #16211C 0%, #0B5334 100%); color:#FFFFFF; border-radius:24px; padding:28px 32px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 8px 24px rgba(15,110,68,0.15);">
                 <div>
@@ -1060,7 +1107,7 @@
 
                 <!-- 3 Provider Selector Cards -->
                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:24px;">
-                  
+
                   <!-- Card 1: Supabase Cloud -->
                   <div @click="selectedProviderView = 'supabase'"
                        :style="{
@@ -1124,7 +1171,7 @@
                 </div>
 
                 <!-- 3. Form Detail Berdasarkan Provider Terpilih -->
-                
+
                 <!-- DETAIL: SUPABASE CLOUD -->
                 <div v-if="selectedProviderView === 'supabase'" style="background:#F6F7F5; border:1px solid #DCE0DA; border-radius:18px; padding:24px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -1308,22 +1355,30 @@
             <input type="text" v-model="searchQuery" placeholder="Cari nama anak..." style="border:0; background:transparent; font-size:20px; font-family:inherit; outline:none; width:100%; margin-left:12px;">
           </div>
         </header>
-        
+
         <div style="flex:1; overflow-y:auto; padding:30px;">
           <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
-            <div v-for="anak in filteredAnak" :key="anak.id" @click="pilihAnak(anak)" style="background:#FFFFFF; border-radius:20px; padding:24px; border:1px solid #DCE0DA; cursor:pointer; display:flex; flex-direction:column; gap:16px; transition:box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 10px 30px rgba(22,33,28,0.1)'" onmouseout="this.style.boxShadow='none'">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between;">
+            <div v-for="anak in filteredAnak" :key="anak.id" @click="pilihAnak(anak)" role="button" tabindex="0" style="background:#FFFFFF; border-radius:20px; padding:24px; border:1px solid #DCE0DA; cursor:pointer; touch-action:manipulation; user-select:none; display:flex; flex-direction:column; gap:16px; transition:transform 0.15s, box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 10px 30px rgba(22,33,28,0.1)'; this.style.transform='translateY(-3px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; pointer-events:none;">
                 <div style="width:56px; height:56px; border-radius:14px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; flex-shrink:0;">
                   {{ anak.inisial }}
                 </div>
-                <!-- Status icon only for record mode -->
+                <!-- Status icon for record mode -->
                 <div v-if="listMode === 'record' && anak.sudahDiukur" style="background:#E9F3EC; color:#14713D; padding:6px 12px; border-radius:8px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:6px;">
                   <i class="ph-fill ph-check-circle"></i> Selesai
                 </div>
+                <!-- Badge for history / kartu kontrol mode -->
+                <div v-if="listMode === 'history'" style="background:#F6F7F5; color:#0F6E44; border:1px solid #DCE0DA; padding:6px 12px; border-radius:8px; font-size:13px; font-weight:800; display:flex; align-items:center; gap:6px;">
+                  <i class="ph-bold ph-files"></i> Buka KMS
+                </div>
               </div>
-              <div>
-                <div style="font-size:24px; font-weight:800; line-height:1.2; margin-bottom:6px;">{{ anak.nama }}</div>
+              <div style="pointer-events:none;">
+                <div style="font-size:24px; font-weight:800; line-height:1.2; margin-bottom:6px; color:#16211C;">{{ anak.nama }}</div>
                 <div style="font-size:16px; color:#4A5750;">{{ anak.umurBulan }} bln &nbsp;·&nbsp; {{ anak.namaOrtu }} &nbsp;·&nbsp; RT {{ anak.rt }}</div>
+              </div>
+              <div v-if="listMode === 'history'" style="pointer-events:none; border-top:1px dashed #DCE0DA; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+                <span style="color:#4A5750; font-weight:600;">Status: <strong>{{ anak.statusGizi === 'normal' ? 'Normal' : (anak.statusGizi === 'risiko_pendek' ? 'Risiko Pendek' : 'Pendek / Stunted') }}</strong></span>
+                <span style="color:#0F6E44; font-weight:800; display:flex; align-items:center; gap:4px;">Lihat Riwayat &rarr;</span>
               </div>
             </div>
           </div>
@@ -1335,7 +1390,7 @@
 
       <!-- ================== HISTORY VIEW (KARTU KONTROL) ================== -->
       <div v-if="view === 'history'" style="flex:1; display:flex; flex-direction:column; background:#EDEFEA; overflow:hidden;">
-        
+
         <!-- Header -->
         <header style="flex-shrink:0;display:flex;align-items:center;gap:16px;padding:14px 24px;background:#FFFFFF;border-bottom:1px solid #DCE0DA">
           <button @click="kembaliDariHistory" class="btn-outline" style="width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
@@ -1348,9 +1403,9 @@
             <div style="font-size:22px;font-weight:800;letter-spacing:-0.01em;white-space:nowrap">{{ activeAnak.nama }}</div>
             <div style="font-size:15px;color:#4A5750;white-space:nowrap">{{ activeAnak.umurBulan }} bulan &nbsp;·&nbsp; {{ activeAnak.namaOrtu }} &nbsp;·&nbsp; RT {{ activeAnak.rt }}</div>
           </div>
-          
+
           <div style="flex:1"></div>
-          
+
           <!-- Pilihan Tahun -->
           <div style="display:flex; align-items:center; gap:12px; margin-right:16px;">
             <span style="font-size:16px; font-weight:700; color:#4A5750;">Tahun:</span>
@@ -1368,10 +1423,10 @@
 
         <!-- Tabs Bulan (Excel Style) -->
         <div style="background:#FFFFFF; border-bottom:1px solid #DCE0DA; display:flex; overflow-x:auto; padding:0 24px; gap:4px; flex-shrink:0;">
-          <button v-for="(bln, idx) in months" :key="idx" 
+          <button v-for="(bln, idx) in months" :key="idx"
                   @click="selectedMonthIndex = idx"
-                  :style="{ 
-                    padding: '16px 20px', 
+                  :style="{
+                    padding: '16px 20px',
                     background: selectedMonthIndex === idx ? '#0F6E44' : 'transparent',
                     color: selectedMonthIndex === idx ? '#FFFFFF' : '#4A5750',
                     border: 'none',
@@ -1389,7 +1444,7 @@
 
         <!-- Content Area -->
         <div style="flex:1; padding:24px 36px; overflow-y:auto; display:flex; flex-direction:column; align-items:center;">
-          
+
           <div v-if="!activeAnak.riwayat || !activeAnak.riwayat[selectedYear] || !activeAnak.riwayat[selectedYear][selectedMonthIndex]" style="text-align:center; margin-top:100px;">
             <div style="width:100px; height:100px; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
               <i class="ph-bold ph-calendar-blank" style="font-size:50px; color:#A8B0A9;"></i>
@@ -1399,9 +1454,9 @@
           </div>
 
           <div v-else style="width:100%; max-width:1180px; display:flex; flex-direction:column; gap:24px;">
-            
+
             <div style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:36px 40px; box-shadow:0 12px 30px rgba(22,33,28,0.03);">
-              
+
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; border-bottom:2px dashed #E9F3EC; padding-bottom:20px;">
                 <div>
                   <h2 style="font-size:28px; font-weight:800; color:#16211C; margin:0;">Hasil Pengukuran Bulan {{ months[selectedMonthIndex] }} {{ selectedYear }}</h2>
@@ -1411,8 +1466,15 @@
                   <div style="background:#E9F3EC; color:#14713D; padding:8px 16px; border-radius:12px; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px;">
                     <i class="ph-bold ph-check-circle" style="font-size:20px;"></i> Hadir
                   </div>
+                  <div :style="{ background: activeAnak.riwayat[selectedYear][selectedMonthIndex].syncStatus === 'synced' ? '#EFF6FF' : '#FFFAEB', color: activeAnak.riwayat[selectedYear][selectedMonthIndex].syncStatus === 'synced' ? '#1E4ED8' : '#B54708' }" style="padding:8px 14px;border-radius:12px;font-size:14px;font-weight:800;display:flex;align-items:center;gap:7px;">
+                    <i :class="activeAnak.riwayat[selectedYear][selectedMonthIndex].syncStatus === 'synced' ? 'ph-bold ph-cloud-check' : 'ph-bold ph-device-mobile'" style="font-size:18px;"></i>
+                    {{ activeAnak.riwayat[selectedYear][selectedMonthIndex].syncStatus === 'synced' ? 'Tersinkron Cloud' : 'Aman di Android' }}
+                  </div>
                   <button @click="cetakKartu" class="btn-outline" style="padding:10px 18px; border-radius:12px; font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px;">
                     <i class="ph-bold ph-printer" style="font-size:19px;"></i> Cetak KMS
+                  </button>
+                  <button @click="koreksiPengukuranAktif" class="btn-outline" style="padding:10px 18px; border-radius:12px; font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px; color:#B54708; border-color:#F79009;">
+                    <i class="ph-bold ph-pencil-simple" style="font-size:19px;"></i> Koreksi Data
                   </button>
                 </div>
               </div>
@@ -1464,17 +1526,17 @@
               <!-- Z-Score Analysis Results -->
               <h3 style="font-size:22px; font-weight:800; color:#16211C; margin:0 0 16px;">Analisis Status Gizi Medis (Standar Baku Antropometri WHO)</h3>
               <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
-                <div :style="getBadgeStyleZScore(activeAnak.riwayat[selectedYear][selectedMonthIndex].status.bbu)" style="border-radius:16px; padding:20px; border:1px solid;">
+                <div :style="getBadgeStyleZScore(activeAnak.riwayat[selectedYear][selectedMonthIndex]?.status?.bbu || 'Gizi Baik')" style="border-radius:16px; padding:20px; border:1px solid;">
                   <div style="font-size:15px; font-weight:700; opacity:0.85; margin-bottom:4px;">Berat Badan / Umur (BB/U)</div>
-                  <div style="font-size:24px; font-weight:800;">{{ activeAnak.riwayat[selectedYear][selectedMonthIndex].status.bbu }}</div>
+                  <div style="font-size:24px; font-weight:800;">{{ (activeAnak.riwayat[selectedYear][selectedMonthIndex]?.status?.bbu) || 'Gizi Baik' }}</div>
                 </div>
-                <div :style="getBadgeStyleZScore(activeAnak.riwayat[selectedYear][selectedMonthIndex].status.pbu)" style="border-radius:16px; padding:20px; border:1px solid;">
+                <div :style="getBadgeStyleZScore(activeAnak.riwayat[selectedYear][selectedMonthIndex]?.tbU || activeAnak.riwayat[selectedYear][selectedMonthIndex]?.status?.pbu || 'Normal')" style="border-radius:16px; padding:20px; border:1px solid;">
                   <div style="font-size:15px; font-weight:700; opacity:0.85; margin-bottom:4px;">Panjang/Tinggi / Umur (PB/U)</div>
-                  <div style="font-size:24px; font-weight:800;">{{ activeAnak.riwayat[selectedYear][selectedMonthIndex].status.pbu }}</div>
+                  <div style="font-size:24px; font-weight:800;">{{ activeAnak.riwayat[selectedYear][selectedMonthIndex]?.tbU || activeAnak.riwayat[selectedYear][selectedMonthIndex]?.status?.pbu || 'Normal' }}</div>
                 </div>
-                <div :style="getBadgeStyleZScore(activeAnak.riwayat[selectedYear][selectedMonthIndex].status.bbpb)" style="border-radius:16px; padding:20px; border:1px solid;">
+                <div :style="getBadgeStyleZScore(activeAnak.riwayat[selectedYear][selectedMonthIndex]?.status?.bbpb || 'Gizi Baik')" style="border-radius:16px; padding:20px; border:1px solid;">
                   <div style="font-size:15px; font-weight:700; opacity:0.85; margin-bottom:4px;">Berat / Panjang/Tinggi (BB/PB)</div>
-                  <div style="font-size:24px; font-weight:800;">{{ activeAnak.riwayat[selectedYear][selectedMonthIndex].status.bbpb }}</div>
+                  <div style="font-size:24px; font-weight:800;">{{ (activeAnak.riwayat[selectedYear][selectedMonthIndex]?.status?.bbpb) || 'Gizi Baik' }}</div>
                 </div>
               </div>
 
@@ -1498,12 +1560,12 @@
 
       <!-- ================== FORM VIEW (INPUT PENGUKURAN) ================== -->
       <div v-if="view === 'form'" style="flex:1; display:flex; flex-direction:column; background:#EDEFEA; overflow:hidden;">
-        
+
         <header style="flex-shrink:0;display:flex;align-items:center;gap:10px;padding:14px 16px;background:#FFFFFF;border-bottom:1px solid #DCE0DA">
-          <button @click="setView('list')" class="btn-outline" style="width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <button @click="kembaliDariForm" class="btn-outline" style="width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
             <i class="ph-bold ph-arrow-left" style="font-size:24px;"></i>
           </button>
-          
+
           <div style="width:52px;height:52px;flex-shrink:0;border-radius:14px;background:#E9F3EC;color:#0F6E44;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800">
             {{ activeAnak.inisial }}
           </div>
@@ -1521,11 +1583,17 @@
             </div>
           </div>
           <div style="flex:1"></div>
-          
+
+          <label style="display:flex;align-items:center;gap:8px;background:#F6F7F5;border:1px solid #DCE0DA;border-radius:12px;padding:7px 12px;font-size:14px;font-weight:700;color:#4A5750;">
+            Tanggal ukur
+            <input type="date" v-model="tanggalUkur" :max="tanggalHariIniISO" style="border:0;background:transparent;font:inherit;font-weight:800;color:#16211C;outline:none;">
+          </label>
+          <span v-if="isEditingRecord" style="padding:8px 12px;border-radius:10px;background:#FEF0C7;color:#B54708;font-size:13px;font-weight:800;white-space:nowrap;">Mode koreksi</span>
+
           <button type="button" @click="bukaKartuKontrolForm" class="btn-outline" style="flex-shrink:0;height:52px;padding:0 16px;display:inline-flex;align-items:center;gap:8px;border-radius:12px;font-size:16px;font-weight:700;white-space:nowrap;color:#0F6E44;border:2px solid #0F6E44;background:#E9F3EC;">
             <i class="ph-bold ph-files" style="font-size:19px"></i>Lihat Kartu Kontrol
           </button>
-          
+
           <button type="button" class="btn-outline" style="flex-shrink:0;height:52px;padding:0 16px;display:inline-flex;align-items:center;gap:8px;border-radius:12px;font-size:16px;font-weight:700;white-space:nowrap"><i class="ph-bold ph-user-minus" style="font-size:19px"></i>Tidak hadir</button>
         </header>
 
@@ -1615,7 +1683,75 @@
             <span style="font-size:21px;font-weight:800;white-space:nowrap" :style="{ color: k.warna }">{{ k.kategori }}</span>
             <span style="font-size:15px;color:#4A5750">{{ k.z }}</span>
           </div>
-          <button type="button" @click="bukaDialog = true" class="btn-primary" style="width:268px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:12px;border-radius:12px;font-size:20px;font-weight:800"><i class="ph-bold ph-check" style="font-size:24px"></i>Simpan</button>
+          <button type="button" @click="siapkanKonfirmasiSimpan" :disabled="isSaving" class="btn-primary" style="width:268px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:12px;border-radius:12px;font-size:20px;font-weight:800"><i class="ph-bold ph-check" style="font-size:24px"></i>{{ isEditingRecord ? 'Tinjau Koreksi' : 'Simpan' }}</button>
+        </div>
+
+        <!-- Modal Panduan & Batasan Parameter SKDN Kemenkes RI -->
+        <div v-if="bukaModalPanduanSKDN" style="position:fixed; inset:0; background:rgba(22,33,28,0.6); display:flex; align-items:center; justify-content:center; padding:40px; z-index:9999; backdrop-filter:blur(4px);">
+          <div style="background:#FFFFFF; width:100%; max-width:820px; border-radius:28px; padding:36px 40px; box-shadow:0 24px 60px rgba(0,0,0,0.25); max-height:90vh; overflow-y:auto; display:flex; flex-direction:column; gap:20px;">
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #DCE0DA; padding-bottom:16px;">
+              <div style="display:flex; align-items:center; gap:14px;">
+                <div style="width:48px; height:48px; background:#E9F3EC; border-radius:14px; display:flex; align-items:center; justify-content:center;">
+                  <i class="ph-bold ph-book-open-text" style="font-size:26px; color:#0F6E44;"></i>
+                </div>
+                <div>
+                  <h2 style="font-size:24px; font-weight:800; color:#16211C; margin:0;">Panduan &amp; Batasan Parameter SKDN</h2>
+                  <div style="font-size:14px; color:#4A5750; font-weight:600;">Pedoman Tata Laksana Pemantauan Pertumbuhan Posyandu Kemenkes RI</div>
+                </div>
+              </div>
+              <button @click="bukaModalPanduanSKDN = false" class="btn-outline" style="width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                <i class="ph-bold ph-x"></i>
+              </button>
+            </div>
+
+            <!-- Konten Penjelasan SKDN -->
+            <div style="display:flex; flex-direction:column; gap:16px; font-size:15px; color:#2B3830; line-height:1.6;">
+              <p style="margin:0;">
+                Sistem <strong>SKDN</strong> adalah instrumen resmi Kementerian Kesehatan Republik Indonesia untuk mengukur keberhasilan program gizi dan partisipasi masyarakat pada setiap sesi buka Posyandu:
+              </p>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                <div style="background:#F6F7F5; border-radius:16px; padding:16px; border-left:5px solid #4A5750;">
+                  <div style="font-weight:800; color:#16211C; font-size:16px; margin-bottom:4px;">1. S (Sasaran)</div>
+                  <div style="font-size:14px; color:#4A5750;">Jumlah seluruh balita yang bertempat tinggal di wilayah kerja Posyandu (RT 01 s/d RT 05). Di Posyandu Melati terdata <strong>{{ totalSasaran }} anak</strong>.</div>
+                </div>
+
+                <div style="background:#F0F9F4; border-radius:16px; padding:16px; border-left:5px solid #0F6E44;">
+                  <div style="font-weight:800; color:#0F6E44; font-size:16px; margin-bottom:4px;">2. K (KMS / Buku KIA)</div>
+                  <div style="font-size:14px; color:#4A5750;">Jumlah balita yang memiliki Buku KIA / Kartu Menuju Sehat. Seluruh <strong>100% balita</strong> di sistem SIMPATIK memiliki rekam KMS digital.</div>
+                </div>
+
+                <div style="background:#F0FDF4; border-radius:16px; padding:16px; border-left:5px solid #14713D;">
+                  <div style="font-weight:800; color:#14713D; font-size:16px; margin-bottom:4px;">3. D (Ditimbang / Diukur)</div>
+                  <div style="font-size:14px; color:#4A5750;">Jumlah balita yang hadir dan berhasil ditimbang/diukur pada sesi Posyandu yang aktif. Mengindikasikan kepatuhan dan keaktifan kunjungan.</div>
+                </div>
+
+                <div style="background:#FEF3F2; border-radius:16px; padding:16px; border-left:5px solid #B42318;">
+                  <div style="font-weight:800; color:#B42318; font-size:16px; margin-bottom:4px;">4. S - D (Belum Diukur)</div>
+                  <div style="font-size:14px; color:#4A5750;">Jumlah balita sasaran yang belum datang pada hari buka Posyandu. Kelompok ini menjadi prioritas kunjungan rumah (sweeping) oleh kader.</div>
+                </div>
+              </div>
+
+              <!-- Indikator Keberhasilan -->
+              <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:16px; padding:18px; display:flex; gap:16px; align-items:flex-start;">
+                <i class="ph-bold ph-check-circle" style="font-size:28px; color:#1E4ED8; flex-shrink:0;"></i>
+                <div>
+                  <div style="font-weight:800; color:#1E4ED8; font-size:16px; margin-bottom:4px;">Rumus Cakupan Partisipasi Masyarakat: D / S x 100%</div>
+                  <div style="font-size:14px; color:#1E3A8A; line-height:1.5;">
+                    Kemenkes RI menetapkan ambang batas minimal keberhasilan Posyandu adalah <strong>≥ 80%</strong>. Jika cakupan di bawah 80%, kader bersama Tim Pendamping Keluarga (TPK) wajib melakukan pelacakan balita tidak hadir untuk mencegah lolosnya deteksi stunting dini.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; border-top:1px solid #DCE0DA; padding-top:16px;">
+              <button @click="bukaModalPanduanSKDN = false" class="btn-primary" style="padding:12px 28px; border-radius:12px; font-size:16px; font-weight:800;">
+                Saya Mengerti
+              </button>
+            </div>
+
+          </div>
         </div>
 
         <!-- Dialog Konfirmasi -->
@@ -1623,7 +1759,8 @@
           <div style="width:660px;background:#FFFFFF;border-radius:18px;padding:28px 30px;display:flex;flex-direction:column;gap:18px;box-shadow:0 24px 60px rgba(22,33,28,0.3)">
             <div style="display:flex;flex-direction:column;gap:4px">
               <h3 style="margin:0;font-size:26px;font-weight:800">Periksa dulu sebelum disimpan</h3>
-              <p style="margin:0;font-size:18px;color:#4A5750">{{ activeAnak.nama }}, {{ activeAnak.umurBulan }} bulan. Setelah disimpan, catatan langsung tersimpan.</p>
+              <p style="margin:0;font-size:18px;color:#4A5750">{{ activeAnak.nama }}, {{ activeAnak.umurBulan }} bulan · {{ tanggalUkur }}. Data langsung diamankan di penyimpanan Android.</p>
+              <div v-if="isEditingRecord" style="padding:12px 14px;border-radius:12px;background:#FFFAEB;border:1px solid #FEDF89;color:#B54708;font-size:15px;font-weight:700;">Catatan pada periode ini sudah ada. Penyimpanan akan membuat revisi pada catatan yang sama, bukan entri baru.</div>
             </div>
             <div style="border:1px solid #DCE0DA;border-radius:12px;overflow:hidden">
               <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#F6F7F5;border-bottom:1px solid #DCE0DA">
@@ -1645,7 +1782,7 @@
             </div>
             <div style="display:flex;gap:14px">
               <button type="button" @click="bukaDialog = false" class="btn-outline" style="flex:1;height:64px;border-radius:12px;font-size:19px;font-weight:700">Perbaiki dulu</button>
-              <button type="button" @click="simpanData" class="btn-primary" style="flex:1;height:64px;border-radius:12px;font-size:19px;font-weight:800">Ya, simpan</button>
+              <button type="button" @click="simpanData" :disabled="isSaving" class="btn-primary" style="flex:1;height:64px;border-radius:12px;font-size:19px;font-weight:800">{{ isSaving ? 'Menyimpan…' : (isEditingRecord ? 'Ya, simpan koreksi' : 'Ya, simpan') }}</button>
             </div>
           </div>
         </div>
@@ -1660,7 +1797,7 @@
 
   // Dummy Data Balita dengan Klasifikasi Status Gizi Antropometri Medis
   const DUMMY_ANAK = [
-    { 
+    {
       id: 1, nama: 'Nabila Ayu Ramadhani', inisial: 'NA', umurBulan: 14, jk: 'P', namaOrtu: 'Ibu Sri Wahyuni', rt: '03', sudahDiukur: true,
       statusGizi: 'normal',
       tbU: '+0,2 SD (Normal)',
@@ -1676,7 +1813,7 @@
         }
       }
     },
-    { 
+    {
       id: 2, nama: 'Bima Satya', inisial: 'BS', umurBulan: 22, jk: 'L', namaOrtu: 'Ibu Ratna', rt: '01', sudahDiukur: true,
       statusGizi: 'normal',
       tbU: '-0,8 SD (Normal)',
@@ -1689,7 +1826,7 @@
         }
       }
     },
-    { 
+    {
       id: 3, nama: 'Citra Kirana', inisial: 'CK', umurBulan: 8, jk: 'P', namaOrtu: 'Ibu Dewi', rt: '02', sudahDiukur: false,
       statusGizi: 'normal',
       tbU: '+0,5 SD (Normal)',
@@ -1700,7 +1837,7 @@
         }
       }
     },
-    { 
+    {
       id: 4, nama: 'Gilang Perkasa', inisial: 'GP', umurBulan: 28, jk: 'L', namaOrtu: 'Ibu Anisa', rt: '04', sudahDiukur: false,
       statusGizi: 'normal',
       tbU: '+0,1 SD (Normal)',
@@ -1711,7 +1848,7 @@
         }
       }
     },
-    { 
+    {
       id: 5, nama: 'Dimas Anggara', inisial: 'DA', umurBulan: 30, jk: 'L', namaOrtu: 'Ibu Fitri', rt: '03', sudahDiukur: false,
       statusGizi: 'risiko_pendek',
       tbU: '-1,6 SD (Borderline)',
@@ -1722,7 +1859,7 @@
         }
       }
     },
-    { 
+    {
       id: 6, nama: 'Elara Putri', inisial: 'EP', umurBulan: 5, jk: 'P', namaOrtu: 'Ibu Rina', rt: '01', sudahDiukur: false,
       statusGizi: 'risiko_pendek',
       tbU: '-1,8 SD (Borderline)',
@@ -1733,7 +1870,7 @@
         }
       }
     },
-    { 
+    {
       id: 7, nama: 'Fajar Hidayat', inisial: 'FH', umurBulan: 18, jk: 'L', namaOrtu: 'Ibu Yanti', rt: '02', sudahDiukur: true,
       statusGizi: 'pendek',
       tbU: '-2,5 SD (Stunted)',
@@ -1745,7 +1882,7 @@
         }
       }
     },
-    { 
+    {
       id: 8, nama: 'Aisyah Humaira', inisial: 'AH', umurBulan: 11, jk: 'P', namaOrtu: 'Ibu Halimah', rt: '05', sudahDiukur: false,
       statusGizi: 'pendek',
       tbU: '-2,4 SD (Stunted)',
@@ -1756,7 +1893,7 @@
         }
       }
     },
-    { 
+    {
       id: 9, nama: 'Rizky Ramadhan', inisial: 'RR', umurBulan: 20, jk: 'L', namaOrtu: 'Ibu Maryam', rt: '01', sudahDiukur: false,
       statusGizi: 'sangat_pendek',
       tbU: '-3,3 SD (Severely Stunted)',
@@ -1790,20 +1927,29 @@
         initialAnak = DUMMY_ANAK;
       }
 
+      const savedUser = JSON.parse(localStorage.getItem('SIMPATIK_CURRENT_USER') || 'null');
+      const savedSession = localStorage.getItem('SIMPATIK_SESSION');
+      const initialView = (savedUser && savedSession) ? 'portal' : 'login';
+
       return {
-        view: 'home',
+        view: initialView,
         isLoadingSupabase: false,
-        cloudSyncStatus: 'Siap', // 'login', 'portal', 'home', 'list', 'form', 'history', 'register', 'nutrition_detail', 'settings'
-        
+        cloudSyncStatus: 'Siap',
+        isLoggingIn: false,
+
+        // SKDN & Session States
+        sesiAktifMode: 'terakhir', // 'terakhir' (Juni 2026: 95 anak diukur) | 'berjalan' (September 2026)
+        bukaModalPanduanSKDN: false,
+
         // Manajemen Akun & Hak Akses (RBAC)
-        currentUser: JSON.parse(localStorage.getItem('SIMPATIK_CURRENT_USER') || 'null') || {
-          username: 'sri_wahyuni',
+        currentUser: savedUser || {
+          username: 'kader',
           name: 'Ibu Sri Wahyuni',
-          role: 'kader' // 'kader' | 'admin'
+          role: 'kader'
         },
         loginRole: 'kader',
         adminPinInput: '',
-        
+
         // Local Registry Database & Server Switcher
         selectedProviderView: 'supabase', // 'supabase', 'personal', 'offline'
         registryConfig: (() => {
@@ -1836,32 +1982,38 @@
             lastSyncTime: 'Belum pernah sinkronisasi'
           };
         })(), // 'login', 'portal', 'home', 'list', 'form', 'history', 'register', 'nutrition_detail', 'settings'
-        
+
         // Data Login
         loginData: { username: '', password: '' },
-        
+
         // Data Form Registrasi
         regData: { nik: '', nama: '', tglLahir: '', jk: 'L', namaIbu: '', rt: '' },
 
         // Navigation State
-        listMode: 'record', 
+        listMode: 'record',
         previousView: 'portal',
         previousViewBeforeSettings: 'home',
-        
+        previousViewBeforeForm: 'list',
+
         // Data Anak
         daftarAnak: initialAnak,
         searchQuery: '',
         activeAnak: null,
-        
+
         // State Form Pengukuran
         formVals: { bb: '', pb: '', lila: '', lika: '' },
         aktif: 'bb',
         metode: 'terlentang',
         bukaDialog: false,
+        tanggalUkur: new Date().toISOString().split('T')[0],
+        isEditingRecord: false,
+        editingOriginal: null,
+        isSaving: false,
+        pendingSyncCount: 0,
 
         // State History
         months: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
-        selectedMonthIndex: new Date().getMonth(), 
+        selectedMonthIndex: new Date().getMonth(),
         selectedYear: new Date().getFullYear().toString(),
 
         // State Detailing Status Gizi (Dedicated Screen)
@@ -1911,11 +2063,37 @@
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         return new Date().toLocaleDateString('id-ID', options);
       },
+      tanggalHariIniISO() {
+        return new Date().toISOString().split('T')[0];
+      },
+      totalSasaran() {
+        return this.daftarAnak.length;
+      },
       anakDiukur() {
-        return this.daftarAnak.filter(a => a.sudahDiukur).length;
+        if (this.sesiAktifMode === 'terakhir') {
+          // Sesi Penimbangan Terakhir Tercatat (Bulan Juni 2026 atau pengukuran terbaru)
+          return this.daftarAnak.filter(a => {
+            if (a.sudahDiukur) return true;
+            if (a.riwayat && a.riwayat['2026'] && (a.riwayat['2026']['5'] || a.riwayat['2026']['6'] || a.riwayat['2026']['7'])) return true;
+            return false;
+          }).length;
+        } else {
+          // Sesi Berjalan (September 2026 / penimbangan hari ini)
+          const m = new Date().getMonth().toString();
+          const y = new Date().getFullYear().toString();
+          return this.daftarAnak.filter(a => {
+            if (a.sudahDiukur) return true;
+            if (a.riwayat && a.riwayat[y] && a.riwayat[y][m]) return true;
+            return false;
+          }).length;
+        }
       },
       anakBelum() {
-        return this.daftarAnak.length - this.anakDiukur;
+        return Math.max(0, this.totalSasaran - this.anakDiukur);
+      },
+      persenCakupan() {
+        if (!this.totalSasaran) return 0;
+        return Math.round((this.anakDiukur / this.totalSasaran) * 100);
       },
       filteredAnak() {
         if (!this.searchQuery) return this.daftarAnak;
@@ -1933,10 +2111,10 @@
         const ada = k => !!(v[k] && v[k] !== ',');
         const kosong = { kategori: 'Belum ada', z: 'Isi dulu ukurannya', latar: '#F6F7F5', garis: '#DCE0DA', warna: '#4A5750' };
         const baik = (kat, z) => ({ kategori: kat, z: z, latar: '#E9F3EC', garis: '#14713D', warna: '#14713D' });
-        
+
         const pbIndeks = this.metode === 'berdiri' ? 'TB/U' : 'PB/U';
         const bbPb = this.metode === 'berdiri' ? 'BB/TB' : 'BB/PB';
-        
+
         return [
           { indeks: 'BB/U', ...(ada('bb') ? baik('Gizi Baik', '-0,4 SD') : kosong) },
           { indeks: pbIndeks, ...(ada('pb') ? baik('Normal', '-0,8 SD') : kosong) },
@@ -2031,40 +2209,132 @@
       setView(v) {
         this.view = v;
       },
-      doLogin() {
-        if (!this.loginData.username) {
-          alert("Mohon masukkan Nama Pengguna atau NIK untuk login.");
-          return;
-        }
+      async doLogin() {
         const u = (this.loginData.username || '').trim().toLowerCase();
         const p = (this.loginData.password || '').trim();
-        
-        if (this.loginRole === 'admin' || u === 'admin') {
-          if (p === 'admin' || p === 'admin123' || p === '') {
-            this.currentUser = { username: 'admin', name: 'Administrator SIMPATIK', role: 'admin' };
+
+        if (!u) {
+          alert("Mohon masukkan Nama Pengguna atau Email untuk login.");
+          return;
+        }
+        if (!p) {
+          alert("Mohon masukkan Kata Sandi / PIN.");
+          return;
+        }
+
+        let email = u;
+        if (!email.includes('@')) {
+          if (u === 'admin') email = 'admin@posyandu.id';
+          else if (u === 'kader') email = 'kader@posyandu.id';
+          else email = u + '@posyandu.id';
+        }
+
+        this.isLoggingIn = true;
+
+        try {
+          const url = (this.registryConfig && this.registryConfig.supabase && this.registryConfig.supabase.url) || 'https://tolumulfmtioogzqnrhb.supabase.co';
+          const key = (this.registryConfig && this.registryConfig.supabase && this.registryConfig.supabase.anonKey) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvbHVtdWxmbXRpb29nenFucmhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5MTc1NDYsImV4cCI6MjEwNDQ5MzU0Nn0.rw8mfSW3h1a_AXEfzTu2l2ywJmKsJKq9Lkx6G-oFrHQ';
+
+          const res = await fetch(url + '/auth/v1/token?grant_type=password', {
+            method: 'POST',
+            headers: {
+              'apikey': key,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email, password: p })
+          });
+
+          if (res.ok) {
+            const authData = await res.json();
+            const role = (authData.user && authData.user.user_metadata && authData.user.user_metadata.role) || (email.includes('admin') ? 'admin' : 'kader');
+            const name = (authData.user && authData.user.user_metadata && authData.user.user_metadata.name) || (role === 'admin' ? 'Administrator SIMPATIK' : 'Ibu Sri Wahyuni');
+
+            this.currentUser = {
+              username: u,
+              email: email,
+              name: name,
+              role: role,
+              verifiedAt: new Date().toISOString()
+            };
+            // Simpan sesi permanen di perangkat
+            localStorage.setItem('SIMPATIK_SESSION', JSON.stringify(authData));
             localStorage.setItem('SIMPATIK_CURRENT_USER', JSON.stringify(this.currentUser));
+
+            this.loginData.password = '';
             this.setView('portal');
+            return;
           } else {
-            alert("Kata sandi Administrator salah! (Gunakan kata sandi: admin)");
+            let errMsg = "Nama pengguna atau kata sandi yang Anda masukkan salah.";
+            try {
+              const errJson = await res.json();
+              if (errJson.error_description) errMsg = errJson.error_description;
+              else if (errJson.msg) errMsg = errJson.msg;
+            } catch(e) {}
+            alert("[Verifikasi Database Gagal]\n\n" + errMsg + "\n\nPastikan kredensial Anda sudah terdaftar pada database server.");
           }
-        } else {
-          this.currentUser = { username: this.loginData.username, name: 'Ibu Sri Wahyuni', role: 'kader' };
-          localStorage.setItem('SIMPATIK_CURRENT_USER', JSON.stringify(this.currentUser));
-          this.setView('portal');
+        } catch (netErr) {
+          alert("[Koneksi Terputus]\n\nTidak dapat memverifikasi akun ke server database: " + netErr.message + "\n\nPastikan tablet terhubung ke jaringan internet.");
+        } finally {
+          this.isLoggingIn = false;
         }
       },
-      doQuickLogin(role) {
-        if (role === 'admin') {
-          this.currentUser = { username: 'admin', name: 'Administrator SIMPATIK', role: 'admin' };
-        } else {
-          this.currentUser = { username: 'kader', name: 'Ibu Sri Wahyuni', role: 'kader' };
+      handleAndroidBack() {
+        // 1. Jika modal panduan SKDN sedang terbuka, tutup modal
+        if (this.bukaModalPanduanSKDN) {
+          this.bukaModalPanduanSKDN = false;
+          return 'handled';
         }
-        localStorage.setItem('SIMPATIK_CURRENT_USER', JSON.stringify(this.currentUser));
-        this.setView('portal');
+        // 2. Jika dialog konfirmasi simpan pengukuran sedang terbuka, tutup dialog
+        if (this.bukaDialog) {
+          this.bukaDialog = false;
+          return 'handled';
+        }
+        // 3. Jika di layar riwayat pengukuran / KMS digital balita
+        if (this.view === 'history') {
+          this.kembaliDariHistory();
+          return 'handled';
+        }
+        // 4. Jika di layar input form pengukuran balita
+        if (this.view === 'form') {
+          this.kembaliDariForm();
+          return 'handled';
+        }
+        // 5. Jika di detail kategori status gizi
+        if (this.view === 'nutrition_detail') {
+          this.kembaliDariDetailStatus();
+          return 'handled';
+        }
+        // 6. Jika di daftar balita (list)
+        if (this.view === 'list') {
+          this.setView('home');
+          return 'handled';
+        }
+        // 7. Jika di layar pengaturan sistem
+        if (this.view === 'settings') {
+          this.kembaliDariPengaturan();
+          return 'handled';
+        }
+        // 8. Jika di modul pendaftaran balita baru
+        if (this.view === 'register') {
+          this.setView('portal');
+          return 'handled';
+        }
+        // 9. Jika di dashboard modul penimbangan (home)
+        if (this.view === 'home') {
+          this.setView('portal');
+          return 'handled';
+        }
+        // 10. Jika di portal (menu utama) atau layar login (akar aplikasi)
+        // Kembalikan 'unhandled' agar native Android menjalankan double-press exit toast
+        return 'unhandled';
       },
       doLogout() {
+        localStorage.removeItem('SIMPATIK_SESSION');
+        localStorage.removeItem('SIMPATIK_CURRENT_USER');
+        this.currentUser = null;
         this.loginData.username = '';
         this.loginData.password = '';
+        this.tabPengaturan = 'rumus';
         this.setView('login');
       },
       bukaAksesAdmin() {
@@ -2081,6 +2351,31 @@
       },
       simpanRegistryConfig() {
         localStorage.setItem('SIMPATIK_REGISTRY_CONFIG', JSON.stringify(this.registryConfig));
+      },
+      persistDaftarAnak() {
+        const serialized = JSON.stringify(this.daftarAnak);
+        localStorage.setItem('SIMPATIK_DATA_ANAK', serialized);
+        try {
+          if (window.AndroidBridge && typeof window.AndroidBridge.simpanDaftarAnak === 'function') {
+            const result = JSON.parse(window.AndroidBridge.simpanDaftarAnak(serialized));
+            if (!result.ok) throw new Error(result.error || 'Penyimpanan Android gagal');
+          }
+        } catch (error) {
+          console.error('Gagal membuat snapshot data di Android:', error);
+        }
+      },
+      pulihkanDaftarAnakAndroid() {
+        try {
+          if (!window.AndroidBridge || typeof window.AndroidBridge.ambilDaftarAnak !== 'function') return false;
+          const rows = JSON.parse(window.AndroidBridge.ambilDaftarAnak());
+          if (!Array.isArray(rows) || rows.length === 0) return false;
+          this.daftarAnak = rows;
+          localStorage.setItem('SIMPATIK_DATA_ANAK', JSON.stringify(rows));
+          return true;
+        } catch (error) {
+          console.error('Gagal memulihkan snapshot Android:', error);
+          return false;
+        }
       },
       switchProvider(prov) {
         this.registryConfig.activeProvider = prov;
@@ -2102,12 +2397,12 @@
             'apikey': key,
             'Authorization': 'Bearer ' + key
           };
-          
+
           // 1. Ambil master data anak dari Supabase
           const rAnak = await fetch(url + '/rest/v1/anak?select=*&order=nama_anak.asc', { headers });
           if (!rAnak.ok) throw new Error('Gagal memuat data anak (HTTP ' + rAnak.status + ')');
           const rawAnak = await rAnak.json();
-          
+
           // 2. Ambil seluruh riwayat pengukuran dengan pagination
           let rawPeng = [];
           let offset = 0;
@@ -2133,7 +2428,7 @@
           }
           const statMap = {};
           rawStat.forEach(s => { statMap[s.id_pengukuran] = s; });
-          
+
           // 4. Transformasi relasional Supabase ke struktur reactive daftarAnak
           const anakMap = {};
           rawAnak.forEach(a => {
@@ -2166,7 +2461,7 @@
               riwayat: {}
             };
           });
-          
+
           // Urutkan pengukuran berdasarkan tanggal
           rawPeng.sort((x, y) => new Date(x.tanggal_ukur) - new Date(y.tanggal_ukur));
 
@@ -2176,18 +2471,26 @@
               const thn = d.getFullYear().toString();
               const bln = d.getMonth().toString();
               if (!anakMap[p.nik].riwayat[thn]) anakMap[p.nik].riwayat[thn] = {};
-              
+
               const st = statMap[p.id_pengukuran] || {};
               const tbuVal = st.indeks_tbu || 'Normal';
 
               anakMap[p.nik].riwayat[thn][bln] = {
+                idPengukuran: p.id_pengukuran,
+                tanggalUkur: p.tanggal_ukur,
                 bb: (p.bb_kg || '0').replace(',', '.'),
                 pb: (p.panjang_tinggi_cm || '0').replace(',', '.'),
                 lila: p.lila || 'N/A',
                 lika: p.lika || 'N/A',
                 caraUkur: p.jenis_ukur || 'Terlentang',
                 statusKehadiran: p.status_kehadiran || 'Hadir',
-                tbU: tbuVal
+                syncStatus: 'synced',
+                tbU: tbuVal,
+                status: {
+                  bbu: 'Gizi Baik',
+                  pbu: tbuVal || 'Normal',
+                  bbpb: 'Gizi Baik'
+                }
               };
 
               anakMap[p.nik].pbTerakhir = (p.panjang_tinggi_cm || '0').replace(',', '.');
@@ -2206,11 +2509,11 @@
               }
             }
           });
-          
+
           const list = Object.values(anakMap);
           if (list.length > 0) {
             this.daftarAnak = list;
-            localStorage.setItem('SIMPATIK_DATA_ANAK', JSON.stringify(list));
+            this.persistDaftarAnak();
             this.registryConfig.lastSyncTime = new Date().toLocaleString('id-ID');
             this.registryConfig.supabase.status = 'Online & Sinkron';
             this.cloudSyncStatus = 'Tersinkron';
@@ -2274,7 +2577,11 @@
       },
       bukaPengaturan(fromView, tab) {
         this.previousViewBeforeSettings = fromView || 'home';
-        if (tab) this.tabPengaturan = tab;
+        if (tab) {
+          this.tabPengaturan = tab;
+        } else if (!this.currentUser || this.currentUser.role !== 'admin') {
+          if (this.tabPengaturan === 'registry') this.tabPengaturan = 'rumus';
+        }
         this.setView('settings');
       },
       kembaliDariPengaturan() {
@@ -2344,61 +2651,44 @@
             ? window.REAL_DATA_BALITA
             : DUMMY_ANAK;
           this.daftarAnak = JSON.parse(JSON.stringify(sourceData));
-          localStorage.setItem('SIMPATIK_DATA_ANAK', JSON.stringify(this.daftarAnak));
-          
-          // Kirim data pengukuran baru ke Supabase Cloud (Background Push)
-          if (this.registryConfig && this.registryConfig.activeProvider === 'supabase_cloud' && this.registryConfig.supabase && this.registryConfig.supabase.anonKey) {
-            const url = this.registryConfig.supabase.url;
-            const key = this.registryConfig.supabase.anonKey;
-            const payloadPengukuran = [{
-              id_pengukuran: 'ukur_' + Date.now(),
-              nik: this.activeAnak.nik,
-              id_periode: 'periode_' + yearStr + '_' + (new Date().getMonth() + 1),
-              tanggal_ukur: new Date().toISOString().split('T')[0],
-              bb_kg: this.formVals.bb,
-              panjang_tinggi_cm: this.formVals.pb,
-              jenis_ukur: 'Terlentang',
-              lila: this.formVals.lila || 'N/A',
-              lika: this.formVals.lika || 'N/A',
-              ntob: 'N',
-              status_kehadiran: 'Hadir'
-            }];
-            fetch(url + '/rest/v1/pengukuran', {
-              method: 'POST',
-              headers: {
-                'apikey': key,
-                'Authorization': 'Bearer ' + key,
-                'Content-Type': 'application/json',
-                'Prefer': 'resolution=merge-duplicates'
-              },
-              body: JSON.stringify(payloadPengukuran)
-            }).then(() => {
-              console.log('Pengukuran berhasil disinkronkan ke Supabase');
-            }).catch(e => {
-              console.warn('Sync offline: Pengukuran akan dikirim saat koneksi tersedia', e);
-            });
-          }
+          this.persistDaftarAnak();
+
           alert(`Data berhasil direset ke database balita riil Posyandu (${this.daftarAnak.length} balita)!`);
         }
       },
       simpanRegistrasi() {
-        if(!this.regData.nama || !this.regData.tglLahir || !this.regData.namaIbu || !this.regData.rt) {
+        const nik = (this.regData.nik || '').replace(/\D/g, '');
+        if(!nik || !this.regData.nama || !this.regData.tglLahir || !this.regData.namaIbu || !this.regData.rt) {
             alert("Mohon lengkapi semua data wajib yang ditandai bintang (*)");
             return;
         }
-        
+        if (nik.length !== 16) {
+          alert("NIK balita harus terdiri dari tepat 16 digit angka.");
+          return;
+        }
+        if (this.daftarAnak.some(a => String(a.nik || a.id) === nik)) {
+          alert("NIK tersebut sudah terdaftar. Buka data balita yang ada agar tidak terjadi data ganda.");
+          return;
+        }
+
         // Hitung umur bulan dari tanggal lahir
         const birthDate = new Date(this.regData.tglLahir);
         const today = new Date();
+        if (Number.isNaN(birthDate.getTime()) || birthDate > today) {
+          alert("Tanggal lahir tidak valid atau berada di masa depan.");
+          return;
+        }
         let ageMonths = (today.getFullYear() - birthDate.getFullYear()) * 12;
         ageMonths -= birthDate.getMonth();
         ageMonths += today.getMonth();
-        
+
         const newAnak = {
-          id: Date.now(),
+          id: nik,
+          nik: nik,
           nama: this.regData.nama,
           inisial: this.regData.nama.substring(0,2).toUpperCase(),
           umurBulan: Math.max(0, ageMonths),
+          tglLahir: this.regData.tglLahir,
           jk: this.regData.jk,
           namaOrtu: this.regData.namaIbu,
           rt: this.regData.rt,
@@ -2408,11 +2698,11 @@
           pbTerakhir: '-',
           riwayat: {}
         };
-        
+
         this.daftarAnak.push(newAnak);
-        localStorage.setItem('SIMPATIK_DATA_ANAK', JSON.stringify(this.daftarAnak));
+        this.persistDaftarAnak();
         alert("Balita baru berhasil didaftarkan ke dalam sistem!");
-        
+
         // Reset form
         this.regData = { nik: '', nama: '', tglLahir: '', jk: 'L', namaIbu: '', rt: '' };
         this.setView('portal');
@@ -2424,7 +2714,7 @@
         this.setView('list');
       },
       bukaKartuKontrolForm() {
-        this.selectedMonthIndex = new Date().getMonth(); 
+        this.selectedMonthIndex = new Date().getMonth();
         this.selectedYear = new Date().getFullYear().toString();
         this.previousView = 'form';
         this.setView('history');
@@ -2432,10 +2722,7 @@
       pilihAnak(anak) {
         this.activeAnak = anak;
         if (this.listMode === 'record') {
-          this.formVals = { bb: '', pb: '', lila: '', lika: '' };
-          this.aktif = 'bb';
-          this.metode = anak.umurBulan >= 24 ? 'berdiri' : 'terlentang';
-          this.setView('form');
+          this.bukaFormPengukuran(anak, this.tanggalHariIniISO);
         } else {
           if (anak.riwayat && anak.riwayat['2026'] && Object.keys(anak.riwayat['2026']).length > 0) {
             this.selectedYear = '2026';
@@ -2458,6 +2745,45 @@
       },
       kembaliDariHistory() {
         this.setView(this.previousView || 'list');
+      },
+      bukaFormPengukuran(anak, tanggal, recordOverride) {
+        this.previousViewBeforeForm = this.view === 'history' ? 'history' : 'list';
+        this.activeAnak = anak;
+        this.tanggalUkur = tanggal || this.tanggalHariIniISO;
+        const date = new Date(this.tanggalUkur + 'T00:00:00');
+        const year = date.getFullYear().toString();
+        const month = date.getMonth();
+        const existing = recordOverride || (anak.riwayat && anak.riwayat[year] && anak.riwayat[year][month]);
+        this.isEditingRecord = !!existing;
+        this.editingOriginal = existing ? {
+          idPengukuran: existing.idPengukuran || null,
+          year: year,
+          month: month,
+          record: existing
+        } : null;
+        this.formVals = existing ? {
+          bb: String(existing.bb || '').replace('.', ','),
+          pb: String(existing.pb || '').replace('.', ','),
+          lila: existing.lila === 'N/A' ? '' : String(existing.lila || '').replace('.', ','),
+          lika: existing.lika === 'N/A' ? '' : String(existing.lika || '').replace('.', ',')
+        } : { bb: '', pb: '', lila: '', lika: '' };
+        this.aktif = 'bb';
+        this.metode = existing && existing.caraUkur
+          ? (String(existing.caraUkur).toLowerCase().includes('berdiri') ? 'berdiri' : 'terlentang')
+          : (anak.umurBulan >= 24 ? 'berdiri' : 'terlentang');
+        this.setView('form');
+      },
+      kembaliDariForm() {
+        this.setView(this.previousViewBeforeForm || 'list');
+      },
+      koreksiPengukuranAktif() {
+        const record = this.activeAnak && this.activeAnak.riwayat && this.activeAnak.riwayat[this.selectedYear]
+          ? this.activeAnak.riwayat[this.selectedYear][this.selectedMonthIndex]
+          : null;
+        if (!record) return;
+        const fallbackDate = `${this.selectedYear}-${String(this.selectedMonthIndex + 1).padStart(2, '0')}-01`;
+        this.previousView = 'history';
+        this.bukaFormPengukuran(this.activeAnak, record.tanggalUkur || fallbackDate, record);
       },
       getBadgeStyleZScore(status) {
         if (!status) return { background: '#F6F7F5', borderColor: '#DCE0DA', color: '#4A5750' };
@@ -2488,46 +2814,230 @@
         const idx = URUT.indexOf(this.aktif);
         this.aktif = URUT[(idx + 1) % URUT.length];
       },
-      simpanData() {
-        this.bukaDialog = false;
-        if (this.activeAnak) {
-          this.activeAnak.sudahDiukur = true;
-          if(!this.activeAnak.riwayat) this.activeAnak.riwayat = {};
-          const yearStr = new Date().getFullYear().toString();
-          if(!this.activeAnak.riwayat[yearStr]) this.activeAnak.riwayat[yearStr] = {};
-          
-          const record = {
-            bb: this.formVals.bb,
-            pb: this.formVals.pb,
-            lila: this.formVals.lila,
-            lika: this.formVals.lika,
-            status: { bbu: 'Gizi Baik', pbu: 'Normal', bbpb: 'Gizi Baik' }
-          };
-          
-          this.activeAnak.riwayat[yearStr][new Date().getMonth()] = record;
-          localStorage.setItem('SIMPATIK_DATA_ANAK', JSON.stringify(this.daftarAnak));
-          
-          // Kirim data ke Android Native (Kotlin) via Jembatan
-          if (window.AndroidBridge) {
-              const payload = JSON.stringify({
-                  jenis: 'pengukuran',
-                  nama_anak: this.activeAnak.nama,
-                  bb_kg: this.formVals.bb,
-                  panjang_tinggi_cm: this.formVals.pb,
-                  lila: this.formVals.lila,
-                  lika: this.formVals.lika
-              });
-              window.AndroidBridge.simpanDataPengukuran(payload);
+      angkaPengukuran(value) {
+        if (value === null || value === undefined || value === '') return null;
+        const number = Number(String(value).replace(',', '.'));
+        return Number.isFinite(number) ? number : null;
+      },
+      recordPadaTanggal(tanggal) {
+        if (!this.activeAnak || !tanggal) return null;
+        const date = new Date(tanggal + 'T00:00:00');
+        const year = date.getFullYear().toString();
+        return this.activeAnak.riwayat && this.activeAnak.riwayat[year]
+          ? this.activeAnak.riwayat[year][date.getMonth()] || null
+          : null;
+      },
+      validasiPengukuran() {
+        if (!this.activeAnak) return 'Balita belum dipilih.';
+        const identity = String(this.activeAnak.nik || this.activeAnak.id || '').trim();
+        if (!identity) return 'Identitas/NIK balita tidak tersedia.';
+        if (!this.tanggalUkur) return 'Tanggal pengukuran wajib diisi.';
+        const measurementDate = new Date(this.tanggalUkur + 'T00:00:00');
+        const today = new Date(this.tanggalHariIniISO + 'T23:59:59');
+        if (Number.isNaN(measurementDate.getTime()) || measurementDate > today) return 'Tanggal pengukuran tidak valid atau berada di masa depan.';
+        if (this.activeAnak.tglLahir && measurementDate < new Date(this.activeAnak.tglLahir + 'T00:00:00')) return 'Tanggal pengukuran tidak boleh lebih awal dari tanggal lahir.';
+        const values = {
+          'Berat badan': [this.angkaPengukuran(this.formVals.bb), 1, 40, true],
+          'Panjang/tinggi badan': [this.angkaPengukuran(this.formVals.pb), 30, 130, true],
+          'LILA': [this.angkaPengukuran(this.formVals.lila), 5, 40, false],
+          'LIKA': [this.angkaPengukuran(this.formVals.lika), 20, 65, false]
+        };
+        for (const [label, rule] of Object.entries(values)) {
+          const [value, min, max, required] = rule;
+          if (required && value === null) return `${label} wajib diisi dengan angka yang valid.`;
+          if (value !== null && (value < min || value > max)) return `${label} berada di luar rentang wajar (${min}–${max}). Periksa kembali penulisannya.`;
+        }
+        return '';
+      },
+      siapkanKonfirmasiSimpan() {
+        const error = this.validasiPengukuran();
+        if (error) {
+          alert('[Data Belum Valid]\n\n' + error);
+          return false;
+        }
+        this.isEditingRecord = !!this.editingOriginal || !!this.recordPadaTanggal(this.tanggalUkur);
+        this.bukaDialog = true;
+        return true;
+      },
+      buatPayloadPengukuran() {
+        const date = new Date(this.tanggalUkur + 'T00:00:00');
+        const year = date.getFullYear().toString();
+        const month = date.getMonth();
+        const identity = String(this.activeAnak.nik || this.activeAnak.id).trim();
+        const existing = this.recordPadaTanggal(this.tanggalUkur) || (this.editingOriginal && this.editingOriginal.record);
+        const safeIdentity = identity.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const stableId = `ukur_${safeIdentity}_${year}${String(month + 1).padStart(2, '0')}`;
+        return {
+          id_pengukuran: this.editingOriginal && this.editingOriginal.idPengukuran
+            ? this.editingOriginal.idPengukuran
+            : (existing && existing.idPengukuran ? existing.idPengukuran : stableId),
+          nik: identity,
+          id_periode: `periode_${year}_${month + 1}`,
+          tanggal_ukur: this.tanggalUkur,
+          bb_kg: String(this.formVals.bb).replace(',', '.'),
+          panjang_tinggi_cm: String(this.formVals.pb).replace(',', '.'),
+          jenis_ukur: this.metode === 'berdiri' ? 'Berdiri' : 'Terlentang',
+          lila: this.formVals.lila ? String(this.formVals.lila).replace(',', '.') : 'N/A',
+          lika: this.formVals.lika ? String(this.formVals.lika).replace(',', '.') : 'N/A',
+          ntob: 'N',
+          status_kehadiran: 'Hadir'
+        };
+      },
+      simpanPengukuranKeAndroid(payload) {
+        if (window.AndroidBridge && typeof window.AndroidBridge.simpanDataPengukuran === 'function') {
+          const result = JSON.parse(window.AndroidBridge.simpanDataPengukuran(JSON.stringify(payload)));
+          if (!result.ok) throw new Error(result.error || 'Database Android menolak data');
+          return result;
+        }
+        const pending = JSON.parse(localStorage.getItem('SIMPATIK_PENDING_MEASUREMENTS') || '[]');
+        const index = pending.findIndex(item => item.id_pengukuran === payload.id_pengukuran);
+        if (index >= 0) pending[index] = payload; else pending.push(payload);
+        localStorage.setItem('SIMPATIK_PENDING_MEASUREMENTS', JSON.stringify(pending));
+        return { ok: true, action: index >= 0 ? 'updated' : 'inserted', revision: 1 };
+      },
+      tandaiTersinkron(payload) {
+        try {
+          if (window.AndroidBridge && typeof window.AndroidBridge.tandaiPengukuranTersinkron === 'function') {
+            window.AndroidBridge.tandaiPengukuranTersinkron(payload.id_pengukuran);
+          }
+          const pending = JSON.parse(localStorage.getItem('SIMPATIK_PENDING_MEASUREMENTS') || '[]');
+          localStorage.setItem('SIMPATIK_PENDING_MEASUREMENTS', JSON.stringify(pending.filter(item => item.id_pengukuran !== payload.id_pengukuran)));
+        } catch (error) {
+          console.warn('Gagal memperbarui status sinkron lokal:', error);
+        }
+      },
+      async sinkronkanSatuPengukuran(payload) {
+        if (!this.registryConfig || this.registryConfig.activeProvider !== 'supabase_cloud') return false;
+        const url = this.registryConfig.supabase && this.registryConfig.supabase.url;
+        const key = this.registryConfig.supabase && this.registryConfig.supabase.anonKey;
+        if (!url || !key) return false;
+        const response = await fetch(url + '/rest/v1/pengukuran?on_conflict=id_pengukuran', {
+          method: 'POST',
+          headers: {
+            'apikey': key,
+            'Authorization': 'Bearer ' + key,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify([payload])
+        });
+        if (!response.ok) throw new Error('Server menolak sinkronisasi (HTTP ' + response.status + ')');
+        this.tandaiTersinkron(payload);
+        return true;
+      },
+      ambilAntreanPengukuran() {
+        const byId = {};
+        try {
+          const localPending = JSON.parse(localStorage.getItem('SIMPATIK_PENDING_MEASUREMENTS') || '[]');
+          localPending.forEach(item => { byId[item.id_pengukuran] = item; });
+          if (window.AndroidBridge && typeof window.AndroidBridge.ambilPengukuranTertunda === 'function') {
+            JSON.parse(window.AndroidBridge.ambilPengukuranTertunda()).forEach(item => { byId[item.id_pengukuran] = item; });
+          }
+        } catch (error) {
+          console.warn('Gagal membaca antrean sinkronisasi:', error);
+        }
+        return Object.values(byId);
+      },
+      async sinkronkanDataTertunda() {
+        const queue = this.ambilAntreanPengukuran();
+        let remaining = queue.length;
+        for (const payload of queue) {
+          try {
+            if (await this.sinkronkanSatuPengukuran(payload)) remaining--;
+          } catch (error) {
+            console.warn('Data tetap aman dalam antrean Android:', error);
           }
         }
-        this.setView('list');
+        this.pendingSyncCount = remaining;
+        return remaining;
+      },
+      async simpanData() {
+        if (this.isSaving) return;
+        const error = this.validasiPengukuran();
+        if (error) {
+          this.bukaDialog = false;
+          alert('[Data Belum Valid]\n\n' + error);
+          return;
+        }
+        this.isSaving = true;
+        try {
+          const payload = this.buatPayloadPengukuran();
+          const nativeResult = this.simpanPengukuranKeAndroid(payload);
+          const date = new Date(payload.tanggal_ukur + 'T00:00:00');
+          const year = date.getFullYear().toString();
+          const month = date.getMonth();
+          if (!this.activeAnak.riwayat) this.activeAnak.riwayat = {};
+          if (!this.activeAnak.riwayat[year]) this.activeAnak.riwayat[year] = {};
+          if (this.editingOriginal && (this.editingOriginal.year !== year || this.editingOriginal.month !== month)) {
+            const oldYear = this.activeAnak.riwayat[this.editingOriginal.year];
+            if (oldYear) delete oldYear[this.editingOriginal.month];
+          }
+          this.activeAnak.sudahDiukur = true;
+          this.activeAnak.riwayat[year][month] = {
+            idPengukuran: payload.id_pengukuran,
+            tanggalUkur: payload.tanggal_ukur,
+            bb: payload.bb_kg,
+            pb: payload.panjang_tinggi_cm,
+            lila: payload.lila,
+            lika: payload.lika,
+            caraUkur: payload.jenis_ukur,
+            statusKehadiran: 'Hadir',
+            syncStatus: 'pending',
+            revision: nativeResult.revision || 1,
+            status: { bbu: 'Gizi Baik', pbu: 'Normal', bbpb: 'Gizi Baik' }
+          };
+          this.persistDaftarAnak();
+          this.editingOriginal = null;
+          this.bukaDialog = false;
+          this.setView(this.previousViewBeforeForm === 'history' ? 'history' : 'list');
+          if (window.AndroidBridge && typeof window.AndroidBridge.tampilkanPesan === 'function') {
+            window.AndroidBridge.tampilkanPesan(nativeResult.action === 'updated' ? 'Koreksi tersimpan di Android' : 'Pengukuran tersimpan di Android');
+          }
+          this.sinkronkanSatuPengukuran(payload).then(synced => {
+            if (synced && this.activeAnak.riwayat[year] && this.activeAnak.riwayat[year][month]) {
+              this.activeAnak.riwayat[year][month].syncStatus = 'synced';
+              this.persistDaftarAnak();
+            }
+          }).catch(syncError => {
+            this.pendingSyncCount = this.ambilAntreanPengukuran().length;
+            console.warn('Pengukuran tersimpan lokal dan menunggu koneksi:', syncError);
+          });
+        } catch (saveError) {
+          this.bukaDialog = false;
+          alert('[Gagal Menyimpan]\n\n' + saveError.message + '\n\nData belum diubah. Silakan periksa dan coba lagi.');
+        } finally {
+          this.isSaving = false;
+        }
       }
     },
     mounted() {
-      // Auto-retrieve data dari Supabase Cloud saat aplikasi dibuka
-      if (this.registryConfig && this.registryConfig.activeProvider === 'supabase_cloud') {
-        this.muatDataDariSupabase(false);
+      // Pasang handler tombol back hardware/gesture Android
+      window.handleAndroidBack = () => this.handleAndroidBack();
+
+      // SQLite Android menjadi salinan tahan lama; localStorage tetap menjadi cache UI cepat.
+      if (!this.pulihkanDaftarAnakAndroid()) this.persistDaftarAnak();
+
+      // Periksa Sesi Permanen Pengguna
+      try {
+        const savedUser = localStorage.getItem('SIMPATIK_CURRENT_USER');
+        const savedSession = localStorage.getItem('SIMPATIK_SESSION');
+        if (savedUser && savedSession) {
+          this.currentUser = JSON.parse(savedUser);
+          this.view = 'portal';
+        } else {
+          this.view = 'login';
+        }
+      } catch (e) {
+        console.warn("Gagal membaca sesi pengguna:", e);
       }
+
+      // Kirim revisi lokal lebih dahulu agar unduhan cloud tidak menimpa perubahan yang belum terkirim.
+      this.sinkronkanDataTertunda().then(remaining => {
+        if (remaining === 0 && this.registryConfig && this.registryConfig.activeProvider === 'supabase_cloud') {
+          this.muatDataDariSupabase(false);
+        }
+      });
+      window.addEventListener('online', () => this.sinkronkanDataTertunda());
     },
   }).mount('#app')
 </script>

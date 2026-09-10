@@ -67,7 +67,7 @@ Aplikasi ini menggabungkan performa native **Android Jetpack Compose & WebView**
 Aplikasi ini menggunakan basis data riil dari rekap posyandu yang telah melalui proses validasi dan pembersihan:
 - **131 Balita Riil**: Seluruh balita aktif usia 0–59 bulan (kelahiran 2021–2026) dengan 1.507 catatan riwayat penimbangan terverifikasi.
 - **Pemisahan Segmen Lansia**: 19 data individu usia sekolah dan lansia dipisahkan ke `segment_lansia_terpisah.json` untuk modul masa depan.
-- **Penyimpanan Lokal Persisten**: Memanfaatkan `localStorage` terindeks di level WebView tablet (`SIMPATIK_DATA_ANAK` & `SIMPATIK_DATA_VERSION`) sehingga data tidak akan hilang saat aplikasi ditutup.
+- **Penyimpanan Lokal Persisten**: Setiap pengukuran langsung disimpan secara atomik ke SQLite internal Android. `localStorage` dipakai sebagai cache antarmuka, sedangkan antrean SQLite menjaga data offline hingga berhasil disinkronkan ke server.
 
 ```
 outputdatabasesementara_json/
@@ -97,7 +97,7 @@ outputdatabasesementara_json/
 │  Lapisan Native Android                                 │
 │  - Kotlin + Jetpack Compose (Edge-to-Edge Container)    │
 │  - Android WebView (DOM Storage, File & Hardware Accel) │
-│  - Siap dihubungkan ke Room SQLite & Retrofit/Ktor      │
+│  - SQLite internal, antrean offline, upsert Supabase    │
 └─────────────────────────────────────────────────────────┘
 ```
 

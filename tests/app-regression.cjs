@@ -91,11 +91,16 @@ test('Back closes dialogs before changing screens', () => {
 
 test('Back follows navigation routes and delegates root exit to Android', () => {
   const { app } = harness();
-  for (const [from, to] of [['form', 'list'], ['list', 'home']]) {
+  for (const [from, to] of [['form', 'list'], ['list', 'home'], ['register', 'home']]) {
     app.view = from;
     assert.equal(app.handleAndroidBack(), 'handled');
     assert.equal(app.view, to);
   }
+  app.activeAnak = { riwayat: {} };
+  app.previousView = 'list';
+  app.view = 'history';
+  assert.equal(app.handleAndroidBack(), 'handled');
+  assert.equal(app.view, 'list');
   for (const root of ['login', 'home']) {
     app.view = root;
     assert.equal(app.handleAndroidBack(), 'unhandled');
@@ -190,14 +195,61 @@ test('failed cloud upload remains queued for automatic retry', async () => {
   assert.equal(h.app.pendingSyncCount, 1);
 });
 
-test('tablet UI exposes field recording without portal analytics modules', () => {
+test('child registration is stored locally and duplicate NIK is rejected', async () => {
+  const h = harness();
+  h.app.registryConfig.activeProvider = 'json_offline';
+  h.app.daftarAnak = [];
+  h.app.regData = { nik: '3273010101220001', nama: 'Anak Uji', tglLahir: '2022-01-01', jk: 'L', namaIbu: 'Ibu Uji', rt: '01' };
+  await h.app.simpanRegistrasi();
+  assert.equal(h.app.daftarAnak.length, 1);
+  assert.equal(h.app.daftarAnak[0].syncStatus, 'pending');
+  assert.equal(h.app.view, 'home');
+  h.app.regData = { nik: '3273010101220001', nama: 'Duplikat', tglLahir: '2022-01-01', jk: 'L', namaIbu: 'Ibu Uji', rt: '01' };
+  await h.app.simpanRegistrasi();
+  assert.equal(h.app.daftarAnak.length, 1);
+  assert.match(h.alerts.pop(), /Duplikat Dicegah/);
+});
+
+test('pending child registration is upserted and marked as synced', async () => {
+  const h = harness();
+  const child = { id: '3273010101220002', nik: '3273010101220002', nama: 'Anak Server', tglLahir: '2023-02-01', jk: 'P', namaOrtu: 'Ibu Server', rt: '02', syncStatus: 'pending', riwayat: {} };
+  h.app.daftarAnak = [child];
+  h.app.registryConfig.activeProvider = 'supabase_cloud';
+  h.context.fetch = async (url, request) => {
+    assert.match(url, /\/rest\/v1\/anak\?on_conflict=nik/);
+    assert.match(request.headers.Prefer, /merge-duplicates/);
+    const payload = JSON.parse(request.body)[0];
+    assert.equal(payload.nama_anak, 'Anak Server');
+    return { ok: true, status: 201 };
+  };
+  assert.equal(await h.app.sinkronkanAnakTertunda(), 0);
+  assert.equal(child.syncStatus, 'synced');
+});
+
+test('monthly history opens latest record and correction returns to history', () => {
+  const { app } = harness();
+  const child = { id: '1', nik: '1', nama: 'Anak', inisial: 'AN', riwayat: { '2025': { 4: { tanggalUkur: '2025-05-10', bb: '8.1', pb: '74', lila: '13', lika: '44', idPengukuran: 'ukur_1_202505' } } } };
+  app.bukaRiwayat(child, 'list');
+  assert.equal(app.view, 'history');
+  assert.equal(app.selectedYear, '2025');
+  assert.equal(app.selectedMonthIndex, 4);
+  assert.equal(app.recordBulanTerpilih.bb, '8.1');
+  app.koreksiPengukuranAktif();
+  assert.equal(app.view, 'form');
+  assert.equal(app.isEditingRecord, true);
+  assert.equal(app.previousViewBeforeForm, 'history');
+});
+
+test('tablet UI exposes operational modules without portal analytics modules', () => {
   assert.match(html, /Pencatatan Lapangan/);
   assert.match(html, /Mulai Pencatatan/);
+  assert.match(html, /Riwayat Bulanan/);
+  assert.match(html, /Pendaftaran Balita Baru/);
+  assert.match(html, /Politeknik Manufaktur Bandung/);
+  assert.match(html, /© 2026 POLMAN Bandung/);
   assert.match(html, /Progres pencatatan bulan ini/);
-  assert.doesNotMatch(html, /view === 'history'/);
   assert.doesNotMatch(html, /view === 'nutrition_detail'/);
   assert.doesNotMatch(html, /view === 'settings'/);
-  assert.doesNotMatch(html, /view === 'register'/);
   assert.doesNotMatch(html, /kartuHasil\(\)/);
   assert.doesNotMatch(html, /hasilSimulasiZScore\(\)/);
 });

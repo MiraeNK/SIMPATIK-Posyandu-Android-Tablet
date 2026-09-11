@@ -1,17 +1,19 @@
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
-Aplikasi Android untuk pencatatan pengukuran balita saat kegiatan Posyandu. Versi 1.3 memusatkan tablet pada pekerjaan lapangan, sedangkan KMS lengkap, analitik gizi, laporan, pengelolaan master data, dan koreksi setelah kegiatan menjadi tanggung jawab Portal SIMPATIK.
+Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.4 mencakup pendaftaran anak, pengukuran, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
 
 ## Ruang lingkup tablet
 
 - Login kader menggunakan autentikasi server.
 - Mengunduh dan menyimpan daftar balita untuk pencarian offline.
 - Mencari balita berdasarkan nama atau NIK.
+- Mendaftarkan balita baru dan mencegah NIK ganda.
 - Mengisi tanggal, BB, PB/TB, LILA, LIKA, dan cara ukur.
 - Memeriksa kelengkapan serta rentang angka sebelum menyimpan.
 - Menyimpan pengukuran lebih dahulu ke SQLite Android.
 - Mencegah pencatatan ganda untuk anak dan periode yang sama.
-- Memperbaiki data bulan berjalan dengan membuka kembali anak yang sama.
+- Melihat riwayat pencatatan melalui tab bulan dan tahun.
+- Memperbaiki nilai pengukuran dari riwayat tanpa membuat entri ganda.
 - Mengantrekan dan mencoba kembali sinkronisasi ketika jaringan tersedia.
 - Menampilkan progres operasional bulan berjalan dan jumlah antrean sinkron.
 
@@ -19,12 +21,12 @@ Aplikasi Android untuk pencatatan pengukuran balita saat kegiatan Posyandu. Vers
 
 Fitur berikut dikelola di website Portal:
 
-- KMS dan riwayat pengukuran lengkap.
+- KMS dan visualisasi pertumbuhan lengkap.
 - Perhitungan serta penetapan status gizi resmi.
 - Dashboard analitik dan pemantauan kelompok.
 - Laporan dan ekspor.
-- Pendaftaran serta pengelolaan data induk anak.
-- Koreksi setelah kegiatan dan audit perubahan.
+- Pengelolaan lanjutan dan penggabungan data induk anak.
+- Audit perubahan tingkat administrator.
 - Pengaturan akun, rumus, serta integrasi database.
 
 Tablet hanya menampilkan pengukuran sebelumnya secara ringkas untuk membantu kader memeriksa kewajaran input. Tablet tidak menghitung kategori gizi resmi.
@@ -54,7 +56,7 @@ APK debug dihasilkan di `app/build/outputs/apk/debug/app-debug.apk`.
 
 - `CHANGELOG.md` — riwayat perubahan per versi.
 - `PROGRESS.md` — posisi pekerjaan, hasil verifikasi, dan pekerjaan lanjutan.
-- `WALKTHROUGH-ANDROID-FOKUS-INPUT-v1.3.md` — alur penggunaan untuk kader.
+- `WALKTHROUGH-ANDROID-OPERASIONAL-v1.4.md` — alur penggunaan terbaru untuk kader.
 - `TESTING-2026-09-10.md` — laporan pengujian versi 1.2.
 
 ## Cabang pengembangan

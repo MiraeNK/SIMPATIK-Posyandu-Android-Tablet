@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.4.0 — Riwayat dan Administrasi Lapangan
+
+### Ditambahkan
+
+- Riwayat pengukuran baca-saja dengan tab Januari–Desember dan pilihan tahun.
+- Tombol koreksi dari catatan bulan yang dipilih; penyimpanan tetap menggunakan ID pengukuran yang sama.
+- Pendaftaran balita baru dari beranda dengan validasi NIK dan pencegahan duplikat.
+- Antrean sinkronisasi anak baru menggunakan snapshot SQLite Android dan upsert server.
+- Splash screen beridentitas Program KKN Politeknik Manufaktur Bandung.
+- Informasi hak cipta `© 2026 POLMAN Bandung`.
+
+### Batas fitur
+
+- Riwayat Android hanya menampilkan nilai BB, PB/TB, LILA, LIKA, cara ukur, revisi, dan status sinkronisasi.
+- KMS, penilaian gizi, dashboard analitik, dan laporan lengkap tetap berada di Portal SIMPATIK.
+
 ## 1.3.0 — Fokus Pencatatan Lapangan
 
 ### Diubah

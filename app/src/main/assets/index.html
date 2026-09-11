@@ -64,11 +64,40 @@
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #A8B0A9; border-radius: 4px; }
+
+  .app-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #0F6E44 0%, #09482D 100%);
+    color: #FFFFFF;
+  }
+  .app-splash__mark {
+    width: 112px;
+    height: 112px;
+    border-radius: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.28);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+  }
 </style>
 </head>
 <body>
 
 <div id="app">
+  <div v-if="showSplash" class="app-splash" aria-label="Layar pembuka SIMPATIK Posyandu">
+    <div class="app-splash__mark"><span style="font-size:42px; font-weight:800; letter-spacing:-0.05em;">SI</span></div>
+    <div style="font-size:34px; font-weight:800; margin-top:24px; letter-spacing:-0.02em;">SIMPATIK Posyandu</div>
+    <div style="font-size:17px; margin-top:6px; color:rgba(255,255,255,0.82);">Program KKN Politeknik Manufaktur Bandung</div>
+    <div style="position:absolute; bottom:34px; font-size:13px; color:rgba(255,255,255,0.68);">© 2026 POLMAN Bandung · Hak cipta dilindungi</div>
+  </div>
   <!-- ================== LOGIN VIEW ================== -->
   <div v-if="view === 'login'" style="flex:1; display:flex; background:#FFFFFF;">
         <!-- Bagian Kiri: Form & Selector Role -->
@@ -197,31 +226,25 @@
         </header>
 
         <main style="padding:30px 40px 40px; display:flex; flex-direction:column; gap:24px;">
-          <section style="display:grid; grid-template-columns:minmax(0, 1.65fr) minmax(300px, 0.75fr); gap:22px;">
-            <button type="button" @click="goToList('record')" class="btn-primary" style="min-height:230px; border-radius:28px; padding:34px 38px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 16px 34px rgba(15,110,68,0.18);">
-              <div style="width:68px; height:68px; background:rgba(255,255,255,0.18); border-radius:20px; display:flex; align-items:center; justify-content:center;">
-                <i class="ph-bold ph-plus-circle" style="font-size:38px;"></i>
-              </div>
-              <div>
-                <div style="font-size:34px; font-weight:800; margin-bottom:8px;">Mulai Pencatatan</div>
-                <div style="font-size:18px; font-weight:500; opacity:0.9;">Cari balita, isi BB, PB/TB, LILA, dan LIKA.</div>
-              </div>
+          <section style="display:grid; grid-template-columns:1.55fr 1fr 1fr; gap:18px;">
+            <button type="button" @click="goToList('record')" class="btn-primary" style="min-height:210px; border-radius:26px; padding:30px 34px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 16px 34px rgba(15,110,68,0.18);">
+              <div style="width:62px; height:62px; background:rgba(255,255,255,0.18); border-radius:18px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-plus-circle" style="font-size:35px;"></i></div>
+              <div><div style="font-size:31px; font-weight:800; margin-bottom:6px;">Mulai Pencatatan</div><div style="font-size:16px; font-weight:500; opacity:0.9;">Isi pengukuran balita dengan cepat.</div></div>
             </button>
+            <button type="button" @click="goToList('history')" class="btn-outline" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
+              <div style="width:58px; height:58px; background:#E3EAF7; color:#1E4ED8; border-radius:17px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-calendar-dots" style="font-size:31px;"></i></div>
+              <div><div style="font-size:24px; font-weight:800; color:#16211C; margin-bottom:5px;">Riwayat Bulanan</div><div style="font-size:15px; color:#4A5750;">Lihat catatan dan lakukan koreksi.</div></div>
+            </button>
+            <button type="button" @click="bukaPendaftaran" class="btn-outline" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
+              <div style="width:58px; height:58px; background:#F3E8FF; color:#7C3AED; border-radius:17px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-user-plus" style="font-size:31px;"></i></div>
+              <div><div style="font-size:24px; font-weight:800; color:#16211C; margin-bottom:5px;">Daftarkan Balita</div><div style="font-size:15px; color:#4A5750;">Tambahkan data administrasi baru.</div></div>
+            </button>
+          </section>
 
-            <div style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:28px; padding:28px; display:flex; flex-direction:column; justify-content:space-between;">
-              <div>
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-                  <span style="font-size:16px; font-weight:800; color:#16211C;">Status penyimpanan</span>
-                  <span :style="{ background: pendingSyncCount > 0 ? '#FEF0C7' : '#E9F3EC', color: pendingSyncCount > 0 ? '#B54708' : '#14713D' }" style="padding:6px 10px; border-radius:9px; font-size:13px; font-weight:800;">
-                    {{ pendingSyncCount > 0 ? pendingSyncCount + ' menunggu' : 'Tersinkron' }}
-                  </span>
-                </div>
-                <p style="font-size:15px; color:#4A5750; line-height:1.55; margin:0;">Setiap pengukuran disimpan lebih dahulu di Android. Data yang belum terkirim tetap aman saat jaringan terputus.</p>
-              </div>
-              <button type="button" @click="sinkronkanManual" :disabled="isSyncing" class="btn-outline" style="height:52px; border-radius:13px; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:9px; margin-top:20px;">
-                <i class="ph-bold ph-arrows-clockwise" :class="{ 'ph-spin': isSyncing }" style="font-size:21px;"></i>{{ isSyncing ? 'Menyinkronkan…' : 'Sinkronkan sekarang' }}
-              </button>
-            </div>
+          <section style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:18px; padding:15px 18px; display:flex; align-items:center; gap:16px;">
+            <div style="width:44px; height:44px; border-radius:13px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-device-mobile" style="font-size:24px;"></i></div>
+            <div style="flex:1;"><div style="font-size:15px; font-weight:800; color:#16211C;">Data disimpan lebih dahulu di Android</div><div style="font-size:13px; color:#4A5750;">{{ totalPendingCount > 0 ? totalPendingCount + ' data menunggu jaringan.' : 'Tidak ada antrean sinkronisasi.' }}</div></div>
+            <button type="button" @click="sinkronkanManual" :disabled="isSyncing" class="btn-outline" style="height:46px; padding:0 18px; border-radius:12px; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-arrows-clockwise" style="font-size:19px;"></i>{{ isSyncing ? 'Menyinkronkan…' : 'Sinkronkan' }}</button>
           </section>
 
           <section style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:24px 28px;">
@@ -243,7 +266,7 @@
               </div>
               <div style="background:#F6F7F5; border:1px solid #DCE0DA; border-radius:18px; padding:20px;">
                 <div style="font-size:13px; font-weight:800; color:#4A5750;">ANTREAN SINKRON</div>
-                <div style="font-size:34px; font-weight:800; color:#16211C; margin-top:5px;">{{ pendingSyncCount }}</div>
+                <div style="font-size:34px; font-weight:800; color:#16211C; margin-top:5px;">{{ totalPendingCount }}</div>
               </div>
             </div>
           </section>
@@ -251,10 +274,32 @@
           <aside style="display:flex; align-items:center; gap:14px; background:#EEF4FF; border:1px solid #B2CCFF; border-radius:18px; padding:17px 20px; color:#1D4ED8;">
             <i class="ph-bold ph-browser" style="font-size:28px;"></i>
             <div>
-              <div style="font-size:16px; font-weight:800;">KMS, analitik gizi, laporan, dan koreksi setelah kegiatan tersedia di Portal SIMPATIK.</div>
+              <div style="font-size:16px; font-weight:800;">KMS, analitik gizi, dan laporan lengkap tersedia di Portal SIMPATIK.</div>
               <div style="font-size:14px; margin-top:3px;">Tablet ini difokuskan untuk pencatatan cepat dan penyimpanan data lapangan.</div>
             </div>
           </aside>
+        </main>
+      </div>
+
+      <!-- ================== REGISTRATION VIEW ================== -->
+      <div v-if="view === 'register'" style="flex:1; display:flex; flex-direction:column; background:#F6F7F5; overflow-y:auto;">
+        <header style="background:#FFFFFF; padding:18px 30px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; gap:20px; position:sticky; top:0; z-index:10;">
+          <button @click="setView('home')" class="btn-outline" style="width:54px; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-arrow-left" style="font-size:25px;"></i></button>
+          <div style="flex:1;"><h2 style="margin:0; font-size:27px; font-weight:800;">Pendaftaran Balita Baru</h2><div style="font-size:15px; color:#4A5750;">Masukkan data sesuai Kartu Keluarga atau Buku KIA.</div></div>
+          <span style="padding:7px 11px; border-radius:9px; background:#F3E8FF; color:#7C3AED; font-size:13px; font-weight:800;"><i class="ph-bold ph-identification-card"></i> Administrasi</span>
+        </header>
+        <main style="padding:28px 40px 40px; display:flex; justify-content:center;">
+          <form @submit.prevent="simpanRegistrasi" style="width:100%; max-width:980px; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:30px 34px; box-shadow:0 10px 28px rgba(22,33,28,0.04);">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px 24px;">
+              <div><label style="font-size:14px; font-weight:800; display:block; margin-bottom:7px;">NIK Balita <span style="color:#B42318;">*</span></label><input v-model="regData.nik" inputmode="numeric" maxlength="16" placeholder="16 digit NIK" style="width:100%; padding:15px 16px; border:2px solid #DCE0DA; border-radius:13px; font:inherit;"></div>
+              <div><label style="font-size:14px; font-weight:800; display:block; margin-bottom:7px;">Nama Lengkap <span style="color:#B42318;">*</span></label><input v-model="regData.nama" placeholder="Nama balita" style="width:100%; padding:15px 16px; border:2px solid #DCE0DA; border-radius:13px; font:inherit;"></div>
+              <div><label style="font-size:14px; font-weight:800; display:block; margin-bottom:7px;">Tanggal Lahir <span style="color:#B42318;">*</span></label><input type="date" v-model="regData.tglLahir" :max="tanggalHariIniISO" style="width:100%; padding:15px 16px; border:2px solid #DCE0DA; border-radius:13px; font:inherit;"></div>
+              <div><label style="font-size:14px; font-weight:800; display:block; margin-bottom:7px;">Jenis Kelamin <span style="color:#B42318;">*</span></label><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><button type="button" @click="regData.jk='L'" :style="{background:regData.jk==='L'?'#0F6E44':'#F6F7F5',color:regData.jk==='L'?'#FFF':'#4A5750'}" style="height:56px; border-radius:13px; font-size:16px; font-weight:800;">Laki-laki</button><button type="button" @click="regData.jk='P'" :style="{background:regData.jk==='P'?'#0F6E44':'#F6F7F5',color:regData.jk==='P'?'#FFF':'#4A5750'}" style="height:56px; border-radius:13px; font-size:16px; font-weight:800;">Perempuan</button></div></div>
+              <div><label style="font-size:14px; font-weight:800; display:block; margin-bottom:7px;">Nama Orang Tua <span style="color:#B42318;">*</span></label><input v-model="regData.namaIbu" placeholder="Nama ibu atau ayah" style="width:100%; padding:15px 16px; border:2px solid #DCE0DA; border-radius:13px; font:inherit;"></div>
+              <div><label style="font-size:14px; font-weight:800; display:block; margin-bottom:7px;">Wilayah RT <span style="color:#B42318;">*</span></label><select v-model="regData.rt" style="width:100%; padding:15px 16px; border:2px solid #DCE0DA; border-radius:13px; background:#FFFFFF; font:inherit;"><option value="" disabled>Pilih RT</option><option v-for="rt in ['01','02','03','04','05']" :key="rt" :value="rt">RT {{ rt }}</option></select></div>
+            </div>
+            <div style="margin-top:26px; padding-top:22px; border-top:1px solid #DCE0DA; display:flex; align-items:center; gap:16px;"><div style="flex:1; font-size:14px; color:#4A5750;"><i class="ph-bold ph-shield-check" style="color:#0F6E44;"></i> NIK diperiksa agar satu anak tidak terdaftar dua kali.</div><button type="button" @click="setView('home')" class="btn-outline" style="height:56px; padding:0 22px; border-radius:13px; font-size:16px; font-weight:800;">Batal</button><button type="submit" :disabled="isSavingChild" class="btn-primary" style="height:56px; padding:0 26px; border-radius:13px; font-size:16px; font-weight:800;">{{ isSavingChild ? 'Menyimpan…' : 'Simpan Balita' }}</button></div>
+          </form>
         </main>
       </div>
 
@@ -265,14 +310,14 @@
             <i class="ph-bold ph-arrow-left" style="font-size:28px;"></i>
           </button>
           <div style="flex:1;">
-            <h2 style="margin:0; font-size:28px; font-weight:800;">Pilih Balita</h2>
+            <h2 style="margin:0; font-size:28px; font-weight:800;">{{ listMode === 'history' ? 'Riwayat Pencatatan' : 'Pilih Balita' }}</h2>
             <div style="font-size:18px; color:#4A5750;">
-              Pilih nama anak untuk mencatat atau memperbaiki pengukuran bulan ini
+              {{ listMode === 'history' ? 'Pilih balita untuk melihat catatan bulan demi bulan' : 'Pilih nama anak untuk mencatat atau memperbaiki pengukuran bulan ini' }}
             </div>
           </div>
           <div style="display:flex; align-items:center; background:#F6F7F5; border:1px solid #DCE0DA; border-radius:16px; padding:0 20px; width:400px; height:60px;">
             <i class="ph-bold ph-magnifying-glass" style="font-size:24px; color:#4A5750;"></i>
-            <input type="text" v-model="searchQuery" placeholder="Cari nama anak..." style="border:0; background:transparent; font-size:20px; font-family:inherit; outline:none; width:100%; margin-left:12px;">
+            <input type="text" v-model="searchQuery" placeholder="Cari nama atau NIK..." style="border:0; background:transparent; font-size:20px; font-family:inherit; outline:none; width:100%; margin-left:12px;">
           </div>
         </header>
 
@@ -288,6 +333,7 @@
                   <i :class="pengukuranBulanAktif(anak).syncStatus === 'synced' ? 'ph-fill ph-check-circle' : 'ph-bold ph-clock'"></i>
                   {{ pengukuranBulanAktif(anak).syncStatus === 'synced' ? 'Tersimpan' : 'Menunggu sinkron' }}
                 </div>
+                <div v-else-if="listMode === 'history'" style="background:#E3EAF7; color:#1E4ED8; padding:6px 12px; border-radius:8px; font-size:14px; font-weight:700;"><i class="ph-bold ph-calendar-dots"></i> Lihat riwayat</div>
               </div>
               <div style="pointer-events:none;">
                 <div style="font-size:24px; font-weight:800; line-height:1.2; margin-bottom:6px; color:#16211C;">{{ anak.nama }}</div>
@@ -299,6 +345,32 @@
             Tidak ada anak yang sesuai dengan pencarian.
           </div>
         </div>
+      </div>
+
+      <!-- ================== HISTORY VIEW ================== -->
+      <div v-if="view === 'history'" style="flex:1; display:flex; flex-direction:column; background:#F6F7F5; overflow:hidden;">
+        <header style="background:#FFFFFF; padding:16px 26px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; gap:16px; flex-shrink:0;">
+          <button @click="kembaliDariHistory" class="btn-outline" style="width:54px; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-arrow-left" style="font-size:25px;"></i></button>
+          <div style="width:52px; height:52px; border-radius:14px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800;">{{ activeAnak.inisial }}</div>
+          <div style="flex:1;"><h2 style="margin:0; font-size:25px; font-weight:800;">Riwayat {{ activeAnak.nama }}</h2><div style="font-size:14px; color:#4A5750;">{{ activeAnak.umurBulan }} bulan · {{ activeAnak.namaOrtu }} · RT {{ activeAnak.rt }}</div></div>
+          <label style="display:flex; align-items:center; gap:9px; background:#F6F7F5; border:1px solid #DCE0DA; border-radius:12px; padding:9px 13px; font-size:14px; font-weight:800;">Tahun <select v-model="selectedYear" style="border:0; background:transparent; font:inherit; color:#0F6E44; outline:none;"><option v-for="tahun in availableYears" :key="tahun" :value="tahun">{{ tahun }}</option></select></label>
+        </header>
+        <nav style="background:#FFFFFF; border-bottom:1px solid #DCE0DA; display:flex; overflow-x:auto; padding:8px 22px 0; gap:4px; flex-shrink:0;" aria-label="Bulan pengukuran">
+          <button v-for="(bulan, index) in months" :key="bulan" @click="selectedMonthIndex=index" :style="{background:selectedMonthIndex===index?'#0F6E44':'transparent',color:selectedMonthIndex===index?'#FFFFFF':'#4A5750'}" style="min-width:76px; padding:13px 16px; border-radius:11px 11px 0 0; font-size:16px; font-weight:800;">{{ bulan }}</button>
+        </nav>
+        <main style="flex:1; overflow-y:auto; padding:30px 40px;">
+          <div v-if="recordBulanTerpilih" style="max-width:1080px; margin:0 auto; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:30px 34px; box-shadow:0 10px 28px rgba(22,33,28,0.04);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding-bottom:20px; border-bottom:1px solid #DCE0DA;">
+              <div><div style="font-size:13px; font-weight:800; color:#4A5750; letter-spacing:0.06em;">CATATAN PENGUKURAN</div><h3 style="font-size:27px; margin:4px 0 0;">{{ months[selectedMonthIndex] }} {{ selectedYear }}</h3><div style="font-size:14px; color:#4A5750; margin-top:3px;">Tanggal {{ formatTanggal(recordBulanTerpilih.tanggalUkur) }}</div></div>
+              <div style="display:flex; align-items:center; gap:12px;"><span :style="{background:recordBulanTerpilih.syncStatus==='synced'?'#E9F3EC':'#FEF0C7',color:recordBulanTerpilih.syncStatus==='synced'?'#14713D':'#B54708'}" style="padding:9px 13px; border-radius:10px; font-size:13px; font-weight:800;">{{ recordBulanTerpilih.syncStatus==='synced'?'Tersinkron':'Aman di Android' }}</span><button @click="koreksiPengukuranAktif" class="btn-outline" style="height:48px; padding:0 18px; border-radius:12px; font-size:15px; font-weight:800; color:#B54708; border-color:#F79009;"><i class="ph-bold ph-pencil-simple"></i> Koreksi Nilai</button></div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:24px;">
+              <div v-for="item in historyMeasurements" :key="item.label" style="background:#F6F7F5; border:1px solid #E3E7E2; border-radius:17px; padding:20px;"><div style="font-size:13px; font-weight:800; color:#4A5750;">{{ item.label }}</div><div style="font-size:29px; font-weight:800; color:#16211C; margin-top:7px;">{{ item.value }} <span style="font-size:15px; color:#4A5750;">{{ item.unit }}</span></div></div>
+            </div>
+            <div style="margin-top:18px; font-size:14px; color:#4A5750;">Cara ukur: <strong>{{ recordBulanTerpilih.caraUkur || 'Belum dicatat' }}</strong> · Revisi: <strong>{{ recordBulanTerpilih.revision || 1 }}</strong></div>
+          </div>
+          <div v-else style="max-width:720px; margin:70px auto 0; text-align:center; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:44px;"><div style="width:76px; height:76px; margin:0 auto 18px; border-radius:21px; background:#F6F7F5; color:#A8B0A9; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-calendar-blank" style="font-size:38px;"></i></div><h3 style="font-size:25px; margin:0 0 7px;">Belum ada pencatatan</h3><p style="font-size:16px; color:#4A5750; margin:0;">Tidak ditemukan pengukuran untuk {{ months[selectedMonthIndex] }} {{ selectedYear }}.</p></div>
+        </main>
       </div>
 
       <!-- ================== FORM VIEW (INPUT PENGUKURAN) ================== -->
@@ -332,6 +404,7 @@
             <input type="date" v-model="tanggalUkur" :max="tanggalHariIniISO" style="border:0;background:transparent;font:inherit;font-weight:800;color:#16211C;outline:none;">
           </label>
           <span v-if="isEditingRecord" style="padding:8px 12px;border-radius:10px;background:#FEF0C7;color:#B54708;font-size:13px;font-weight:800;white-space:nowrap;">Mode koreksi</span>
+          <button type="button" @click="bukaRiwayatDariForm" class="btn-outline" style="height:52px; padding:0 15px; border-radius:12px; font-size:15px; font-weight:800; color:#1E4ED8; border-color:#B2CCFF;"><i class="ph-bold ph-calendar-dots"></i> Riwayat</button>
         </header>
 
         <div style="flex:1;min-height:0;display:flex;gap:20px;padding:20px 28px">
@@ -595,6 +668,8 @@
         cloudSyncStatus: 'Siap',
         isLoggingIn: false,
         isSyncing: false,
+        loginRole: 'kader',
+        showSplash: true,
 
         // Manajemen Akun & Hak Akses (RBAC)
         currentUser: savedUser || {
@@ -634,10 +709,12 @@
             },
             lastSyncTime: 'Belum pernah sinkronisasi'
           };
-        })(), // Alur aktif: 'login', 'home', 'list', 'form'
+        })(), // Alur aktif: 'login', 'home', 'register', 'list', 'history', 'form'
 
         // Data Login
         loginData: { username: '', password: '' },
+        regData: { nik: '', nama: '', tglLahir: '', jk: 'L', namaIbu: '', rt: '' },
+        isSavingChild: false,
 
         // Navigation State
         listMode: 'record',
@@ -660,6 +737,9 @@
         editingOriginal: null,
         isSaving: false,
         pendingSyncCount: 0,
+        months: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
+        selectedMonthIndex: new Date().getMonth(),
+        selectedYear: new Date().getFullYear().toString(),
 
       }
     },
@@ -680,31 +760,8 @@
       anakBelumBulanIni() {
         return Math.max(0, this.daftarAnak.length - this.anakDiukurBulanIni);
       },
-      anakDiukur() {
-        if (this.sesiAktifMode === 'terakhir') {
-          // Sesi Penimbangan Terakhir Tercatat (Bulan Juni 2026 atau pengukuran terbaru)
-          return this.daftarAnak.filter(a => {
-            if (a.sudahDiukur) return true;
-            if (a.riwayat && a.riwayat['2026'] && (a.riwayat['2026']['5'] || a.riwayat['2026']['6'] || a.riwayat['2026']['7'])) return true;
-            return false;
-          }).length;
-        } else {
-          // Sesi Berjalan (September 2026 / penimbangan hari ini)
-          const m = new Date().getMonth().toString();
-          const y = new Date().getFullYear().toString();
-          return this.daftarAnak.filter(a => {
-            if (a.sudahDiukur) return true;
-            if (a.riwayat && a.riwayat[y] && a.riwayat[y][m]) return true;
-            return false;
-          }).length;
-        }
-      },
-      anakBelum() {
-        return Math.max(0, this.totalSasaran - this.anakDiukur);
-      },
-      persenCakupan() {
-        if (!this.totalSasaran) return 0;
-        return Math.round((this.anakDiukur / this.totalSasaran) * 100);
+      totalPendingCount() {
+        return this.pendingSyncCount + this.daftarAnak.filter(anak => anak.syncStatus === 'pending').length;
       },
       filteredAnak() {
         if (!this.searchQuery) return this.daftarAnak;
@@ -716,6 +773,21 @@
           return this.metode === 'berdiri' ? 'Tinggi Badan' : 'Panjang Badan';
         }
         return LABEL[this.aktif];
+      },
+      availableYears() {
+        const years = this.activeAnak && this.activeAnak.riwayat ? Object.keys(this.activeAnak.riwayat) : [];
+        const current = new Date().getFullYear().toString();
+        return Array.from(new Set([...years, current])).sort((a, b) => Number(b) - Number(a));
+      },
+      recordBulanTerpilih() {
+        return this.activeAnak && this.activeAnak.riwayat && this.activeAnak.riwayat[this.selectedYear]
+          ? this.activeAnak.riwayat[this.selectedYear][this.selectedMonthIndex] || null
+          : null;
+      },
+      historyMeasurements() {
+        const record = this.recordBulanTerpilih || {};
+        const item = (label, value, unit) => ({ label, value: value && value !== 'N/A' ? value : 'N/A', unit: value && value !== 'N/A' ? unit : '' });
+        return [item('Berat Badan', record.bb, 'kg'), item('Panjang / Tinggi', record.pb, 'cm'), item('LILA', record.lila, 'cm'), item('LIKA', record.lika, 'cm')];
       },
     },
     methods: {
@@ -800,7 +872,15 @@
           this.kembaliDariForm();
           return 'handled';
         }
+        if (this.view === 'history') {
+          this.kembaliDariHistory();
+          return 'handled';
+        }
         if (this.view === 'list') {
+          this.setView('home');
+          return 'handled';
+        }
+        if (this.view === 'register') {
           this.setView('home');
           return 'handled';
         }
@@ -842,6 +922,84 @@
           console.error('Gagal memulihkan snapshot Android:', error);
           return false;
         }
+      },
+      async simpanRegistrasi() {
+        if (this.isSavingChild) return;
+        const nik = String(this.regData.nik || '').replace(/\D/g, '');
+        const nama = String(this.regData.nama || '').trim();
+        const namaIbu = String(this.regData.namaIbu || '').trim();
+        if (!nik || !nama || !this.regData.tglLahir || !namaIbu || !this.regData.rt) {
+          alert('[Data Belum Lengkap]\n\nLengkapi semua kolom yang ditandai bintang.');
+          return;
+        }
+        if (nik.length !== 16) {
+          alert('[NIK Tidak Valid]\n\nNIK balita harus terdiri dari tepat 16 digit.');
+          return;
+        }
+        if (this.daftarAnak.some(anak => String(anak.nik || anak.id) === nik)) {
+          alert('[Duplikat Dicegah]\n\nNIK tersebut sudah terdaftar. Cari anak pada daftar yang tersedia.');
+          return;
+        }
+        const birthDate = new Date(this.regData.tglLahir + 'T00:00:00');
+        const today = new Date(this.tanggalHariIniISO + 'T23:59:59');
+        if (Number.isNaN(birthDate.getTime()) || birthDate > today) {
+          alert('[Tanggal Tidak Valid]\n\nTanggal lahir tidak boleh berada di masa depan.');
+          return;
+        }
+
+        this.isSavingChild = true;
+        const words = nama.split(/\s+/);
+        const inisial = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : nama.slice(0, 2).toUpperCase();
+        let umurBulan = (today.getFullYear() - birthDate.getFullYear()) * 12 + today.getMonth() - birthDate.getMonth();
+        if (today.getDate() < birthDate.getDate()) umurBulan--;
+        const child = {
+          id: nik,
+          nik,
+          nama,
+          inisial,
+          umurBulan: Math.max(0, umurBulan),
+          tglLahir: this.regData.tglLahir,
+          jk: this.regData.jk,
+          namaOrtu: namaIbu,
+          rt: this.regData.rt,
+          sudahDiukur: false,
+          syncStatus: 'pending',
+          riwayat: {}
+        };
+        this.daftarAnak.push(child);
+        this.persistDaftarAnak();
+        this.regData = { nik: '', nama: '', tglLahir: '', jk: 'L', namaIbu: '', rt: '' };
+        this.isSavingChild = false;
+        this.setView('home');
+        alert('[Balita Tersimpan]\n\nData administrasi sudah aman di Android dan akan disinkronkan ke server.');
+        this.sinkronkanSatuAnak(child).catch(error => console.warn('Pendaftaran menunggu sinkronisasi:', error));
+      },
+      async sinkronkanSatuAnak(child) {
+        if (!this.registryConfig || this.registryConfig.activeProvider !== 'supabase_cloud') return false;
+        const url = this.registryConfig.supabase && this.registryConfig.supabase.url;
+        const key = this.registryConfig.supabase && this.registryConfig.supabase.anonKey;
+        if (!url || !key) return false;
+        const response = await fetch(url + '/rest/v1/anak?on_conflict=nik', {
+          method: 'POST',
+          headers: { 'apikey': key, 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify([{ nik: child.nik, nama_anak: child.nama, tgl_lahir: child.tglLahir, jk: child.jk, nama_ortu: child.namaOrtu, rt: child.rt }])
+        });
+        if (!response.ok) throw new Error('Server menolak pendaftaran (HTTP ' + response.status + ')');
+        child.syncStatus = 'synced';
+        this.persistDaftarAnak();
+        return true;
+      },
+      async sinkronkanAnakTertunda() {
+        const pending = this.daftarAnak.filter(anak => anak.syncStatus === 'pending');
+        let remaining = pending.length;
+        for (const child of pending) {
+          try {
+            if (await this.sinkronkanSatuAnak(child)) remaining--;
+          } catch (error) {
+            console.warn('Pendaftaran tetap aman di Android:', error);
+          }
+        }
+        return remaining;
       },
       async muatDataDariSupabase(showNotification = false) {
         const url = (this.registryConfig && this.registryConfig.supabase && this.registryConfig.supabase.url) || 'https://tolumulfmtioogzqnrhb.supabase.co';
@@ -957,10 +1115,14 @@
         return false;
       },
       goToList(mode) {
-        this.listMode = 'record';
+        this.listMode = mode === 'history' ? 'history' : 'record';
         this.searchQuery = '';
         this.previousView = 'home';
         this.setView('list');
+      },
+      bukaPendaftaran() {
+        this.regData = { nik: '', nama: '', tglLahir: '', jk: 'L', namaIbu: '', rt: '' };
+        this.setView('register');
       },
       pengukuranBulanAktif(anak) {
         if (!anak || !anak.riwayat) return null;
@@ -970,7 +1132,35 @@
       },
       pilihAnak(anak) {
         this.activeAnak = anak;
-        this.bukaFormPengukuran(anak, this.tanggalHariIniISO);
+        if (this.listMode === 'history') this.bukaRiwayat(anak, 'list');
+        else this.bukaFormPengukuran(anak, this.tanggalHariIniISO);
+      },
+      bukaRiwayat(anak, origin = 'list') {
+        this.activeAnak = anak;
+        this.previousView = origin;
+        const years = Object.keys((anak && anak.riwayat) || {}).sort((a, b) => Number(b) - Number(a));
+        this.selectedYear = years[0] || new Date().getFullYear().toString();
+        const records = anak && anak.riwayat && anak.riwayat[this.selectedYear] ? Object.keys(anak.riwayat[this.selectedYear]).map(Number).sort((a, b) => b - a) : [];
+        this.selectedMonthIndex = records.length ? records[0] : new Date().getMonth();
+        this.setView('history');
+      },
+      bukaRiwayatDariForm() {
+        this.bukaRiwayat(this.activeAnak, 'form');
+      },
+      kembaliDariHistory() {
+        this.setView(this.previousView || 'list');
+      },
+      koreksiPengukuranAktif() {
+        const record = this.recordBulanTerpilih;
+        if (!record) return;
+        const fallbackDate = `${this.selectedYear}-${String(this.selectedMonthIndex + 1).padStart(2, '0')}-01`;
+        this.bukaFormPengukuran(this.activeAnak, record.tanggalUkur || fallbackDate, record);
+        this.previousViewBeforeForm = 'history';
+      },
+      formatTanggal(value) {
+        if (!value) return 'belum dicatat';
+        const date = new Date(value + 'T00:00:00');
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
       },
       bukaFormPengukuran(anak, tanggal, recordOverride) {
         this.previousViewBeforeForm = 'list';
@@ -1001,7 +1191,7 @@
         this.setView('form');
       },
       kembaliDariForm() {
-        this.setView('list');
+        this.setView(this.previousViewBeforeForm || 'list');
       },
       ketik(ch) {
         const k = this.aktif;
@@ -1159,14 +1349,16 @@
         if (this.isSyncing) return;
         this.isSyncing = true;
         try {
-          const remaining = await this.sinkronkanDataTertunda();
+          const remainingChildren = await this.sinkronkanAnakTertunda();
+          const remainingMeasurements = await this.sinkronkanDataTertunda();
+          const remaining = remainingChildren + remainingMeasurements;
           if (remaining === 0) {
             const rosterUpdated = await this.muatDataDariSupabase(false);
             alert(rosterUpdated
               ? '[Sinkronisasi Selesai]\n\nSemua data pengukuran lokal sudah terkirim. Daftar balita juga telah diperbarui dari server.'
               : '[Antrean Sudah Aman]\n\nTidak ada pengukuran yang menunggu dikirim. Daftar balita belum dapat diperbarui; periksa jaringan lalu coba kembali.');
           } else {
-            alert(`[Belum Tersinkron]\n\n${remaining} data tetap aman di Android dan akan dicoba kembali saat jaringan tersedia.`);
+            alert(`[Belum Tersinkron]\n\n${remaining} data anak atau pengukuran tetap aman di Android dan akan dicoba kembali saat jaringan tersedia.`);
           }
         } catch (error) {
           alert('[Sinkronisasi Tertunda]\n\nData tetap aman di Android. Periksa jaringan lalu coba kembali.');
@@ -1212,7 +1404,7 @@
           this.persistDaftarAnak();
           this.editingOriginal = null;
           this.bukaDialog = false;
-          this.setView('list');
+          this.setView(this.previousViewBeforeForm === 'history' ? 'history' : 'list');
           if (window.AndroidBridge && typeof window.AndroidBridge.tampilkanPesan === 'function') {
             window.AndroidBridge.tampilkanPesan(nativeResult.action === 'updated' ? 'Koreksi tersimpan di Android' : 'Pengukuran tersimpan di Android');
           }
@@ -1236,6 +1428,7 @@
     mounted() {
       // Pasang handler tombol back hardware/gesture Android
       window.handleAndroidBack = () => this.handleAndroidBack();
+      setTimeout(() => { this.showSplash = false; }, 1600);
 
       // SQLite Android menjadi salinan tahan lama; localStorage tetap menjadi cache UI cepat.
       if (!this.pulihkanDaftarAnakAndroid()) this.persistDaftarAnak();
@@ -1256,12 +1449,16 @@
 
       // Kirim revisi lokal lebih dahulu agar unduhan cloud tidak menimpa perubahan yang belum terkirim.
       this.pendingSyncCount = this.ambilAntreanPengukuran().length;
-      this.sinkronkanDataTertunda().then(remaining => {
-        if (remaining === 0 && this.registryConfig && this.registryConfig.activeProvider === 'supabase_cloud') {
+      this.sinkronkanAnakTertunda().then(async remainingChildren => {
+        const remainingMeasurements = await this.sinkronkanDataTertunda();
+        if (remainingChildren === 0 && remainingMeasurements === 0 && this.registryConfig && this.registryConfig.activeProvider === 'supabase_cloud') {
           this.muatDataDariSupabase(false);
         }
       });
-      window.addEventListener('online', () => this.sinkronkanDataTertunda());
+      window.addEventListener('online', () => {
+        this.sinkronkanAnakTertunda();
+        this.sinkronkanDataTertunda();
+      });
     },
   }).mount('#app')
 </script>

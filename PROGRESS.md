@@ -15,20 +15,25 @@ Terakhir diperbarui: 11 September 2026
 - [x] Mempertahankan SQLite, validasi, koreksi periode aktif, upsert, dan retry offline.
 - [x] Memperbaiki tanggal lokal perangkat.
 - [x] Memperbarui README, changelog, dan walkthrough versi 1.3.
+- [x] Mengembalikan riwayat baca-saja dengan tab bulan dan pilihan tahun.
+- [x] Mengaktifkan koreksi nilai dari riwayat Android.
+- [x] Mengembalikan pendaftaran balita baru pada beranda.
+- [x] Menyimpan pendaftaran ke Android sebelum upsert server.
+- [x] Menambahkan identitas POLMAN Bandung dan hak cipta 2026 pada splash screen.
 
 ## Verifikasi
 
-- [x] Regression test Node.js: 11/11 lulus.
-- [x] Gradle unit test: lulus dalam build 42 task.
-- [x] Build APK debug versi 1.3: berhasil.
-- [x] Pemeriksaan metadata APK: versionCode 3, versionName 1.3, min SDK 24, target SDK 37.
-- [ ] Uji pada emulator atau tablet fisik.
+- [x] Regression test Node.js versi 1.4: 14/14 lulus.
+- [x] Gradle unit test versi 1.4: `testDebugUnitTest` lulus.
+- [x] Build APK debug versi 1.4: `assembleDebug` lulus.
+- [x] Pemeriksaan metadata APK versi 1.4: versionCode 4, versionName 1.4, minSdk 24, targetSdk 37.
+- [x] Uji pada emulator Pixel Tablet API 33: splash, beranda, riwayat bulanan, dan pendaftaran tampil dengan benar.
 
-APK hasil build: `build_apk/SIMPATIK_Posyandu_Tablet_v1.3_fokus_input.apk`
+APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.4_operasional.apk`
 
-SHA-256: `E7F325B1143DB0CAF29792F8D95829EC5867BB987F19860EB7C06ABF1DB24D26`
+SHA-256: `6A2F06AF5C8E63F317D0B521FC1851A5A4E7B885B37EB57924F66A240E8798ED`
 
-Uji perangkat belum dapat dilakukan karena tidak ada emulator atau perangkat Android yang terhubung saat build.
+Ukuran: 12.838.983 byte. Aset `index.html` di dalam APK sama dengan sumber saat build.
 
 ## Integrasi Portal yang masih diperlukan
 

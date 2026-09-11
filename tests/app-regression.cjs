@@ -66,13 +66,13 @@ for (const role of ['admin', 'kader']) test(`${role}: login, session restore, an
   };
   await h.app.doLogin();
   assert.equal(h.app.currentUser.role, role);
-  assert.equal(h.app.view, 'portal');
+  assert.equal(h.app.view, 'home');
   assert.equal(h.app.loginData.password, '');
   assert.equal(h.app.isLoggingIn, false);
   h.app.registryConfig.activeProvider = 'local';
   h.app.view = 'login';
   h.mount();
-  assert.equal(h.app.view, 'portal');
+  assert.equal(h.app.view, 'home');
   h.app.doLogout();
   assert.equal(h.app.view, 'login');
   assert.equal(h.app.currentUser, null);
@@ -83,36 +83,20 @@ for (const role of ['admin', 'kader']) test(`${role}: login, session restore, an
 test('Back closes dialogs before changing screens', () => {
   const { app } = harness();
   app.view = 'form';
-  app.bukaModalPanduanSKDN = true;
   app.bukaDialog = true;
   assert.equal(app.handleAndroidBack(), 'handled');
-  assert.equal(app.bukaModalPanduanSKDN, false);
-  assert.equal(app.bukaDialog, true);
-  assert.equal(app.view, 'form');
-  app.handleAndroidBack();
   assert.equal(app.bukaDialog, false);
   assert.equal(app.view, 'form');
 });
 
 test('Back follows navigation routes and delegates root exit to Android', () => {
   const { app } = harness();
-  for (const [from, to] of [['form', 'list'], ['list', 'home'], ['home', 'portal'], ['register', 'portal'], ['nutrition_detail', 'home']]) {
+  for (const [from, to] of [['form', 'list'], ['list', 'home']]) {
     app.view = from;
     assert.equal(app.handleAndroidBack(), 'handled');
     assert.equal(app.view, to);
   }
-  for (const origin of ['list', 'form', 'nutrition_detail']) {
-    app.previousView = origin;
-    app.view = 'history';
-    app.handleAndroidBack();
-    assert.equal(app.view, origin);
-  }
-  for (const origin of ['home', 'portal']) {
-    app.bukaPengaturan(origin);
-    app.handleAndroidBack();
-    assert.equal(app.view, origin);
-  }
-  for (const root of ['login', 'portal']) {
+  for (const root of ['login', 'home']) {
     app.view = root;
     assert.equal(app.handleAndroidBack(), 'unhandled');
     assert.equal(app.view, root);
@@ -160,6 +144,7 @@ test('saving twice in one child-period updates one stable record', async () => {
   assert.equal(nativeRows.size, 1);
   h.app.bukaFormPengukuran(child, '2026-09-09');
   assert.equal(h.app.isEditingRecord, true);
+  assert.equal(h.app.tanggalUkur, '2026-09-10');
   h.app.formVals.bb = '8,7';
   await h.app.simpanData();
   assert.equal(nativeRows.size, 1);
@@ -205,11 +190,14 @@ test('failed cloud upload remains queued for automatic retry', async () => {
   assert.equal(h.app.pendingSyncCount, 1);
 });
 
-test('child registration rejects duplicate NIK', () => {
-  const h = harness();
-  h.app.daftarAnak = [{ id: '3273010101220001', nik: '3273010101220001' }];
-  h.app.regData = { nik: '3273010101220001', nama: 'Anak Uji', tglLahir: '2022-01-01', jk: 'L', namaIbu: 'Ibu Uji', rt: '01' };
-  h.app.simpanRegistrasi();
-  assert.equal(h.app.daftarAnak.length, 1);
-  assert.match(h.alerts.pop(), /sudah terdaftar/);
+test('tablet UI exposes field recording without portal analytics modules', () => {
+  assert.match(html, /Pencatatan Lapangan/);
+  assert.match(html, /Mulai Pencatatan/);
+  assert.match(html, /Progres pencatatan bulan ini/);
+  assert.doesNotMatch(html, /view === 'history'/);
+  assert.doesNotMatch(html, /view === 'nutrition_detail'/);
+  assert.doesNotMatch(html, /view === 'settings'/);
+  assert.doesNotMatch(html, /view === 'register'/);
+  assert.doesNotMatch(html, /kartuHasil\(\)/);
+  assert.doesNotMatch(html, /hasilSimulasiZScore\(\)/);
 });

@@ -1,6 +1,6 @@
 # Progress Pengembangan
 
-Terakhir diperbarui: 11 September 2026
+Terakhir diperbarui: 24 September 2026
 
 ## Selesai
 
@@ -20,6 +20,12 @@ Terakhir diperbarui: 11 September 2026
 - [x] Mengembalikan pendaftaran balita baru pada beranda.
 - [x] Menyimpan pendaftaran ke Android sebelum upsert server.
 - [x] Menambahkan identitas POLMAN Bandung dan hak cipta 2026 pada splash screen.
+- [x] Menambahkan antrean layanan harian sebagai alur utama Android.
+- [x] Mencegah antrean ganda untuk anak dan tanggal yang sama.
+- [x] Menambahkan panggil, lewati, batal, mulai ukur, dan selesai otomatis setelah penyimpanan.
+- [x] Menyimpan dan memulihkan antrean melalui SQLite Android.
+- [x] Menambahkan migrasi database v1 ke v2 tanpa menghapus data lama.
+- [x] Menyesuaikan login, antrean, dan formulir pengukuran untuk ponsel portrait.
 
 ## Verifikasi
 
@@ -28,6 +34,20 @@ Terakhir diperbarui: 11 September 2026
 - [x] Build APK debug versi 1.4: `assembleDebug` lulus.
 - [x] Pemeriksaan metadata APK versi 1.4: versionCode 4, versionName 1.4, minSdk 24, targetSdk 37.
 - [x] Uji pada emulator Pixel Tablet API 33: splash, beranda, riwayat bulanan, dan pendaftaran tampil dengan benar.
+
+### Verifikasi versi 1.5
+
+- [x] Regression test Node.js: 15/15 lulus.
+- [x] Gradle unit test dan kompilasi Kotlin lulus.
+- [x] Build APK debug versionCode 5, versionName 1.5.
+- [x] Uji Pixel Tablet: beranda, antrean kosong, tambah dua anak, panggil, dan pemulihan SQLite setelah force-stop.
+- [x] Uji viewport ponsel portrait 1080 × 2400: login, antrean, formulir ukur, simpan, dan penyelesaian antrean.
+
+APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.5_antrean.apk`
+
+SHA-256: `F62B831AFDCCCFA11333AEB00D49459B11BC3A8FC82AAC98B04C5E59CF15F034`
+
+Ukuran: 12.849.198 byte. Aset `index.html` di dalam APK sama dengan sumber saat build.
 
 APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.4_operasional.apk`
 

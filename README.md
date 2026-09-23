@@ -1,6 +1,6 @@
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
-Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.4 mencakup pendaftaran anak, pengukuran, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
+Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.5 mencakup antrean layanan harian, pendaftaran anak, pengukuran, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
 
 ## Ruang lingkup tablet
 
@@ -8,6 +8,10 @@ Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.4 
 - Mengunduh dan menyimpan daftar balita untuk pencarian offline.
 - Mencari balita berdasarkan nama atau NIK.
 - Mendaftarkan balita baru dan mencegah NIK ganda.
+- Mendaftarkan kehadiran anak ke antrean harian dan mencegah antrean ganda.
+- Memanggil, melewati, membatalkan, dan memulai layanan pengukuran dari antrean.
+- Menyelesaikan antrean secara otomatis setelah pengukuran tersimpan.
+- Menyimpan antrean ke SQLite Android agar tetap tersedia setelah aplikasi ditutup.
 - Mengisi tanggal, BB, PB/TB, LILA, LIKA, dan cara ukur.
 - Memeriksa kelengkapan serta rentang angka sebelum menyimpan.
 - Menyimpan pengukuran lebih dahulu ke SQLite Android.
@@ -33,12 +37,13 @@ Tablet hanya menampilkan pengukuran sebelumnya secara ringkas untuk membantu kad
 
 ## Alur data
 
-1. Kader memilih balita dan mengisi pengukuran.
-2. Data divalidasi lalu disimpan atomik di SQLite Android.
-3. Satu anak hanya memiliki satu catatan untuk satu periode; penyimpanan ulang memperbarui catatan yang sama.
-4. Data masuk antrean sinkronisasi.
-5. Saat jaringan tersedia, aplikasi melakukan upsert ke server.
-6. Website mengolah data menjadi status gizi, KMS, analitik, dan laporan.
+1. Kader menambahkan anak yang hadir ke antrean layanan harian.
+2. Kader memanggil anak dan memulai pengukuran dari antrean.
+3. Data divalidasi lalu disimpan atomik di SQLite Android; antrean otomatis ditandai selesai.
+4. Satu anak hanya memiliki satu catatan untuk satu periode; penyimpanan ulang memperbarui catatan yang sama.
+5. Data masuk antrean sinkronisasi.
+6. Saat jaringan tersedia, aplikasi melakukan upsert ke server.
+7. Website mengolah data menjadi status gizi, KMS, analitik, dan laporan.
 
 ## Build dan pengujian
 
@@ -56,7 +61,7 @@ APK debug dihasilkan di `app/build/outputs/apk/debug/app-debug.apk`.
 
 - `CHANGELOG.md` — riwayat perubahan per versi.
 - `PROGRESS.md` — posisi pekerjaan, hasil verifikasi, dan pekerjaan lanjutan.
-- `WALKTHROUGH-ANDROID-OPERASIONAL-v1.4.md` — alur penggunaan terbaru untuk kader.
+- `WALKTHROUGH-ANDROID-ANTREAN-v1.5.md` — alur antrean dan pengukuran terbaru untuk kader.
 - `TESTING-2026-09-10.md` — laporan pengujian versi 1.2.
 
 ## Cabang pengembangan

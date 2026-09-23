@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
 }
 
 private class PosyanduDatabase(context: Context) :
-    SQLiteOpenHelper(context, "simpatik_posyandu.db", null, 1) {
+    SQLiteOpenHelper(context, "simpatik_posyandu.db", null, 2) {
 
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
@@ -115,9 +115,25 @@ private class PosyanduDatabase(context: Context) :
             )
             """.trimIndent()
         )
+        createServiceQueueTable(db)
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 2) createServiceQueueTable(db)
+    }
+
+    private fun createServiceQueueTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS service_queue (
+                queue_id TEXT PRIMARY KEY,
+                service_date TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                updated_at INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+    }
 
     fun upsertMeasurement(payloadText: String): JSONObject {
         val payload = JSONObject(payloadText)
@@ -238,6 +254,44 @@ private class PosyanduDatabase(context: Context) :
         }
         return rows
     }
+
+    fun replaceServiceQueue(jsonText: String): Int {
+        val queue = JSONArray(jsonText)
+        val db = writableDatabase
+        val now = System.currentTimeMillis()
+        db.beginTransaction()
+        try {
+            db.delete("service_queue", null, null)
+            for (index in 0 until queue.length()) {
+                val item = queue.getJSONObject(index)
+                val id = item.optString("id").trim()
+                val date = item.optString("date").trim()
+                if (id.isEmpty() || date.isEmpty()) continue
+                val values = ContentValues().apply {
+                    put("queue_id", id)
+                    put("service_date", date)
+                    put("payload_json", item.toString())
+                    put("updated_at", now)
+                }
+                db.insertWithOnConflict("service_queue", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+        return queue.length()
+    }
+
+    fun serviceQueue(): JSONArray {
+        val rows = JSONArray()
+        readableDatabase.query(
+            "service_queue", arrayOf("payload_json"), null, null, null, null,
+            "service_date ASC, updated_at ASC"
+        ).use { cursor ->
+            while (cursor.moveToNext()) rows.put(JSONObject(cursor.getString(0)))
+        }
+        return rows
+    }
 }
 
 // Jembatan antara JavaScript (Vue/HTML) dan penyimpanan SQLite Android.
@@ -278,6 +332,23 @@ class AndroidAppBridge(private val activity: ComponentActivity) {
         database.children().toString()
     } catch (error: Exception) {
         Log.e("PosyanduDatabase", "Gagal membaca daftar anak", error)
+        "[]"
+    }
+
+    @JavascriptInterface
+    fun simpanAntrean(jsonData: String): String = try {
+        val count = database.replaceServiceQueue(jsonData)
+        JSONObject().put("ok", true).put("count", count).toString()
+    } catch (error: Exception) {
+        Log.e("PosyanduDatabase", "Gagal menyimpan antrean layanan", error)
+        JSONObject().put("ok", false).put("error", error.message ?: "Gagal menyimpan antrean").toString()
+    }
+
+    @JavascriptInterface
+    fun ambilAntrean(): String = try {
+        database.serviceQueue().toString()
+    } catch (error: Exception) {
+        Log.e("PosyanduDatabase", "Gagal membaca antrean layanan", error)
         "[]"
     }
 

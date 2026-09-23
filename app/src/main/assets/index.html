@@ -87,6 +87,64 @@
     border: 1px solid rgba(255,255,255,0.28);
     box-shadow: 0 24px 60px rgba(0,0,0,0.2);
   }
+
+  .home-actions { display:grid; grid-template-columns:1.25fr repeat(3, 1fr); gap:18px; }
+  .login-shell { flex:1; display:flex; background:#FFFFFF; }
+  .login-panel { width:50%; padding:50px 70px; display:flex; flex-direction:column; justify-content:center; overflow-y:auto; }
+  .login-art { width:50%; background:linear-gradient(135deg, #0F6E44 0%, #0B5334 100%); position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px; }
+  .queue-layout { display:grid; grid-template-columns:minmax(0, 1.55fr) minmax(330px, 0.75fr); gap:22px; align-items:start; }
+  .queue-stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+  .queue-card { background:#FFFFFF; border:1px solid #DCE0DA; border-radius:20px; }
+  .queue-row { display:grid; grid-template-columns:72px minmax(0, 1fr) auto; gap:16px; align-items:center; padding:17px 18px; border-top:1px solid #E7EAE5; }
+  .queue-row:first-child { border-top:0; }
+  .queue-number { width:58px; height:58px; border-radius:17px; display:flex; align-items:center; justify-content:center; background:#E9F3EC; color:#0F6E44; font-size:20px; font-weight:800; }
+  .queue-status { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:800; }
+  .queue-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .queue-small-button { min-height:42px; padding:0 13px; border-radius:11px; font-size:13px; font-weight:800; }
+  .queue-child-option { width:100%; display:flex; gap:12px; align-items:center; padding:13px; border-radius:14px; background:#F6F7F5; border:1px solid #DCE0DA; text-align:left; }
+
+  @media (max-width: 900px) {
+    html, body { font-size:16px; }
+    .login-panel { width:100% !important; padding:34px 28px !important; }
+    .login-art { display:none !important; }
+    .home-header { padding:16px 18px !important; }
+    .home-main { padding:20px 18px 30px !important; }
+    .home-user { display:none !important; }
+    .home-actions { grid-template-columns:1fr 1fr; }
+    .queue-layout { grid-template-columns:1fr; }
+    .queue-header-user { display:none !important; }
+    .queue-add-panel { position:static !important; }
+  }
+  @media (max-width: 600px) {
+    .home-actions { grid-template-columns:1fr; }
+    .queue-page-header { padding:13px 14px !important; }
+    .queue-page-main { padding:14px 12px 28px !important; }
+    .queue-stats { grid-template-columns:1fr 1fr 1fr; }
+    .queue-stats .queue-card { padding:12px !important; }
+    .queue-current { flex-direction:column; align-items:stretch !important; padding:18px !important; }
+    .queue-current__button { width:100%; }
+    .queue-row { grid-template-columns:54px minmax(0, 1fr); }
+    .queue-number { width:48px; height:48px; border-radius:14px; font-size:17px; }
+    .queue-actions { grid-column:1 / -1; justify-content:stretch; }
+    .queue-actions button { flex:1; }
+    .form-shell { overflow-y:auto !important; }
+    .form-header { flex-wrap:wrap; padding:12px !important; position:sticky; top:0; z-index:20; }
+    .form-header-person { min-width:0; flex:1 !important; }
+    .form-header-person > div { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .form-header-previous, .form-history { display:none !important; }
+    .form-date { width:100%; justify-content:space-between; }
+    .form-body { flex:none !important; min-height:auto !important; flex-direction:column; padding:12px !important; overflow:visible !important; }
+    .form-fields { padding:18px !important; }
+    .form-fields-heading { align-items:flex-start !important; flex-direction:column; gap:2px; }
+    .measure-row { flex-direction:column; align-items:stretch !important; gap:8px !important; }
+    .measure-label { width:100% !important; }
+    .keypad { width:100% !important; min-height:520px; }
+    .keypad-grid { min-height:350px; }
+    .form-footer { flex-direction:column; padding:12px !important; }
+    .form-footer button { width:100% !important; min-height:64px; }
+    .form-dialog { padding:12px !important; position:fixed !important; }
+    .form-dialog-card { width:100% !important; max-height:92vh; overflow-y:auto; padding:20px !important; }
+  }
 </style>
 </head>
 <body>
@@ -99,9 +157,9 @@
     <div style="position:absolute; bottom:34px; font-size:13px; color:rgba(255,255,255,0.68);">© 2026 POLMAN Bandung · Hak cipta dilindungi</div>
   </div>
   <!-- ================== LOGIN VIEW ================== -->
-  <div v-if="view === 'login'" style="flex:1; display:flex; background:#FFFFFF;">
+  <div v-if="view === 'login'" class="login-shell">
         <!-- Bagian Kiri: Form & Selector Role -->
-        <div style="width:50%; padding:50px 70px; display:flex; flex-direction:column; justify-content:center; overflow-y:auto;">
+        <div class="login-panel">
 
           <div style="display:flex; align-items:center; gap:16px; margin-bottom:28px;">
             <div style="width:48px; height:48px; background:#E9F3EC; border-radius:14px; display:flex; align-items:center; justify-content:center;">
@@ -171,7 +229,7 @@
         </div>
 
         <!-- Bagian Kanan: Art / Ilustrasi Floating 3D Icons -->
-        <div style="width:50%; background:linear-gradient(135deg, #0F6E44 0%, #0B5334 100%); position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px;">
+        <div class="login-art">
           <!-- Abstract Background Art -->
           <div style="position:absolute; inset:0; opacity:0.05; background:url('https://www.transparenttextures.com/patterns/cubes.png');"></div>
 
@@ -204,7 +262,7 @@
 
       <!-- ================== HOME VIEW (PENCATATAN LAPANGAN) ================== -->
       <div v-if="view === 'home'" style="flex:1; display:flex; flex-direction:column; background:#F6F7F5; overflow-y:auto;">
-        <header style="background:#FFFFFF; padding:20px 32px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+        <header class="home-header" style="background:#FFFFFF; padding:20px 32px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
           <div style="display:flex; align-items:center; gap:16px;">
             <div style="width:60px; height:60px; background:#E9F3EC; border-radius:18px; display:flex; align-items:center; justify-content:center;">
               <i class="ph-fill ph-scales" style="font-size:34px; color:#0F6E44;"></i>
@@ -215,7 +273,7 @@
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:14px;">
-            <div style="text-align:right; margin-right:8px;">
+            <div class="home-user" style="text-align:right; margin-right:8px;">
               <div style="font-size:17px; font-weight:800; color:#16211C;">{{ currentUser ? currentUser.name : 'Kader Posyandu' }}</div>
               <div style="font-size:14px; color:#4A5750;">{{ tanggalHariIni }}</div>
             </div>
@@ -225,11 +283,15 @@
           </div>
         </header>
 
-        <main style="padding:30px 40px 40px; display:flex; flex-direction:column; gap:24px;">
-          <section style="display:grid; grid-template-columns:1.55fr 1fr 1fr; gap:18px;">
-            <button type="button" @click="goToList('record')" class="btn-primary" style="min-height:210px; border-radius:26px; padding:30px 34px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 16px 34px rgba(15,110,68,0.18);">
-              <div style="width:62px; height:62px; background:rgba(255,255,255,0.18); border-radius:18px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-plus-circle" style="font-size:35px;"></i></div>
-              <div><div style="font-size:31px; font-weight:800; margin-bottom:6px;">Mulai Pencatatan</div><div style="font-size:16px; font-weight:500; opacity:0.9;">Isi pengukuran balita dengan cepat.</div></div>
+        <main class="home-main" style="padding:30px 40px 40px; display:flex; flex-direction:column; gap:24px;">
+          <section class="home-actions">
+            <button type="button" @click="bukaAntrean" class="btn-primary" style="min-height:210px; border-radius:26px; padding:30px 32px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 16px 34px rgba(15,110,68,0.18);">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;"><div style="width:62px; height:62px; background:rgba(255,255,255,0.18); border-radius:18px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-users-three" style="font-size:35px;"></i></div><span style="background:#FFFFFF; color:#0F6E44; padding:7px 11px; border-radius:999px; font-size:13px; font-weight:800;">{{ antreanMenunggu.length }} menunggu</span></div>
+              <div><div style="font-size:29px; font-weight:800; margin-bottom:6px;">Antrean Hari Ini</div><div style="font-size:15px; font-weight:500; opacity:0.9;">Daftarkan kehadiran, panggil, lalu ukur.</div></div>
+            </button>
+            <button type="button" @click="goToList('record')" class="btn-outline" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
+              <div style="width:58px; height:58px; background:#E9F3EC; color:#0F6E44; border-radius:17px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-plus-circle" style="font-size:31px;"></i></div>
+              <div><div style="font-size:23px; font-weight:800; color:#16211C; margin-bottom:5px;">Pencatatan Langsung</div><div style="font-size:14px; color:#4A5750;">Isi tanpa melalui antrean.</div></div>
             </button>
             <button type="button" @click="goToList('history')" class="btn-outline" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
               <div style="width:58px; height:58px; background:#E3EAF7; color:#1E4ED8; border-radius:17px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-calendar-dots" style="font-size:31px;"></i></div>
@@ -278,6 +340,56 @@
               <div style="font-size:14px; margin-top:3px;">Tablet ini difokuskan untuk pencatatan cepat dan penyimpanan data lapangan.</div>
             </div>
           </aside>
+        </main>
+      </div>
+
+      <!-- ================== SERVICE QUEUE VIEW ================== -->
+      <div v-if="view === 'queue'" style="flex:1; display:flex; flex-direction:column; background:#F6F7F5; overflow-y:auto;">
+        <header class="queue-page-header" style="background:#FFFFFF; padding:18px 28px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; gap:18px; position:sticky; top:0; z-index:10;">
+          <button @click="setView('home')" class="btn-outline" style="width:54px; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-arrow-left" style="font-size:25px;"></i></button>
+          <div style="flex:1;"><div style="font-size:12px; color:#0F6E44; font-weight:800; letter-spacing:.08em;">LAYANAN POSYANDU</div><h2 style="margin:1px 0 0; font-size:27px; font-weight:800;">Antrean Hari Ini</h2></div>
+          <div class="queue-header-user" style="text-align:right;"><div style="font-size:14px; font-weight:800;">{{ tanggalHariIni }}</div><div style="font-size:13px; color:#4A5750;">Tersimpan di perangkat Android</div></div>
+        </header>
+
+        <main class="queue-page-main" style="padding:24px 28px 38px; display:flex; flex-direction:column; gap:20px;">
+          <section class="queue-stats">
+            <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#B54708;">MENUNGGU</div><div style="font-size:31px; font-weight:800; color:#B54708;">{{ antreanMenunggu.length }}</div></div>
+            <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#1D4ED8;">DILAYANI</div><div style="font-size:31px; font-weight:800; color:#1D4ED8;">{{ antreanSedang ? 1 : 0 }}</div></div>
+            <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#14713D;">SELESAI</div><div style="font-size:31px; font-weight:800; color:#14713D;">{{ antreanSelesai.length }}</div></div>
+          </section>
+
+          <section v-if="antreanSedang" class="queue-current" style="background:linear-gradient(135deg,#0F6E44,#0B5334); color:#FFFFFF; border-radius:24px; padding:22px 24px; display:flex; gap:20px; align-items:center; box-shadow:0 14px 30px rgba(15,110,68,.18);">
+            <div style="min-width:88px; height:88px; border-radius:24px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; font-size:29px; font-weight:800;">{{ formatNomorAntrean(antreanSedang.number) }}</div>
+            <div style="flex:1;"><div style="font-size:12px; font-weight:800; opacity:.8; letter-spacing:.08em;">{{ antreanSedang.status === 'serving' ? 'SEDANG DIUKUR' : 'SILAKAN MENUJU MEJA UKUR' }}</div><div style="font-size:27px; font-weight:800; margin-top:2px;">{{ antreanSedang.name }}</div><div style="font-size:14px; opacity:.85;">{{ antreanSedang.parent }} · RT {{ antreanSedang.rt }}</div></div>
+            <button type="button" @click="mulaiLayaniAntrean(antreanSedang)" class="queue-current__button" style="min-height:54px; padding:0 20px; border-radius:14px; background:#FFFFFF; color:#0F6E44; font-size:15px; font-weight:800;"><i class="ph-bold ph-ruler" style="font-size:20px; margin-right:7px;"></i>{{ antreanSedang.status === 'serving' ? 'Lanjutkan Ukur' : 'Mulai Pengukuran' }}</button>
+          </section>
+
+          <div class="queue-layout">
+            <section class="queue-card" style="overflow:hidden;">
+              <div style="padding:19px 20px; display:flex; justify-content:space-between; align-items:center; gap:12px;"><div><h3 style="font-size:20px; margin:0; font-weight:800;">Daftar layanan</h3><div style="font-size:13px; color:#4A5750; margin-top:2px;">Urutan tersimpan meskipun aplikasi ditutup.</div></div><span style="font-size:13px; color:#4A5750; font-weight:700;">{{ antreanAktif.length }} aktif</span></div>
+              <div v-if="antreanAktif.length === 0" style="padding:44px 24px; text-align:center; border-top:1px solid #E7EAE5;"><div style="width:58px; height:58px; border-radius:18px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center; margin:0 auto 13px;"><i class="ph-bold ph-users" style="font-size:30px;"></i></div><div style="font-weight:800;">Belum ada antrean aktif</div><div style="font-size:14px; color:#4A5750; margin-top:4px;">Pilih anak pada panel tambah antrean.</div></div>
+              <div v-for="item in antreanAktif" :key="item.id" class="queue-row">
+                <div class="queue-number">{{ formatNomorAntrean(item.number) }}</div>
+                <div><div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;"><strong style="font-size:17px;">{{ item.name }}</strong><span class="queue-status" :style="gayaStatusAntrean(item.status)">{{ labelStatusAntrean(item.status) }}</span></div><div style="font-size:13px; color:#4A5750; margin-top:3px;">{{ item.parent }} · RT {{ item.rt }} · hadir {{ formatJam(item.checkedInAt) }}</div></div>
+                <div class="queue-actions">
+                  <button v-if="item.status === 'waiting'" type="button" @click="panggilAntrean(item)" class="queue-small-button" style="background:#1D4ED8; color:#FFFFFF;"><i class="ph-bold ph-megaphone"></i> Panggil</button>
+                  <button v-if="item.status === 'called' || item.status === 'serving'" type="button" @click="mulaiLayaniAntrean(item)" class="queue-small-button btn-primary">Ukur</button>
+                  <button v-if="item.status !== 'serving'" type="button" @click="lewatiAntrean(item)" class="queue-small-button btn-outline">Lewati</button>
+                  <button type="button" @click="batalkanAntrean(item)" class="queue-small-button" style="background:#FFF1F0; color:#B42318;">Batal</button>
+                </div>
+              </div>
+              <div v-if="antreanSelesai.length" style="padding:15px 20px; border-top:1px solid #E7EAE5; background:#F8FAF8; font-size:13px; color:#4A5750;"><i class="ph-fill ph-check-circle" style="color:#14713D;"></i> {{ antreanSelesai.length }} anak selesai dilayani hari ini.</div>
+            </section>
+
+            <aside class="queue-card queue-add-panel" style="padding:20px; position:sticky; top:104px;">
+              <div style="display:flex; align-items:center; gap:11px; margin-bottom:14px;"><div style="width:42px; height:42px; border-radius:12px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-user-plus" style="font-size:22px;"></i></div><div><h3 style="font-size:18px; margin:0; font-weight:800;">Tambah antrean</h3><div style="font-size:12px; color:#4A5750;">Cari nama atau NIK balita</div></div></div>
+              <div style="display:flex; align-items:center; gap:8px; border:2px solid #DCE0DA; border-radius:13px; padding:0 13px; height:50px;"><i class="ph-bold ph-magnifying-glass" style="color:#4A5750;"></i><input v-model="queueSearch" placeholder="Nama atau NIK…" style="width:100%; border:0; outline:0; background:transparent; font:inherit; font-size:14px;"></div>
+              <div style="display:flex; flex-direction:column; gap:9px; margin-top:13px; max-height:430px; overflow-y:auto;">
+                <button v-for="anak in anakUntukAntrean" :key="anak.id" type="button" @click="tambahAntrean(anak)" class="queue-child-option" :disabled="sudahDalamAntreanHariIni(anak)" :style="{opacity:sudahDalamAntreanHariIni(anak)?.6:1}"><div style="width:42px; height:42px; border-radius:12px; background:#FFFFFF; color:#0F6E44; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; flex-shrink:0;">{{ anak.inisial }}</div><div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ anak.nama }}</div><div style="font-size:12px; color:#4A5750;">RT {{ anak.rt }} · {{ anak.umurBulan }} bulan</div></div><i :class="sudahDalamAntreanHariIni(anak) ? 'ph-fill ph-check-circle' : 'ph-bold ph-plus-circle'" :style="{color:sudahDalamAntreanHariIni(anak)?'#14713D':'#0F6E44',fontSize:'21px'}"></i></button>
+                <div v-if="anakUntukAntrean.length === 0" style="text-align:center; color:#4A5750; font-size:13px; padding:20px 8px;">Tidak ada anak yang cocok.</div>
+              </div>
+            </aside>
+          </div>
         </main>
       </div>
 
@@ -374,9 +486,9 @@
       </div>
 
       <!-- ================== FORM VIEW (INPUT PENGUKURAN) ================== -->
-      <div v-if="view === 'form'" style="flex:1; display:flex; flex-direction:column; background:#EDEFEA; overflow:hidden;">
+      <div v-if="view === 'form'" class="form-shell" style="flex:1; display:flex; flex-direction:column; background:#EDEFEA; overflow:hidden;">
 
-        <header style="flex-shrink:0;display:flex;align-items:center;gap:10px;padding:14px 16px;background:#FFFFFF;border-bottom:1px solid #DCE0DA">
+        <header class="form-header" style="flex-shrink:0;display:flex;align-items:center;gap:10px;padding:14px 16px;background:#FFFFFF;border-bottom:1px solid #DCE0DA">
           <button @click="kembaliDariForm" class="btn-outline" style="width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
             <i class="ph-bold ph-arrow-left" style="font-size:24px;"></i>
           </button>
@@ -384,12 +496,12 @@
           <div style="width:52px;height:52px;flex-shrink:0;border-radius:14px;background:#E9F3EC;color:#0F6E44;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800">
             {{ activeAnak.inisial }}
           </div>
-          <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+          <div class="form-header-person" style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
             <div style="font-size:21px;font-weight:800;letter-spacing:-0.01em;white-space:nowrap">{{ activeAnak.nama }}</div>
             <div style="font-size:14px;color:#4A5750;white-space:nowrap">{{ activeAnak.umurBulan }} bulan &nbsp;·&nbsp; {{ activeAnak.namaOrtu }} &nbsp;·&nbsp; RT {{ activeAnak.rt }}</div>
           </div>
-          <div style="width:1px;height:44px;background:#DCE0DA;flex-shrink:0;margin:0 10px"></div>
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <div class="form-header-previous" style="width:1px;height:44px;background:#DCE0DA;flex-shrink:0;margin:0 10px"></div>
+          <div class="form-header-previous" style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <div style="font-size:13px;font-weight:600;color:#4A5750">Bulan lalu</div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:16px;font-weight:700;white-space:nowrap">
@@ -399,24 +511,24 @@
           </div>
           <div style="flex:1"></div>
 
-          <label style="display:flex;align-items:center;gap:8px;background:#F6F7F5;border:1px solid #DCE0DA;border-radius:12px;padding:7px 12px;font-size:14px;font-weight:700;color:#4A5750;">
+          <label class="form-date" style="display:flex;align-items:center;gap:8px;background:#F6F7F5;border:1px solid #DCE0DA;border-radius:12px;padding:7px 12px;font-size:14px;font-weight:700;color:#4A5750;">
             Tanggal ukur
             <input type="date" v-model="tanggalUkur" :max="tanggalHariIniISO" style="border:0;background:transparent;font:inherit;font-weight:800;color:#16211C;outline:none;">
           </label>
           <span v-if="isEditingRecord" style="padding:8px 12px;border-radius:10px;background:#FEF0C7;color:#B54708;font-size:13px;font-weight:800;white-space:nowrap;">Mode koreksi</span>
-          <button type="button" @click="bukaRiwayatDariForm" class="btn-outline" style="height:52px; padding:0 15px; border-radius:12px; font-size:15px; font-weight:800; color:#1E4ED8; border-color:#B2CCFF;"><i class="ph-bold ph-calendar-dots"></i> Riwayat</button>
+          <button type="button" @click="bukaRiwayatDariForm" class="btn-outline form-history" style="height:52px; padding:0 15px; border-radius:12px; font-size:15px; font-weight:800; color:#1E4ED8; border-color:#B2CCFF;"><i class="ph-bold ph-calendar-dots"></i> Riwayat</button>
         </header>
 
-        <div style="flex:1;min-height:0;display:flex;gap:20px;padding:20px 28px">
-          <section style="flex:1;min-width:0;background:#FFFFFF;border:1px solid #DCE0DA;border-radius:16px;padding:22px 26px;display:flex;flex-direction:column;gap:16px">
-            <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <div class="form-body" style="flex:1;min-height:0;display:flex;gap:20px;padding:20px 28px">
+          <section class="form-fields" style="flex:1;min-width:0;background:#FFFFFF;border:1px solid #DCE0DA;border-radius:16px;padding:22px 26px;display:flex;flex-direction:column;gap:16px">
+            <div class="form-fields-heading" style="display:flex;align-items:baseline;justify-content:space-between">
               <h2 style="margin:0;font-size:21px;font-weight:800">Pengukuran hari ini</h2>
               <span style="font-size:16px;color:#4A5750">Sentuh kolom, lalu ketik di keypad</span>
             </div>
 
             <!-- Input BB -->
-            <button type="button" @click="aktif = 'bb'" style="display:flex;align-items:center;gap:20px;padding:0;background:transparent;border:0;text-align:left;width:100%">
-              <span style="width:250px;flex-shrink:0;display:flex;flex-direction:column;gap:2px">
+            <button type="button" @click="aktif = 'bb'" class="measure-row" style="display:flex;align-items:center;gap:20px;padding:0;background:transparent;border:0;text-align:left;width:100%">
+              <span class="measure-label" style="width:250px;flex-shrink:0;display:flex;flex-direction:column;gap:2px">
                 <span style="font-size:20px;font-weight:700">Berat Badan</span>
                 <span style="font-size:16px;color:#4A5750">Timbangan digital</span>
               </span>
@@ -427,8 +539,8 @@
             </button>
 
             <!-- Input PB/TB -->
-            <button type="button" @click="aktif = 'pb'" style="display:flex;align-items:center;gap:20px;padding:0;background:transparent;border:0;text-align:left;width:100%">
-              <span style="width:250px;flex-shrink:0;display:flex;flex-direction:column;gap:6px">
+            <button type="button" @click="aktif = 'pb'" class="measure-row" style="display:flex;align-items:center;gap:20px;padding:0;background:transparent;border:0;text-align:left;width:100%">
+              <span class="measure-label" style="width:250px;flex-shrink:0;display:flex;flex-direction:column;gap:6px">
                 <span style="font-size:20px;font-weight:700">{{ metode === 'berdiri' ? 'Tinggi Badan' : 'Panjang Badan' }}</span>
                 <span style="display:inline-flex;align-self:flex-start;border:1px solid #DCE0DA;border-radius:10px;overflow:hidden">
                   <span @click.stop="metode = 'terlentang'" :style="{ background: metode === 'terlentang' ? '#16211C' : '#FFFFFF', color: metode === 'terlentang' ? '#FFFFFF' : '#4A5750' }" style="padding:6px 12px;font-size:15px;font-weight:700;">Terlentang</span>
@@ -447,8 +559,8 @@
             </div>
 
             <!-- Input LILA -->
-            <button type="button" @click="aktif = 'lila'" style="display:flex;align-items:center;gap:20px;padding:0;background:transparent;border:0;text-align:left;width:100%">
-              <span style="width:250px;flex-shrink:0;display:flex;flex-direction:column;gap:2px">
+            <button type="button" @click="aktif = 'lila'" class="measure-row" style="display:flex;align-items:center;gap:20px;padding:0;background:transparent;border:0;text-align:left;width:100%">
+              <span class="measure-label" style="width:250px;flex-shrink:0;display:flex;flex-direction:column;gap:2px">
                 <span style="font-size:20px;font-weight:700">LILA</span>
                 <span style="font-size:16px;color:#4A5750">Lingkar lengan atas</span>
               </span>
@@ -459,8 +571,8 @@
             </button>
 
             <!-- Input LIKA -->
-            <button type="button" @click="aktif = 'lika'" style="display:flex;align-items:center;gap:20px;padding:0;background:transparent;border:0;text-align:left;width:100%">
-              <span style="width:250px;flex-shrink:0;display:flex;flex-direction:column;gap:2px">
+            <button type="button" @click="aktif = 'lika'" class="measure-row" style="display:flex;align-items:center;gap:20px;padding:0;background:transparent;border:0;text-align:left;width:100%">
+              <span class="measure-label" style="width:250px;flex-shrink:0;display:flex;flex-direction:column;gap:2px">
                 <span style="font-size:20px;font-weight:700">LIKA</span>
                 <span style="font-size:16px;color:#4A5750">Lingkar kepala</span>
               </span>
@@ -472,12 +584,12 @@
           </section>
 
           <!-- Keypad -->
-          <section style="width:372px;flex-shrink:0;background:#FFFFFF;border:1px solid #DCE0DA;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <section class="keypad" style="width:372px;flex-shrink:0;background:#FFFFFF;border:1px solid #DCE0DA;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
             <div style="display:flex;flex-direction:column;gap:2px;padding:0 4px">
               <span style="font-size:15px;font-weight:600;color:#4A5750">Sedang mengisi</span>
               <span style="font-size:20px;font-weight:800">{{ aktifLabel }}</span>
             </div>
-            <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:10px">
+            <div class="keypad-grid" style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:10px">
               <button v-for="num in ['1','2','3','4','5','6','7','8','9']" :key="num" type="button" @click="ketik(num)" style="border:1px solid #DCE0DA;border-radius:12px;background:#F6F7F5;font-size:30px;font-weight:700;color:#16211C" onmouseover="this.style.background='#E9EDE7'" onmouseout="this.style.background='#F6F7F5'">{{ num }}</button>
               <button type="button" @click="ketik(',')" style="border:1px solid #DCE0DA;border-radius:12px;background:#F6F7F5;font-size:30px;font-weight:700;color:#16211C" onmouseover="this.style.background='#E9EDE7'" onmouseout="this.style.background='#F6F7F5'">,</button>
               <button type="button" @click="ketik('0')" style="border:1px solid #DCE0DA;border-radius:12px;background:#F6F7F5;font-size:30px;font-weight:700;color:#16211C" onmouseover="this.style.background='#E9EDE7'" onmouseout="this.style.background='#F6F7F5'">0</button>
@@ -487,7 +599,7 @@
           </section>
         </div>
 
-        <div style="flex-shrink:0;display:flex;align-items:stretch;gap:14px;padding:16px 28px;background:#FFFFFF;border-top:1px solid #DCE0DA">
+        <div class="form-footer" style="flex-shrink:0;display:flex;align-items:stretch;gap:14px;padding:16px 28px;background:#FFFFFF;border-top:1px solid #DCE0DA">
           <div style="flex:1; display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; background:#E9F3EC; color:#0F6E44;">
             <i class="ph-bold ph-shield-check" style="font-size:25px;"></i>
             <div>
@@ -498,8 +610,8 @@
           <button type="button" @click="siapkanKonfirmasiSimpan" :disabled="isSaving" class="btn-primary" style="width:268px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:12px;border-radius:12px;font-size:20px;font-weight:800"><i class="ph-bold ph-check" style="font-size:24px"></i>{{ isEditingRecord ? 'Tinjau Koreksi' : 'Simpan' }}</button>
         </div>
 
-        <div v-if="bukaDialog" style="position:absolute;inset:0;background:rgba(22,33,28,0.55);display:flex;align-items:center;justify-content:center;padding:40px;z-index:100;">
-          <div style="width:660px;background:#FFFFFF;border-radius:18px;padding:28px 30px;display:flex;flex-direction:column;gap:18px;box-shadow:0 24px 60px rgba(22,33,28,0.3)">
+        <div v-if="bukaDialog" class="form-dialog" style="position:absolute;inset:0;background:rgba(22,33,28,0.55);display:flex;align-items:center;justify-content:center;padding:40px;z-index:100;">
+          <div class="form-dialog-card" style="width:660px;background:#FFFFFF;border-radius:18px;padding:28px 30px;display:flex;flex-direction:column;gap:18px;box-shadow:0 24px 60px rgba(22,33,28,0.3)">
             <div style="display:flex;flex-direction:column;gap:4px">
               <h3 style="margin:0;font-size:26px;font-weight:800">Periksa dulu sebelum disimpan</h3>
               <p style="margin:0;font-size:18px;color:#4A5750">{{ activeAnak.nama }}, {{ activeAnak.umurBulan }} bulan · {{ tanggalUkur }}. Data langsung diamankan di penyimpanan Android.</p>
@@ -661,6 +773,13 @@
       const savedUser = JSON.parse(localStorage.getItem('SIMPATIK_CURRENT_USER') || 'null');
       const savedSession = localStorage.getItem('SIMPATIK_SESSION');
       const initialView = (savedUser && savedSession) ? 'home' : 'login';
+      let initialQueue = [];
+      try {
+        const savedQueue = JSON.parse(localStorage.getItem('SIMPATIK_SERVICE_QUEUE') || '[]');
+        if (Array.isArray(savedQueue)) initialQueue = savedQueue;
+      } catch (error) {
+        console.warn('Gagal membaca antrean lokal:', error);
+      }
 
       return {
         view: initialView,
@@ -709,7 +828,7 @@
             },
             lastSyncTime: 'Belum pernah sinkronisasi'
           };
-        })(), // Alur aktif: 'login', 'home', 'register', 'list', 'history', 'form'
+        })(), // Alur aktif: 'login', 'home', 'queue', 'register', 'list', 'history', 'form'
 
         // Data Login
         loginData: { username: '', password: '' },
@@ -726,6 +845,11 @@
         daftarAnak: initialAnak,
         searchQuery: '',
         activeAnak: null,
+
+        // Antrean layanan harian (offline-first)
+        queueEntries: initialQueue,
+        queueSearch: '',
+        activeQueueId: null,
 
         // State Form Pengukuran
         formVals: { bb: '', pb: '', lila: '', lika: '' },
@@ -762,6 +886,29 @@
       },
       totalPendingCount() {
         return this.pendingSyncCount + this.daftarAnak.filter(anak => anak.syncStatus === 'pending').length;
+      },
+      antreanHariIni() {
+        return this.queueEntries.filter(item => item.date === this.tanggalHariIniISO);
+      },
+      antreanAktif() {
+        return this.antreanHariIni
+          .filter(item => ['waiting', 'called', 'serving'].includes(item.status))
+          .sort((a, b) => (a.sortOrder || a.number) - (b.sortOrder || b.number));
+      },
+      antreanMenunggu() {
+        return this.antreanAktif.filter(item => item.status === 'waiting');
+      },
+      antreanSedang() {
+        return this.antreanAktif.find(item => item.status === 'serving') || this.antreanAktif.find(item => item.status === 'called') || null;
+      },
+      antreanSelesai() {
+        return this.antreanHariIni.filter(item => item.status === 'done').sort((a, b) => (a.completedAt || '').localeCompare(b.completedAt || ''));
+      },
+      anakUntukAntrean() {
+        const q = String(this.queueSearch || '').trim().toLowerCase();
+        return this.daftarAnak
+          .filter(anak => !q || anak.nama.toLowerCase().includes(q) || String(anak.nik || anak.id || '').includes(q))
+          .slice(0, 12);
       },
       filteredAnak() {
         if (!this.searchQuery) return this.daftarAnak;
@@ -884,6 +1031,10 @@
           this.setView('home');
           return 'handled';
         }
+        if (this.view === 'queue') {
+          this.setView('home');
+          return 'handled';
+        }
         // Beranda dan login adalah akar aplikasi; native menangani double-press exit.
         return 'unhandled';
       },
@@ -897,6 +1048,152 @@
       },
       simpanRegistryConfig() {
         localStorage.setItem('SIMPATIK_REGISTRY_CONFIG', JSON.stringify(this.registryConfig));
+      },
+      persistAntrean() {
+        const serialized = JSON.stringify(this.queueEntries);
+        localStorage.setItem('SIMPATIK_SERVICE_QUEUE', serialized);
+        try {
+          if (window.AndroidBridge && typeof window.AndroidBridge.simpanAntrean === 'function') {
+            const result = JSON.parse(window.AndroidBridge.simpanAntrean(serialized));
+            if (!result.ok) throw new Error(result.error || 'Database Android menolak antrean');
+          }
+        } catch (error) {
+          console.warn('Antrean tersimpan di cache, tetapi SQLite belum diperbarui:', error);
+        }
+      },
+      pulihkanAntreanAndroid() {
+        try {
+          if (!window.AndroidBridge || typeof window.AndroidBridge.ambilAntrean !== 'function') return false;
+          const rows = JSON.parse(window.AndroidBridge.ambilAntrean());
+          if (!Array.isArray(rows) || rows.length === 0) return false;
+          this.queueEntries = rows;
+          localStorage.setItem('SIMPATIK_SERVICE_QUEUE', JSON.stringify(rows));
+          return true;
+        } catch (error) {
+          console.warn('Gagal memulihkan antrean Android:', error);
+          return false;
+        }
+      },
+      bukaAntrean() {
+        this.queueSearch = '';
+        this.setView('queue');
+      },
+      identitasAnak(anak) {
+        return String((anak && (anak.nik || anak.id)) || '').trim();
+      },
+      sudahDalamAntreanHariIni(anak) {
+        const identity = this.identitasAnak(anak);
+        return this.antreanHariIni.some(item => item.childIdentity === identity && item.status !== 'cancelled');
+      },
+      tambahAntrean(anak) {
+        const identity = this.identitasAnak(anak);
+        if (!identity) {
+          alert('[Identitas Belum Lengkap]\n\nAnak tidak dapat dimasukkan ke antrean sebelum memiliki NIK atau identitas lokal.');
+          return false;
+        }
+        const existing = this.antreanHariIni.find(item => item.childIdentity === identity && item.status !== 'cancelled');
+        if (existing) {
+          alert(`[Antrean Sudah Ada]\n\n${anak.nama} sudah terdaftar sebagai ${this.formatNomorAntrean(existing.number)} dengan status ${this.labelStatusAntrean(existing.status).toLowerCase()}.`);
+          return false;
+        }
+        const cancelled = this.antreanHariIni.find(item => item.childIdentity === identity && item.status === 'cancelled');
+        const maxNumber = this.antreanHariIni.reduce((max, item) => Math.max(max, Number(item.number) || 0), 0);
+        const maxOrder = this.antreanHariIni.reduce((max, item) => Math.max(max, Number(item.sortOrder) || Number(item.number) || 0), 0);
+        const now = new Date().toISOString();
+        if (cancelled) {
+          cancelled.status = 'waiting';
+          cancelled.checkedInAt = now;
+          cancelled.calledAt = null;
+          cancelled.completedAt = null;
+          cancelled.sortOrder = maxOrder + 1;
+        } else {
+          this.queueEntries.push({
+            id: `antrean_${this.tanggalHariIniISO.replace(/-/g, '')}_${identity.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
+            date: this.tanggalHariIniISO,
+            number: maxNumber + 1,
+            sortOrder: maxOrder + 1,
+            childIdentity: identity,
+            name: anak.nama,
+            initials: anak.inisial,
+            parent: anak.namaOrtu || 'Orang tua belum dicatat',
+            rt: anak.rt || '-',
+            status: 'waiting',
+            checkedInAt: now,
+            calledAt: null,
+            completedAt: null
+          });
+        }
+        this.persistAntrean();
+        this.queueSearch = '';
+        return true;
+      },
+      panggilAntrean(item) {
+        this.antreanAktif.forEach(entry => {
+          if (entry.id !== item.id && ['called', 'serving'].includes(entry.status)) entry.status = 'waiting';
+        });
+        item.status = 'called';
+        item.calledAt = new Date().toISOString();
+        this.activeQueueId = item.id;
+        this.persistAntrean();
+      },
+      lewatiAntrean(item) {
+        const maxOrder = this.antreanHariIni.reduce((max, entry) => Math.max(max, Number(entry.sortOrder) || Number(entry.number) || 0), 0);
+        item.status = 'waiting';
+        item.sortOrder = maxOrder + 1;
+        item.calledAt = null;
+        if (this.activeQueueId === item.id) this.activeQueueId = null;
+        this.persistAntrean();
+      },
+      batalkanAntrean(item) {
+        item.status = 'cancelled';
+        item.cancelledAt = new Date().toISOString();
+        if (this.activeQueueId === item.id) this.activeQueueId = null;
+        this.persistAntrean();
+      },
+      mulaiLayaniAntrean(item) {
+        const anak = this.daftarAnak.find(candidate => this.identitasAnak(candidate) === item.childIdentity);
+        if (!anak) {
+          alert('[Data Anak Tidak Ditemukan]\n\nMuat ulang daftar sasaran sebelum memulai pengukuran.');
+          return false;
+        }
+        this.antreanAktif.forEach(entry => {
+          if (entry.id !== item.id && ['called', 'serving'].includes(entry.status)) entry.status = 'waiting';
+        });
+        item.status = 'serving';
+        item.calledAt = item.calledAt || new Date().toISOString();
+        this.activeQueueId = item.id;
+        this.persistAntrean();
+        this.bukaFormPengukuran(anak, this.tanggalHariIniISO);
+        this.previousViewBeforeForm = 'queue';
+        return true;
+      },
+      selesaikanAntreanAktif(identity) {
+        const item = this.antreanHariIni.find(entry => entry.childIdentity === identity && ['called', 'serving'].includes(entry.status));
+        if (!item) return false;
+        item.status = 'done';
+        item.completedAt = new Date().toISOString();
+        this.activeQueueId = null;
+        this.persistAntrean();
+        return true;
+      },
+      formatNomorAntrean(number) {
+        return 'A' + String(number || 0).padStart(2, '0');
+      },
+      formatJam(value) {
+        if (!value) return '--.--';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? '--.--' : date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+      },
+      labelStatusAntrean(status) {
+        return ({ waiting: 'Menunggu', called: 'Dipanggil', serving: 'Dilayani', done: 'Selesai', cancelled: 'Dibatalkan' })[status] || status;
+      },
+      gayaStatusAntrean(status) {
+        const styles = {
+          waiting: { background: '#FFF3D6', color: '#B54708' },
+          called: { background: '#E3EAF7', color: '#1D4ED8' },
+          serving: { background: '#E9F3EC', color: '#14713D' }
+        };
+        return styles[status] || { background: '#F1F3F1', color: '#4A5750' };
       },
       persistDaftarAnak() {
         const serialized = JSON.stringify(this.daftarAnak);
@@ -1402,9 +1699,12 @@
             revision: nativeResult.revision || 1
           };
           this.persistDaftarAnak();
+          if (this.previousViewBeforeForm === 'queue') {
+            this.selesaikanAntreanAktif(String(this.activeAnak.nik || this.activeAnak.id || '').trim());
+          }
           this.editingOriginal = null;
           this.bukaDialog = false;
-          this.setView(this.previousViewBeforeForm === 'history' ? 'history' : 'list');
+          this.setView(this.previousViewBeforeForm === 'history' ? 'history' : (this.previousViewBeforeForm === 'queue' ? 'queue' : 'list'));
           if (window.AndroidBridge && typeof window.AndroidBridge.tampilkanPesan === 'function') {
             window.AndroidBridge.tampilkanPesan(nativeResult.action === 'updated' ? 'Koreksi tersimpan di Android' : 'Pengukuran tersimpan di Android');
           }
@@ -1432,6 +1732,7 @@
 
       // SQLite Android menjadi salinan tahan lama; localStorage tetap menjadi cache UI cepat.
       if (!this.pulihkanDaftarAnakAndroid()) this.persistDaftarAnak();
+      if (!this.pulihkanAntreanAndroid()) this.persistAntrean();
 
       // Periksa Sesi Permanen Pengguna
       try {

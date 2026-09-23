@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.5.0 — Antrean Layanan Android
+
+### Ditambahkan
+
+- Antrean layanan harian pada beranda sebagai alur utama kegiatan Posyandu.
+- Nomor antrean otomatis, status menunggu, dipanggil, dilayani, selesai, dan dibatalkan.
+- Aksi panggil, lewati, batal, dan mulai pengukuran dengan satu layanan aktif pada satu waktu.
+- Pencegahan satu anak masuk antrean lebih dari sekali pada hari yang sama.
+- Penyelesaian antrean otomatis setelah pengukuran berhasil disimpan.
+- Penyimpanan antrean ke SQLite Android dan pemulihan setelah aplikasi ditutup.
+- Migrasi database Android versi 1 ke versi 2 tanpa menghapus data anak atau pengukuran lama.
+
+### Disempurnakan
+
+- Beranda memprioritaskan antrean, tetapi pencatatan langsung tetap tersedia.
+- Login, antrean, dan formulir pengukuran menyesuaikan layar tablet serta ponsel portrait.
+- Antrean tetap bersifat operasional lokal; pengukuran yang selesai mengikuti mekanisme sinkronisasi yang sudah ada.
+
 ## 1.4.0 — Riwayat dan Administrasi Lapangan
 
 ### Ditambahkan

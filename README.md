@@ -1,6 +1,6 @@
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
-Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.6.2 mencakup pemindaian kartu sasaran, skrining awal, antrean layanan harian, pencarian anak yang mudah dibaca, pendaftaran anak, pengukuran, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
+Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.7.0 mencakup pemindaian kartu sasaran, skrining awal, antrean layanan harian, catatan pendaftaran, pencatatan berbasis antrean, pendaftaran anak, pengukuran, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
 
 ## Ruang lingkup tablet
 
@@ -11,8 +11,11 @@ Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.6.
 - Mendaftarkan kehadiran anak ke antrean harian dan mencegah antrean ganda.
 - Memindai QR kartu sasaran dari Portal SIMPATIK memakai kamera perangkat.
 - Menampilkan kekurangan identitas, Buku KIA, IMD, dan imunisasi sebelum check-in.
-- Memanggil, melewati, membatalkan, dan menyelesaikan giliran dari menu antrean.
+- Menyimpan catatan opsional untuk setiap anak saat masuk antrean.
+- Memanggil, melewati, dan membatalkan giliran dari menu antrean.
 - Memisahkan antrean layanan dari formulir pencatatan pengukuran.
+- Menampilkan pilihan **Dari Antrean** dan **Semua Balita** di menu Pencatatan.
+- Menandai anak yang dipanggil sebagai **Dalam Proses** dan menyelesaikan antrean setelah hasil ukur tersimpan.
 - Menyimpan antrean ke SQLite Android agar tetap tersedia setelah aplikasi ditutup.
 - Mengisi tanggal, BB, PB/TB, LILA, LIKA, dan cara ukur.
 - Memeriksa kelengkapan serta rentang angka sebelum menyimpan.
@@ -39,13 +42,14 @@ Tablet hanya menampilkan pengukuran sebelumnya secara ringkas untuk membantu kad
 
 ## Alur data
 
-1. Kader menambahkan anak yang hadir, memanggil, dan menyelesaikan gilirannya melalui **Antrean Hari Ini**.
-2. Kader kembali ke beranda lalu membuka **Pencatatan Langsung** untuk memilih anak dan memasukkan hasil ukur.
-3. Data divalidasi lalu disimpan atomik di SQLite Android.
-4. Satu anak hanya memiliki satu catatan untuk satu periode; penyimpanan ulang memperbarui catatan yang sama.
-5. Data masuk antrean sinkronisasi.
-6. Saat jaringan tersedia, aplikasi melakukan upsert ke server.
-7. Website mengolah data menjadi status gizi, KMS, analitik, dan laporan.
+1. Kader menambahkan anak beserta catatan yang diperlukan melalui **Antrean Hari Ini**.
+2. Kader menekan **Panggil** sehingga status anak menjadi **Dalam Proses**.
+3. Petugas pencatatan membuka **Pencatatan Langsung**; tab **Dari Antrean** tampil pertama dan membawa catatan pendaftaran.
+4. Data divalidasi lalu disimpan atomik di SQLite Android; antrean anak otomatis menjadi **Selesai**.
+5. Satu anak hanya memiliki satu catatan untuk satu periode; penyimpanan ulang memperbarui catatan yang sama.
+6. Data masuk antrean sinkronisasi.
+7. Saat jaringan tersedia, aplikasi melakukan upsert ke server.
+8. Website mengolah data menjadi status gizi, KMS, analitik, dan laporan.
 
 ## Build dan pengujian
 

@@ -12,8 +12,9 @@ Antrean disimpan di SQLite Android. Urutan tetap tersedia setelah aplikasi ditut
 
 1. Gunakan kolom **Tambah antrean** di sisi kanan pada tablet atau bagian bawah pada ponsel.
 2. Cari anak menggunakan nama atau NIK.
-3. Tekan anak yang datang ke Posyandu.
-4. Aplikasi memberikan nomor `A01`, `A02`, dan seterusnya.
+3. Tambahkan catatan untuk petugas pencatatan bila diperlukan.
+4. Tekan anak yang datang ke Posyandu.
+5. Aplikasi memberikan nomor `A01`, `A02`, dan seterusnya.
 
 Satu anak hanya dapat memiliki satu antrean aktif atau selesai pada hari yang sama. Anak yang sudah masuk ditandai dan tidak dapat ditambahkan kembali.
 
@@ -26,14 +27,15 @@ Satu anak hanya dapat memiliki satu antrean aktif atau selesai pada hari yang sa
 
 ## Menyelesaikan giliran
 
-1. Pada anak yang dipanggil, tekan **Tandai Selesai** setelah layanan antrean selesai.
-2. Antrean anak berubah menjadi **Selesai** dan giliran berikutnya dapat dipanggil.
+1. Tekan **Panggil** pada anak yang akan dilayani. Statusnya berubah menjadi **Dalam Proses**.
+2. Petugas pencatatan membuka tab **Dari Antrean** pada menu Pencatatan.
+3. Setelah hasil ukur berhasil disimpan, antrean anak berubah menjadi **Selesai**.
 
 Halaman antrean tidak digunakan untuk memasukkan hasil pengukuran.
 
 ## Pencatatan hasil ukur
 
-Gunakan **Pencatatan Langsung** pada beranda untuk memilih anak dan mengisi BB, PB/TB, LILA, serta LIKA. Koreksi tetap dilakukan melalui **Riwayat Bulanan**.
+Menu **Pencatatan Langsung** membuka dua pilihan. **Dari Antrean** tampil pertama dan membawa status serta catatan pendaftaran. **Semua Balita** digunakan untuk pencatatan di luar antrean. Koreksi tetap dilakukan melalui **Riwayat Bulanan**.
 
 ## Saat jaringan terputus
 

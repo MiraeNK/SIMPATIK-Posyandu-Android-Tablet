@@ -2,6 +2,24 @@
 
 Terakhir diperbarui: 24 September 2026
 
+### Verifikasi versi 1.7.0
+
+- [x] Menambahkan tab Dari Antrean sebagai daftar awal pada Pencatatan.
+- [x] Menambahkan tab Semua Balita untuk pencatatan di luar antrean.
+- [x] Menampilkan status Dalam Proses untuk anak yang telah dipanggil.
+- [x] Membatasi pembukaan formulir antrean hanya untuk anak yang sudah dipanggil.
+- [x] Menyimpan dan menampilkan catatan pendaftaran pada seluruh alur pelayanan.
+- [x] Menyelesaikan antrean setelah penyimpanan hasil ukur berhasil.
+- [x] Menjalankan 18 pengujian regresi JavaScript; seluruhnya lulus.
+- [x] Menjalankan unit test Gradle, Android lint, dan assembleDebug; seluruhnya lulus.
+- [x] Uji Pixel Tablet: dua tab Pencatatan, status Dalam Proses, dan panel catatan pada formulir tampil dengan benar.
+
+APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.7.0_pencatatan-antrean.apk`
+
+SHA-256: `22239BD75E715B70343048E303B3FA3A2F75F86DCB88DB9708DA5E04F31BE38B`
+
+Ukuran: 13.857.202 byte.
+
 ### Verifikasi versi 1.6.2
 
 - [x] Memisahkan antrean layanan dari formulir pencatatan.

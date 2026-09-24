@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.0 — Pencatatan Berbasis Antrean
+
+- Menambahkan tab **Dari Antrean** sebagai tampilan pertama pada menu Pencatatan.
+- Menambahkan tab **Semua Balita** untuk pencatatan yang tidak berasal dari antrean hari itu.
+- Mengubah status anak yang dipanggil menjadi **Dalam Proses** pada Antrean dan Pencatatan.
+- Mencegah anak berstatus Menunggu dibuka oleh petugas pencatatan sebelum dipanggil.
+- Menyediakan catatan opsional per anak saat pendaftaran antrean melalui scan maupun pencarian manual.
+- Menampilkan catatan pendaftaran pada daftar antrean, daftar Pencatatan, dan formulir hasil ukur.
+- Menandai antrean **Selesai** hanya setelah hasil ukur berhasil disimpan di Android.
+- Versi aplikasi menjadi `versionCode 9` / `versionName 1.7.0`.
+
 ## 1.6.2 — Pemisahan Antrean dan Pencatatan
 
 - Menghapus tombol masuk ke formulir pengukuran dari halaman antrean.

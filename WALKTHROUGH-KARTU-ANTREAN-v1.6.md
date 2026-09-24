@@ -12,24 +12,27 @@
 2. Arahkan kamera ke QR pada kartu sasaran yang dicetak dari web.
 3. Pastikan nama, wali, dan RT sesuai dengan keluarga yang hadir.
 4. Periksa daftar **Skrining awal**. Item yang tampil adalah data yang masih kurang atau perlu dikonfirmasi, termasuk imunisasi.
-5. Tekan **Konfirmasi masuk antrean**. Anak yang sudah berada dalam antrean hari itu tidak dapat ditambahkan kembali.
+5. Isi **Catatan untuk petugas pencatatan** bila ada informasi yang perlu diperiksa saat pengukuran.
+6. Tekan **Konfirmasi masuk antrean**. Anak yang sudah berada dalam antrean hari itu tidak dapat ditambahkan kembali.
 
 Jika kartu belum ditemukan, sinkronkan daftar sasaran lalu pindai ulang. Untuk pencarian manual, ketik sedikitnya dua huruf nama atau angka NIK. Hasil tampil sebagai kartu besar; tekan **Tambahkan** pada anak yang sesuai.
 
 ## Menyelesaikan antrean
 
 1. Tekan **Panggil** saat giliran anak tiba.
-2. Setelah layanan antrean selesai, tekan **Tandai Selesai**.
-3. Halaman antrean tidak membuka formulir pengukuran.
+2. Status anak berubah menjadi **Dalam Proses**.
+3. Halaman antrean tidak membuka formulir pengukuran dan tidak menyelesaikan antrean secara manual.
 
 ## Pencatatan hasil ukur
 
 1. Kembali ke beranda dan pilih **Pencatatan Langsung**.
-2. Cari dan pilih anak yang akan dicatat.
-3. Isi BB, TB/PB, LILA, dan LIKA.
-4. Bila angka di luar rentang, aplikasi meminta kader mengulang pengukuran.
-5. Bila perubahan BB atau TB/PB jauh dari catatan sebelumnya, dialog tinjauan menampilkan peringatan merah. Ulangi pengukuran sebelum memilih simpan.
-6. Setelah tersimpan, data aman di SQLite Android sebelum dikirim ke server.
+2. Tab **Dari Antrean** terbuka pertama. Anak yang dipanggil memiliki status **Dalam Proses**.
+3. Pilih anak tersebut. Catatan pendaftaran tampil di atas formulir.
+4. Gunakan tab **Semua Balita** bila pencatatan tidak berasal dari antrean.
+5. Isi BB, TB/PB, LILA, dan LIKA.
+6. Bila angka di luar rentang, aplikasi meminta kader mengulang pengukuran.
+7. Bila perubahan BB atau TB/PB jauh dari catatan sebelumnya, dialog tinjauan menampilkan peringatan merah. Ulangi pengukuran sebelum memilih simpan.
+8. Setelah tersimpan, data aman di SQLite Android dan antrean otomatis berubah menjadi **Selesai**.
 
 ## Kode kartu
 

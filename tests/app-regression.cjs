@@ -240,7 +240,7 @@ test('monthly history opens latest record and correction returns to history', ()
   assert.equal(app.previousViewBeforeForm, 'history');
 });
 
-test('daily service queue stays separate from measurement flow', () => {
+test('recording defaults to queue, carries notes, and completes only after save', async () => {
   const h = harness();
   h.app.registryConfig.activeProvider = 'json_offline';
   const first = { id: '3273010101220001', nik: '3273010101220001', nama: 'Anak Satu', inisial: 'AS', umurBulan: 20, namaOrtu: 'Ibu Satu', rt: '01', tglLahir: '2025-01-01', riwayat: {} };
@@ -248,18 +248,37 @@ test('daily service queue stays separate from measurement flow', () => {
   h.app.daftarAnak = [first, second];
   h.app.queueEntries = [];
   h.app.view = 'queue';
+  h.app.queueNotes[first.nik] = 'Batuk dua hari, mohon dicek.';
   assert.equal(h.app.tambahAntrean(first), true);
   assert.equal(h.app.tambahAntrean(second), true);
   assert.equal(h.app.antreanAktif.length, 2);
   assert.equal(h.app.formatNomorAntrean(h.app.antreanAktif[0].number), 'A01');
+  assert.equal(h.app.antreanAktif[0].note, 'Batuk dua hari, mohon dicek.');
   assert.equal(h.app.tambahAntrean(first), false);
   assert.match(h.alerts.pop(), /Antrean Sudah Ada/);
   h.app.panggilAntrean(h.app.antreanAktif[0]);
   h.app.panggilAntrean(h.app.antreanAktif[1]);
   assert.equal(h.app.antreanAktif[0].status, 'waiting');
   assert.equal(h.app.antreanSedang.childIdentity, second.nik);
-  h.app.selesaikanAntrean(h.app.antreanSedang);
-  assert.equal(h.app.view, 'queue');
+  assert.equal(h.app.labelStatusAntrean(h.app.antreanSedang.status), 'Dalam Proses');
+  h.app.goToList('record');
+  assert.equal(h.app.recordListTab, 'queue');
+  assert.equal(h.app.filteredAnak.length, 2);
+  assert.equal(h.app.pilihAnak(h.app.filteredAnak.find(child => child._queueItem.status === 'waiting')), false);
+  assert.match(h.alerts.pop(), /Belum Dipanggil/);
+  const calledChild = h.app.filteredAnak.find(child => child._queueItem.status === 'called');
+  h.app.pilihAnak(calledChild);
+  assert.equal(h.app.view, 'form');
+  assert.equal(h.app.activeQueueForForm.childIdentity, second.nik);
+  h.context.window.AndroidBridge = {
+    simpanDataPengukuran: () => JSON.stringify({ ok: true, action: 'inserted', revision: 1 }),
+    simpanDaftarAnak: () => JSON.stringify({ ok: true }),
+    simpanAntrean: () => JSON.stringify({ ok: true }),
+    tampilkanPesan: () => {},
+  };
+  h.app.formVals = { bb: '11,2', pb: '88,5', lila: '15', lika: '48' };
+  await h.app.simpanData();
+  assert.equal(h.app.view, 'list');
   assert.equal(h.app.antreanSelesai.length, 1);
   assert.equal(h.app.antreanSelesai[0].childIdentity, second.nik);
 });
@@ -319,7 +338,10 @@ test('tablet UI exposes operational modules without portal analytics modules', (
   assert.match(html, /Pindai Kartu dengan Kamera/);
   assert.match(html, /Ketik sedikitnya 2 huruf/);
   assert.match(html, /Daftar layanan/);
-  assert.match(html, /Tandai Selesai/);
+  assert.match(html, /Dari Antrean/);
+  assert.match(html, /Semua Balita/);
+  assert.match(html, /Catatan untuk petugas pencatatan/);
+  assert.match(html, /Diselesaikan dari Pencatatan/);
   assert.doesNotMatch(html, /Mulai Pengukuran/);
   assert.match(html, /Politeknik Manufaktur Bandung/);
   assert.match(html, /© 2026 POLMAN Bandung/);

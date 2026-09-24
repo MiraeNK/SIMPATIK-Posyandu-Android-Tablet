@@ -16,13 +16,20 @@
 
 Jika kartu belum ditemukan, sinkronkan daftar sasaran lalu pindai ulang. Untuk pencarian manual, ketik sedikitnya dua huruf nama atau angka NIK. Hasil tampil sebagai kartu besar; tekan **Tambahkan** pada anak yang sesuai.
 
-## Pengukuran
+## Menyelesaikan antrean
 
-1. Panggil anak, lalu tekan **Ukur**.
-2. Isi BB, TB/PB, LILA, dan LIKA.
-3. Bila angka di luar rentang, aplikasi meminta kader mengulang pengukuran.
-4. Bila perubahan BB atau TB/PB jauh dari catatan sebelumnya, dialog tinjauan menampilkan peringatan merah. Ulangi pengukuran sebelum memilih simpan.
-5. Setelah tersimpan, antrean otomatis menjadi **Selesai** dan data aman di SQLite Android sebelum dikirim ke server.
+1. Tekan **Panggil** saat giliran anak tiba.
+2. Setelah layanan antrean selesai, tekan **Tandai Selesai**.
+3. Halaman antrean tidak membuka formulir pengukuran.
+
+## Pencatatan hasil ukur
+
+1. Kembali ke beranda dan pilih **Pencatatan Langsung**.
+2. Cari dan pilih anak yang akan dicatat.
+3. Isi BB, TB/PB, LILA, dan LIKA.
+4. Bila angka di luar rentang, aplikasi meminta kader mengulang pengukuran.
+5. Bila perubahan BB atau TB/PB jauh dari catatan sebelumnya, dialog tinjauan menampilkan peringatan merah. Ulangi pengukuran sebelum memilih simpan.
+6. Setelah tersimpan, data aman di SQLite Android sebelum dikirim ke server.
 
 ## Kode kartu
 

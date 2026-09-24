@@ -92,7 +92,7 @@
   .login-shell { flex:1; display:flex; background:#FFFFFF; }
   .login-panel { width:50%; padding:50px 70px; display:flex; flex-direction:column; justify-content:center; overflow-y:auto; }
   .login-art { width:50%; background:linear-gradient(135deg, #0F6E44 0%, #0B5334 100%); position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px; }
-  .queue-layout { display:grid; grid-template-columns:minmax(0, 1.55fr) minmax(330px, 0.75fr); gap:22px; align-items:start; }
+  .queue-layout { display:block; }
   .queue-stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
   .queue-card { background:#FFFFFF; border:1px solid #DCE0DA; border-radius:20px; }
   .queue-row { display:grid; grid-template-columns:72px minmax(0, 1fr) auto; gap:16px; align-items:center; padding:17px 18px; border-top:1px solid #E7EAE5; }
@@ -102,6 +102,11 @@
   .queue-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
   .queue-small-button { min-height:42px; padding:0 13px; border-radius:11px; font-size:13px; font-weight:800; }
   .queue-child-option { width:100%; display:flex; gap:12px; align-items:center; padding:13px; border-radius:14px; background:#F6F7F5; border:1px solid #DCE0DA; text-align:left; }
+  .queue-tabs { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:8px; background:#E7EAE5; border-radius:18px; }
+  .queue-tab { min-height:62px; border-radius:13px; display:flex; align-items:center; justify-content:center; gap:10px; font-size:17px; font-weight:800; color:#4A5750; background:transparent; }
+  .queue-tab.active { color:#0F6E44; background:#FFFFFF; box-shadow:0 3px 10px rgba(22,33,28,.08); }
+  .queue-search-results { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; }
+  .queue-search-card { min-height:112px; display:grid; grid-template-columns:64px minmax(0,1fr) auto; gap:16px; align-items:center; padding:18px; border:1px solid #DCE0DA; border-radius:18px; background:#FFFFFF; }
 
   @media (max-width: 900px) {
     html, body { font-size:16px; }
@@ -114,6 +119,7 @@
     .queue-layout { grid-template-columns:1fr; }
     .queue-header-user { display:none !important; }
     .queue-add-panel { position:static !important; }
+    .queue-search-results { grid-template-columns:1fr; }
   }
   @media (max-width: 600px) {
     .home-actions { grid-template-columns:1fr; }
@@ -127,6 +133,9 @@
     .queue-number { width:48px; height:48px; border-radius:14px; font-size:17px; }
     .queue-actions { grid-column:1 / -1; justify-content:stretch; }
     .queue-actions button { flex:1; }
+    .queue-tabs { grid-template-columns:1fr; }
+    .queue-search-card { grid-template-columns:56px minmax(0,1fr); }
+    .queue-search-card .queue-search-action { grid-column:1 / -1; width:100%; }
     .form-shell { overflow-y:auto !important; }
     .form-header { flex-wrap:wrap; padding:12px !important; position:sticky; top:0; z-index:20; }
     .form-header-person { min-width:0; flex:1 !important; }
@@ -358,13 +367,18 @@
             <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#14713D;">SELESAI</div><div style="font-size:31px; font-weight:800; color:#14713D;">{{ antreanSelesai.length }}</div></div>
           </section>
 
-          <section v-if="antreanSedang" class="queue-current" style="background:linear-gradient(135deg,#0F6E44,#0B5334); color:#FFFFFF; border-radius:24px; padding:22px 24px; display:flex; gap:20px; align-items:center; box-shadow:0 14px 30px rgba(15,110,68,.18);">
+          <nav class="queue-tabs" aria-label="Menu antrean">
+            <button type="button" @click="queueTab='list'" class="queue-tab" :class="{active:queueTab==='list'}"><i class="ph-bold ph-list-bullets" style="font-size:23px;"></i> Daftar Antrean <span style="padding:3px 9px; border-radius:999px; background:#E9F3EC; color:#0F6E44; font-size:13px;">{{ antreanAktif.length }}</span></button>
+            <button type="button" @click="bukaTambahAntrean" class="queue-tab" :class="{active:queueTab==='add'}"><i class="ph-bold ph-user-plus" style="font-size:23px;"></i> Tambah Anak ke Antrean</button>
+          </nav>
+
+          <section v-if="queueTab === 'list' && antreanSedang" class="queue-current" style="background:linear-gradient(135deg,#0F6E44,#0B5334); color:#FFFFFF; border-radius:24px; padding:22px 24px; display:flex; gap:20px; align-items:center; box-shadow:0 14px 30px rgba(15,110,68,.18);">
             <div style="min-width:88px; height:88px; border-radius:24px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; font-size:29px; font-weight:800;">{{ formatNomorAntrean(antreanSedang.number) }}</div>
             <div style="flex:1;"><div style="font-size:12px; font-weight:800; opacity:.8; letter-spacing:.08em;">{{ antreanSedang.status === 'serving' ? 'SEDANG DIUKUR' : 'SILAKAN MENUJU MEJA UKUR' }}</div><div style="font-size:27px; font-weight:800; margin-top:2px;">{{ antreanSedang.name }}</div><div style="font-size:14px; opacity:.85;">{{ antreanSedang.parent }} · RT {{ antreanSedang.rt }}</div></div>
             <button type="button" @click="mulaiLayaniAntrean(antreanSedang)" class="queue-current__button" style="min-height:54px; padding:0 20px; border-radius:14px; background:#FFFFFF; color:#0F6E44; font-size:15px; font-weight:800;"><i class="ph-bold ph-ruler" style="font-size:20px; margin-right:7px;"></i>{{ antreanSedang.status === 'serving' ? 'Lanjutkan Ukur' : 'Mulai Pengukuran' }}</button>
           </section>
 
-          <div class="queue-layout">
+          <div v-if="queueTab === 'list'" class="queue-layout">
             <section class="queue-card" style="overflow:hidden;">
               <div style="padding:19px 20px; display:flex; justify-content:space-between; align-items:center; gap:12px;"><div><h3 style="font-size:20px; margin:0; font-weight:800;">Daftar layanan</h3><div style="font-size:13px; color:#4A5750; margin-top:2px;">Urutan tersimpan meskipun aplikasi ditutup.</div></div><span style="font-size:13px; color:#4A5750; font-weight:700;">{{ antreanAktif.length }} aktif</span></div>
               <div v-if="antreanAktif.length === 0" style="padding:44px 24px; text-align:center; border-top:1px solid #E7EAE5;"><div style="width:58px; height:58px; border-radius:18px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center; margin:0 auto 13px;"><i class="ph-bold ph-users" style="font-size:30px;"></i></div><div style="font-weight:800;">Belum ada antrean aktif</div><div style="font-size:14px; color:#4A5750; margin-top:4px;">Pilih anak pada panel tambah antrean.</div></div>
@@ -381,27 +395,39 @@
               <div v-if="antreanSelesai.length" style="padding:15px 20px; border-top:1px solid #E7EAE5; background:#F8FAF8; font-size:13px; color:#4A5750;"><i class="ph-fill ph-check-circle" style="color:#14713D;"></i> {{ antreanSelesai.length }} anak selesai dilayani hari ini.</div>
             </section>
 
-            <aside class="queue-card queue-add-panel" style="padding:20px; position:sticky; top:104px;">
-              <div style="display:flex; align-items:center; gap:11px; margin-bottom:14px;"><div style="width:42px; height:42px; border-radius:12px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-qr-code" style="font-size:22px;"></i></div><div><h3 style="font-size:18px; margin:0; font-weight:800;">Scan & skrining</h3><div style="font-size:12px; color:#4A5750;">Kartu sasaran dari Portal SIMPATIK</div></div></div>
-              <button type="button" @click="mulaiScanKartu" class="btn-primary" style="width:100%; min-height:52px; border-radius:13px; font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:9px;"><i class="ph-bold ph-camera" style="font-size:21px;"></i> Pindai kartu dengan kamera</button>
-              <div v-if="scannedAnak" style="margin-top:13px; border:1px solid #B9D9C3; background:#F3FAF5; border-radius:15px; padding:14px;">
-                <div style="font-size:11px; font-weight:800; color:#0F6E44; letter-spacing:.06em;">SASARAN DITEMUKAN</div>
-                <div style="font-size:17px; font-weight:800; margin-top:3px;">{{ scannedAnak.nama }}</div>
-                <div style="font-size:12px; color:#4A5750;">{{ scannedAnak.namaOrtu }} · RT {{ scannedAnak.rt }}</div>
-                <div style="margin-top:11px; font-size:12px; font-weight:800;">Skrining awal</div>
-                <div v-if="kekuranganSkriningScan.length === 0" style="margin-top:6px; padding:9px 10px; background:#E9F3EC; color:#14713D; border-radius:10px; font-size:12px; font-weight:700;"><i class="ph-fill ph-check-circle"></i> Identitas dasar lengkap</div>
-                <div v-else style="margin-top:6px; display:flex; flex-direction:column; gap:5px;"><div v-for="item in kekuranganSkriningScan" :key="item" style="padding:8px 9px; background:#FFF7E6; color:#B54708; border-radius:9px; font-size:11px; font-weight:700;"><i class="ph-bold ph-warning-circle"></i> {{ item }}</div></div>
-                <button type="button" @click="tambahAntrean(scannedAnak)" :disabled="sudahDalamAntreanHariIni(scannedAnak)" class="btn-primary" style="width:100%; min-height:45px; margin-top:11px; border-radius:11px; font-size:13px; font-weight:800;">{{ sudahDalamAntreanHariIni(scannedAnak) ? 'Sudah masuk antrean' : 'Konfirmasi masuk antrean' }}</button>
-              </div>
-              <div style="height:1px; background:#E7EAE5; margin:16px 0;"></div>
-              <div style="font-size:12px; color:#4A5750; font-weight:700; margin-bottom:7px;">Pencarian manual</div>
-              <div style="display:flex; align-items:center; gap:8px; border:2px solid #DCE0DA; border-radius:13px; padding:0 13px; height:50px;"><i class="ph-bold ph-magnifying-glass" style="color:#4A5750;"></i><input v-model="queueSearch" placeholder="Nama atau NIK…" style="width:100%; border:0; outline:0; background:transparent; font:inherit; font-size:14px;"></div>
-              <div style="display:flex; flex-direction:column; gap:9px; margin-top:13px; max-height:430px; overflow-y:auto;">
-                <button v-for="anak in anakUntukAntrean" :key="anak.id" type="button" @click="tambahAntrean(anak)" class="queue-child-option" :disabled="sudahDalamAntreanHariIni(anak)" :style="{opacity:sudahDalamAntreanHariIni(anak)?.6:1}"><div style="width:42px; height:42px; border-radius:12px; background:#FFFFFF; color:#0F6E44; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; flex-shrink:0;">{{ anak.inisial }}</div><div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ anak.nama }}</div><div style="font-size:12px; color:#4A5750;">RT {{ anak.rt }} · {{ anak.umurBulan }} bulan</div></div><i :class="sudahDalamAntreanHariIni(anak) ? 'ph-fill ph-check-circle' : 'ph-bold ph-plus-circle'" :style="{color:sudahDalamAntreanHariIni(anak)?'#14713D':'#0F6E44',fontSize:'21px'}"></i></button>
-                <div v-if="anakUntukAntrean.length === 0" style="text-align:center; color:#4A5750; font-size:13px; padding:20px 8px;">Tidak ada anak yang cocok.</div>
-              </div>
-            </aside>
           </div>
+
+          <section v-else class="queue-card" style="padding:26px 28px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+              <div><div style="font-size:13px; color:#0F6E44; font-weight:800; letter-spacing:.06em;">PENDAFTARAN KEHADIRAN</div><h3 style="font-size:26px; margin:3px 0 5px;">Tambah Anak ke Antrean</h3><div style="font-size:16px; color:#4A5750;">Pindai kartu sasaran atau cari nama anak secara manual.</div></div>
+              <button type="button" @click="mulaiScanKartu" class="btn-primary" style="min-height:64px; padding:0 28px; border-radius:15px; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:11px;"><i class="ph-bold ph-camera" style="font-size:25px;"></i> Pindai Kartu dengan Kamera</button>
+            </div>
+
+            <div v-if="scannedAnak" style="margin-top:22px; border:2px solid #8DCEA2; background:#F3FAF5; border-radius:18px; padding:22px;">
+              <div style="font-size:13px; font-weight:800; color:#0F6E44; letter-spacing:.06em;">SASARAN DITEMUKAN</div>
+              <div style="font-size:25px; font-weight:800; margin-top:4px;">{{ scannedAnak.nama }}</div>
+              <div style="font-size:16px; color:#4A5750;">{{ scannedAnak.namaOrtu }} · RT {{ scannedAnak.rt }} · {{ scannedAnak.umurBulan }} bulan</div>
+              <div style="margin-top:18px; font-size:17px; font-weight:800;">Skrining awal</div>
+              <div v-if="kekuranganSkriningScan.length === 0" style="margin-top:8px; padding:13px 15px; background:#E9F3EC; color:#14713D; border-radius:12px; font-size:15px; font-weight:700;"><i class="ph-fill ph-check-circle"></i> Identitas dasar lengkap</div>
+              <div v-else style="margin-top:9px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;"><div v-for="item in kekuranganSkriningScan" :key="item" style="padding:11px 12px; background:#FFF7E6; color:#B54708; border-radius:11px; font-size:14px; font-weight:700;"><i class="ph-bold ph-warning-circle"></i> {{ item }}</div></div>
+              <button type="button" @click="tambahAntrean(scannedAnak)" :disabled="sudahDalamAntreanHariIni(scannedAnak)" class="btn-primary" style="width:100%; min-height:60px; margin-top:16px; border-radius:14px; font-size:17px; font-weight:800;">{{ sudahDalamAntreanHariIni(scannedAnak) ? 'Anak Sudah Masuk Antrean' : 'Konfirmasi dan Tambahkan ke Antrean' }}</button>
+            </div>
+
+            <div style="height:1px; background:#DCE0DA; margin:26px 0;"></div>
+            <label for="queue-search" style="font-size:18px; font-weight:800; display:block;">Cari berdasarkan nama atau NIK</label>
+            <div style="font-size:14px; color:#4A5750; margin-top:3px;">Ketik sedikitnya 2 huruf dari nama anak atau angka NIK.</div>
+            <div style="display:flex; align-items:center; gap:14px; border:2px solid #8D9790; border-radius:16px; padding:0 20px; min-height:68px; margin-top:12px; background:#FFFFFF;"><i class="ph-bold ph-magnifying-glass" style="color:#0F6E44; font-size:27px;"></i><input id="queue-search" v-model="queueSearch" autocomplete="off" placeholder="Contoh: Aisyah atau 3273…" style="width:100%; border:0; outline:0; background:transparent; font:inherit; font-size:20px;"><button v-if="queueSearch" type="button" @click="queueSearch=''" aria-label="Hapus pencarian" style="width:46px; height:46px; border-radius:50%; background:#E7EAE5; color:#4A5750; flex-shrink:0;"><i class="ph-bold ph-x" style="font-size:21px;"></i></button></div>
+
+            <div v-if="String(queueSearch || '').trim().length < 2" style="padding:44px 20px; text-align:center; color:#4A5750;"><i class="ph-bold ph-keyboard" style="display:block; font-size:42px; color:#8D9790; margin-bottom:8px;"></i><strong style="font-size:17px; color:#16211C;">Mulai ketik nama anak</strong><div style="font-size:14px; margin-top:3px;">Hasil akan muncul setelah 2 karakter.</div></div>
+            <div v-else-if="anakUntukAntrean.length === 0" style="padding:44px 20px; text-align:center; color:#4A5750;"><i class="ph-bold ph-user-minus" style="display:block; font-size:42px; color:#B54708; margin-bottom:8px;"></i><strong style="font-size:17px; color:#16211C;">Anak tidak ditemukan</strong><div style="font-size:14px; margin-top:3px;">Periksa ejaan atau gunakan NIK.</div></div>
+            <div v-else class="queue-search-results" style="margin-top:20px;">
+              <article v-for="anak in anakUntukAntrean" :key="anak.id" class="queue-search-card" :style="{background:sudahDalamAntreanHariIni(anak)?'#F3F5F2':'#FFFFFF'}">
+                <div style="width:64px; height:64px; border-radius:17px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center; font-size:21px; font-weight:800;">{{ anak.inisial }}</div>
+                <div style="min-width:0;"><div style="font-size:19px; font-weight:800; line-height:1.25;">{{ anak.nama }}</div><div style="font-size:14px; color:#4A5750; margin-top:4px;">{{ anak.namaOrtu }} · RT {{ anak.rt }} · {{ anak.umurBulan }} bulan</div><div style="font-size:13px; color:#66736C; margin-top:2px;">NIK {{ anak.nik || 'belum tercatat' }}</div></div>
+                <button type="button" @click="tambahAntrean(anak)" :disabled="sudahDalamAntreanHariIni(anak)" class="queue-search-action" :class="sudahDalamAntreanHariIni(anak)?'btn-outline':'btn-primary'" style="min-height:52px; padding:0 18px; border-radius:13px; font-size:14px; font-weight:800; white-space:nowrap;">{{ sudahDalamAntreanHariIni(anak) ? 'Sudah Antre' : 'Tambahkan' }}</button>
+              </article>
+            </div>
+          </section>
         </main>
       </div>
 
@@ -862,6 +888,7 @@
         // Antrean layanan harian (offline-first)
         queueEntries: initialQueue,
         queueSearch: '',
+        queueTab: 'list',
         activeQueueId: null,
         scannedAnak: null,
 
@@ -920,9 +947,10 @@
       },
       anakUntukAntrean() {
         const q = String(this.queueSearch || '').trim().toLowerCase();
+        if (q.length < 2) return [];
         return this.daftarAnak
-          .filter(anak => !q || anak.nama.toLowerCase().includes(q) || String(anak.nik || anak.id || '').includes(q))
-          .slice(0, 12);
+          .filter(anak => anak.nama.toLowerCase().includes(q) || String(anak.nik || anak.id || '').includes(q))
+          .slice(0, 20);
       },
       kekuranganSkriningScan() {
         return this.scannedAnak ? this.kekuranganSkrining(this.scannedAnak) : [];
@@ -1053,6 +1081,12 @@
           this.kembaliDariForm();
           return 'handled';
         }
+        if (this.view === 'queue' && this.queueTab === 'add') {
+          this.queueTab = 'list';
+          this.queueSearch = '';
+          this.scannedAnak = null;
+          return 'handled';
+        }
         if (this.view === 'history') {
           this.kembaliDariHistory();
           return 'handled';
@@ -1110,8 +1144,15 @@
       },
       bukaAntrean() {
         this.queueSearch = '';
+        this.queueTab = 'list';
         this.scannedAnak = null;
         this.setView('queue');
+      },
+      bukaTambahAntrean() {
+        this.queueTab = 'add';
+        this.queueSearch = '';
+        this.scannedAnak = null;
+        setTimeout(() => document.getElementById('queue-search')?.focus(), 100);
       },
       mulaiScanKartu() {
         if (!window.AndroidBridge || typeof window.AndroidBridge.scanKartuSasaran !== 'function') {
@@ -1210,6 +1251,8 @@
         }
         this.persistAntrean();
         this.queueSearch = '';
+        this.queueTab = 'list';
+        this.scannedAnak = null;
         return true;
       },
       panggilAntrean(item) {

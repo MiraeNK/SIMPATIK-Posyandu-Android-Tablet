@@ -296,11 +296,11 @@
           <section class="home-actions">
             <button type="button" @click="bukaAntrean" class="btn-primary" style="min-height:210px; border-radius:26px; padding:30px 32px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 16px 34px rgba(15,110,68,0.18);">
               <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;"><div style="width:62px; height:62px; background:rgba(255,255,255,0.18); border-radius:18px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-users-three" style="font-size:35px;"></i></div><span style="background:#FFFFFF; color:#0F6E44; padding:7px 11px; border-radius:999px; font-size:13px; font-weight:800;">{{ antreanMenunggu.length }} menunggu</span></div>
-              <div><div style="font-size:29px; font-weight:800; margin-bottom:6px;">Antrean Hari Ini</div><div style="font-size:15px; font-weight:500; opacity:0.9;">Daftarkan kehadiran, panggil, lalu ukur.</div></div>
+              <div><div style="font-size:29px; font-weight:800; margin-bottom:6px;">Antrean Hari Ini</div><div style="font-size:15px; font-weight:500; opacity:0.9;">Daftarkan kehadiran dan atur giliran layanan.</div></div>
             </button>
             <button type="button" @click="goToList('record')" class="btn-outline" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
               <div style="width:58px; height:58px; background:#E9F3EC; color:#0F6E44; border-radius:17px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-plus-circle" style="font-size:31px;"></i></div>
-              <div><div style="font-size:23px; font-weight:800; color:#16211C; margin-bottom:5px;">Pencatatan Langsung</div><div style="font-size:14px; color:#4A5750;">Isi tanpa melalui antrean.</div></div>
+              <div><div style="font-size:23px; font-weight:800; color:#16211C; margin-bottom:5px;">Pencatatan Langsung</div><div style="font-size:14px; color:#4A5750;">Pilih anak lalu masukkan hasil pengukuran.</div></div>
             </button>
             <button type="button" @click="goToList('history')" class="btn-outline" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
               <div style="width:58px; height:58px; background:#E3EAF7; color:#1E4ED8; border-radius:17px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-calendar-dots" style="font-size:31px;"></i></div>
@@ -363,7 +363,7 @@
         <main class="queue-page-main" style="padding:24px 28px 38px; display:flex; flex-direction:column; gap:20px;">
           <section class="queue-stats">
             <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#B54708;">MENUNGGU</div><div style="font-size:31px; font-weight:800; color:#B54708;">{{ antreanMenunggu.length }}</div></div>
-            <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#1D4ED8;">DILAYANI</div><div style="font-size:31px; font-weight:800; color:#1D4ED8;">{{ antreanSedang ? 1 : 0 }}</div></div>
+            <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#1D4ED8;">DIPANGGIL</div><div style="font-size:31px; font-weight:800; color:#1D4ED8;">{{ antreanSedang ? 1 : 0 }}</div></div>
             <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#14713D;">SELESAI</div><div style="font-size:31px; font-weight:800; color:#14713D;">{{ antreanSelesai.length }}</div></div>
           </section>
 
@@ -374,8 +374,8 @@
 
           <section v-if="queueTab === 'list' && antreanSedang" class="queue-current" style="background:linear-gradient(135deg,#0F6E44,#0B5334); color:#FFFFFF; border-radius:24px; padding:22px 24px; display:flex; gap:20px; align-items:center; box-shadow:0 14px 30px rgba(15,110,68,.18);">
             <div style="min-width:88px; height:88px; border-radius:24px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; font-size:29px; font-weight:800;">{{ formatNomorAntrean(antreanSedang.number) }}</div>
-            <div style="flex:1;"><div style="font-size:12px; font-weight:800; opacity:.8; letter-spacing:.08em;">{{ antreanSedang.status === 'serving' ? 'SEDANG DIUKUR' : 'SILAKAN MENUJU MEJA UKUR' }}</div><div style="font-size:27px; font-weight:800; margin-top:2px;">{{ antreanSedang.name }}</div><div style="font-size:14px; opacity:.85;">{{ antreanSedang.parent }} · RT {{ antreanSedang.rt }}</div></div>
-            <button type="button" @click="mulaiLayaniAntrean(antreanSedang)" class="queue-current__button" style="min-height:54px; padding:0 20px; border-radius:14px; background:#FFFFFF; color:#0F6E44; font-size:15px; font-weight:800;"><i class="ph-bold ph-ruler" style="font-size:20px; margin-right:7px;"></i>{{ antreanSedang.status === 'serving' ? 'Lanjutkan Ukur' : 'Mulai Pengukuran' }}</button>
+            <div style="flex:1;"><div style="font-size:12px; font-weight:800; opacity:.8; letter-spacing:.08em;">SEDANG DIPANGGIL</div><div style="font-size:27px; font-weight:800; margin-top:2px;">{{ antreanSedang.name }}</div><div style="font-size:14px; opacity:.85;">{{ antreanSedang.parent }} · RT {{ antreanSedang.rt }}</div></div>
+            <button type="button" @click="selesaikanAntrean(antreanSedang)" class="queue-current__button" style="min-height:54px; padding:0 20px; border-radius:14px; background:#FFFFFF; color:#0F6E44; font-size:15px; font-weight:800;"><i class="ph-bold ph-check-circle" style="font-size:20px; margin-right:7px;"></i>Tandai Selesai</button>
           </section>
 
           <div v-if="queueTab === 'list'" class="queue-layout">
@@ -387,7 +387,7 @@
                 <div><div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;"><strong style="font-size:17px;">{{ item.name }}</strong><span class="queue-status" :style="gayaStatusAntrean(item.status)">{{ labelStatusAntrean(item.status) }}</span></div><div style="font-size:13px; color:#4A5750; margin-top:3px;">{{ item.parent }} · RT {{ item.rt }} · hadir {{ formatJam(item.checkedInAt) }}</div></div>
                 <div class="queue-actions">
                   <button v-if="item.status === 'waiting'" type="button" @click="panggilAntrean(item)" class="queue-small-button" style="background:#1D4ED8; color:#FFFFFF;"><i class="ph-bold ph-megaphone"></i> Panggil</button>
-                  <button v-if="item.status === 'called' || item.status === 'serving'" type="button" @click="mulaiLayaniAntrean(item)" class="queue-small-button btn-primary">Ukur</button>
+                  <button v-if="item.status === 'called' || item.status === 'serving'" type="button" @click="selesaikanAntrean(item)" class="queue-small-button btn-primary">Selesai</button>
                   <button v-if="item.status !== 'serving'" type="button" @click="lewatiAntrean(item)" class="queue-small-button btn-outline">Lewati</button>
                   <button type="button" @click="batalkanAntrean(item)" class="queue-small-button" style="background:#FFF1F0; color:#B42318;">Batal</button>
                 </div>
@@ -1278,26 +1278,8 @@
         if (this.activeQueueId === item.id) this.activeQueueId = null;
         this.persistAntrean();
       },
-      mulaiLayaniAntrean(item) {
-        const anak = this.daftarAnak.find(candidate => this.identitasAnak(candidate) === item.childIdentity);
-        if (!anak) {
-          alert('[Data Anak Tidak Ditemukan]\n\nMuat ulang daftar sasaran sebelum memulai pengukuran.');
-          return false;
-        }
-        this.antreanAktif.forEach(entry => {
-          if (entry.id !== item.id && ['called', 'serving'].includes(entry.status)) entry.status = 'waiting';
-        });
-        item.status = 'serving';
-        item.calledAt = item.calledAt || new Date().toISOString();
-        this.activeQueueId = item.id;
-        this.persistAntrean();
-        this.bukaFormPengukuran(anak, this.tanggalHariIniISO);
-        this.previousViewBeforeForm = 'queue';
-        return true;
-      },
-      selesaikanAntreanAktif(identity) {
-        const item = this.antreanHariIni.find(entry => entry.childIdentity === identity && ['called', 'serving'].includes(entry.status));
-        if (!item) return false;
+      selesaikanAntrean(item) {
+        if (!item || !['called', 'serving'].includes(item.status)) return false;
         item.status = 'done';
         item.completedAt = new Date().toISOString();
         this.activeQueueId = null;
@@ -1842,12 +1824,9 @@
             revision: nativeResult.revision || 1
           };
           this.persistDaftarAnak();
-          if (this.previousViewBeforeForm === 'queue') {
-            this.selesaikanAntreanAktif(String(this.activeAnak.nik || this.activeAnak.id || '').trim());
-          }
           this.editingOriginal = null;
           this.bukaDialog = false;
-          this.setView(this.previousViewBeforeForm === 'history' ? 'history' : (this.previousViewBeforeForm === 'queue' ? 'queue' : 'list'));
+          this.setView(this.previousViewBeforeForm === 'history' ? 'history' : 'list');
           if (window.AndroidBridge && typeof window.AndroidBridge.tampilkanPesan === 'function') {
             window.AndroidBridge.tampilkanPesan(nativeResult.action === 'updated' ? 'Koreksi tersimpan di Android' : 'Pengukuran tersimpan di Android');
           }

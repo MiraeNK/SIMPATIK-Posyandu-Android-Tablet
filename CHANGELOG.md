@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.2 — Pemisahan Antrean dan Pencatatan
+
+- Menghapus tombol masuk ke formulir pengukuran dari halaman antrean.
+- Menjadikan antrean khusus untuk daftar hadir, panggil, lewati, batal, dan tandai selesai.
+- Memastikan hasil BB, TB/PB, LILA, dan LIKA hanya diisi melalui **Pencatatan Langsung**.
+- Memperjelas keterangan dua menu pada beranda agar kader tidak mencampur alur antrean dan pencatatan.
+- Versi aplikasi menjadi `versionCode 8` / `versionName 1.6.2`.
+
 ## 1.6.1 — Pencarian Antrean Ramah Pengguna
 
 - Memisahkan **Daftar Antrean** dan **Tambah Anak ke Antrean** menjadi dua tab besar.

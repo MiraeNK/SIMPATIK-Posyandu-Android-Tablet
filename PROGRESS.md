@@ -2,6 +2,22 @@
 
 Terakhir diperbarui: 24 September 2026
 
+### Verifikasi versi 1.6.2
+
+- [x] Memisahkan antrean layanan dari formulir pencatatan.
+- [x] Menghapus aksi Ukur dan Mulai Pengukuran dari halaman antrean.
+- [x] Menyediakan aksi Tandai Selesai untuk menutup giliran layanan.
+- [x] Menjaga pemilihan anak dan seluruh input hasil ukur di menu Pencatatan Langsung.
+- [x] Menjalankan 18 pengujian regresi JavaScript; seluruhnya lulus.
+- [x] Menjalankan unit test Gradle, Android lint, dan assembleDebug; seluruhnya lulus.
+- [x] Uji Pixel Tablet: beranda membedakan fungsi Antrean dan Pencatatan, serta Pencatatan Langsung membuka daftar pemilihan balita.
+
+APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.6.2_pemisahan-antrean-pencatatan.apk`
+
+SHA-256: `28501B3187449777A005CCD35A8A91480070F6512326B840A3F41470ACBFA28A`
+
+Ukuran: 13.820.947 byte.
+
 ### Verifikasi versi 1.6.1
 
 - [x] Memindahkan pencarian manual dari panel kanan ke tab khusus selebar layar.
@@ -51,7 +67,7 @@ APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.6_scan-skrining.apk`
 - [x] Menambahkan identitas POLMAN Bandung dan hak cipta 2026 pada splash screen.
 - [x] Menambahkan antrean layanan harian sebagai alur utama Android.
 - [x] Mencegah antrean ganda untuk anak dan tanggal yang sama.
-- [x] Menambahkan panggil, lewati, batal, mulai ukur, dan selesai otomatis setelah penyimpanan.
+- [x] Menambahkan panggil, lewati, batal, dan penyelesaian giliran pada antrean.
 - [x] Menyimpan dan memulihkan antrean melalui SQLite Android.
 - [x] Menambahkan migrasi database v1 ke v2 tanpa menghapus data lama.
 - [x] Menyesuaikan login, antrean, dan formulir pengukuran untuk ponsel portrait.

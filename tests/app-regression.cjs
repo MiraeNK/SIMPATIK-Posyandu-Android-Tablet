@@ -240,13 +240,14 @@ test('monthly history opens latest record and correction returns to history', ()
   assert.equal(app.previousViewBeforeForm, 'history');
 });
 
-test('daily service queue prevents duplicates and completes after measurement', async () => {
+test('daily service queue stays separate from measurement flow', () => {
   const h = harness();
   h.app.registryConfig.activeProvider = 'json_offline';
   const first = { id: '3273010101220001', nik: '3273010101220001', nama: 'Anak Satu', inisial: 'AS', umurBulan: 20, namaOrtu: 'Ibu Satu', rt: '01', tglLahir: '2025-01-01', riwayat: {} };
   const second = { id: '3273010101220002', nik: '3273010101220002', nama: 'Anak Dua', inisial: 'AD', umurBulan: 30, namaOrtu: 'Ibu Dua', rt: '02', tglLahir: '2024-01-01', riwayat: {} };
   h.app.daftarAnak = [first, second];
   h.app.queueEntries = [];
+  h.app.view = 'queue';
   assert.equal(h.app.tambahAntrean(first), true);
   assert.equal(h.app.tambahAntrean(second), true);
   assert.equal(h.app.antreanAktif.length, 2);
@@ -257,17 +258,7 @@ test('daily service queue prevents duplicates and completes after measurement', 
   h.app.panggilAntrean(h.app.antreanAktif[1]);
   assert.equal(h.app.antreanAktif[0].status, 'waiting');
   assert.equal(h.app.antreanSedang.childIdentity, second.nik);
-  h.app.mulaiLayaniAntrean(h.app.antreanSedang);
-  assert.equal(h.app.view, 'form');
-  assert.equal(h.app.previousViewBeforeForm, 'queue');
-  h.context.window.AndroidBridge = {
-    simpanDataPengukuran: () => JSON.stringify({ ok: true, action: 'inserted', revision: 1 }),
-    simpanDaftarAnak: () => JSON.stringify({ ok: true }),
-    simpanAntrean: () => JSON.stringify({ ok: true }),
-    tampilkanPesan: () => {},
-  };
-  h.app.formVals = { bb: '11,2', pb: '88,5', lila: '15', lika: '48' };
-  await h.app.simpanData();
+  h.app.selesaikanAntrean(h.app.antreanSedang);
   assert.equal(h.app.view, 'queue');
   assert.equal(h.app.antreanSelesai.length, 1);
   assert.equal(h.app.antreanSelesai[0].childIdentity, second.nik);
@@ -328,6 +319,8 @@ test('tablet UI exposes operational modules without portal analytics modules', (
   assert.match(html, /Pindai Kartu dengan Kamera/);
   assert.match(html, /Ketik sedikitnya 2 huruf/);
   assert.match(html, /Daftar layanan/);
+  assert.match(html, /Tandai Selesai/);
+  assert.doesNotMatch(html, /Mulai Pengukuran/);
   assert.match(html, /Politeknik Manufaktur Bandung/);
   assert.match(html, /© 2026 POLMAN Bandung/);
   assert.match(html, /Progres pencatatan bulan ini/);

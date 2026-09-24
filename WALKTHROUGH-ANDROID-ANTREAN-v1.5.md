@@ -24,19 +24,16 @@ Satu anak hanya dapat memiliki satu antrean aktif atau selesai pada hari yang sa
 - Tekan **Lewati** jika anak belum siap. Nomor antrean tetap sama, tetapi anak dipindahkan ke bagian akhir urutan menunggu.
 - Tekan **Batal** bila anak pulang atau tidak jadi dilayani. Catatan diubah menjadi dibatalkan dan tidak dihitung sebagai antrean aktif.
 
-## Mengukur dan menyelesaikan layanan
+## Menyelesaikan giliran
 
-1. Pada anak yang dipanggil, tekan **Mulai Pengukuran** atau **Ukur**.
-2. Periksa identitas dan tanggal pengukuran.
-3. Isi BB, PB/TB, LILA, dan LIKA menggunakan keypad.
-4. Tekan **Simpan**, periksa kembali angka, kemudian konfirmasi.
-5. Setelah data berhasil masuk ke penyimpanan Android, antrean anak otomatis berubah menjadi **Selesai**.
+1. Pada anak yang dipanggil, tekan **Tandai Selesai** setelah layanan antrean selesai.
+2. Antrean anak berubah menjadi **Selesai** dan giliran berikutnya dapat dipanggil.
 
-Jika penyimpanan gagal, antrean tidak diselesaikan agar anak tidak hilang dari alur layanan.
+Halaman antrean tidak digunakan untuk memasukkan hasil pengukuran.
 
-## Pencatatan tanpa antrean
+## Pencatatan hasil ukur
 
-Gunakan **Pencatatan Langsung** pada beranda untuk koreksi atau kondisi khusus yang tidak melalui antrean hari itu. Riwayat, pendaftaran balita, dan sinkronisasi tetap tersedia seperti versi sebelumnya.
+Gunakan **Pencatatan Langsung** pada beranda untuk memilih anak dan mengisi BB, PB/TB, LILA, serta LIKA. Koreksi tetap dilakukan melalui **Riwayat Bulanan**.
 
 ## Saat jaringan terputus
 

@@ -382,7 +382,19 @@
             </section>
 
             <aside class="queue-card queue-add-panel" style="padding:20px; position:sticky; top:104px;">
-              <div style="display:flex; align-items:center; gap:11px; margin-bottom:14px;"><div style="width:42px; height:42px; border-radius:12px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-user-plus" style="font-size:22px;"></i></div><div><h3 style="font-size:18px; margin:0; font-weight:800;">Tambah antrean</h3><div style="font-size:12px; color:#4A5750;">Cari nama atau NIK balita</div></div></div>
+              <div style="display:flex; align-items:center; gap:11px; margin-bottom:14px;"><div style="width:42px; height:42px; border-radius:12px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-qr-code" style="font-size:22px;"></i></div><div><h3 style="font-size:18px; margin:0; font-weight:800;">Scan & skrining</h3><div style="font-size:12px; color:#4A5750;">Kartu sasaran dari Portal SIMPATIK</div></div></div>
+              <button type="button" @click="mulaiScanKartu" class="btn-primary" style="width:100%; min-height:52px; border-radius:13px; font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:9px;"><i class="ph-bold ph-camera" style="font-size:21px;"></i> Pindai kartu dengan kamera</button>
+              <div v-if="scannedAnak" style="margin-top:13px; border:1px solid #B9D9C3; background:#F3FAF5; border-radius:15px; padding:14px;">
+                <div style="font-size:11px; font-weight:800; color:#0F6E44; letter-spacing:.06em;">SASARAN DITEMUKAN</div>
+                <div style="font-size:17px; font-weight:800; margin-top:3px;">{{ scannedAnak.nama }}</div>
+                <div style="font-size:12px; color:#4A5750;">{{ scannedAnak.namaOrtu }} · RT {{ scannedAnak.rt }}</div>
+                <div style="margin-top:11px; font-size:12px; font-weight:800;">Skrining awal</div>
+                <div v-if="kekuranganSkriningScan.length === 0" style="margin-top:6px; padding:9px 10px; background:#E9F3EC; color:#14713D; border-radius:10px; font-size:12px; font-weight:700;"><i class="ph-fill ph-check-circle"></i> Identitas dasar lengkap</div>
+                <div v-else style="margin-top:6px; display:flex; flex-direction:column; gap:5px;"><div v-for="item in kekuranganSkriningScan" :key="item" style="padding:8px 9px; background:#FFF7E6; color:#B54708; border-radius:9px; font-size:11px; font-weight:700;"><i class="ph-bold ph-warning-circle"></i> {{ item }}</div></div>
+                <button type="button" @click="tambahAntrean(scannedAnak)" :disabled="sudahDalamAntreanHariIni(scannedAnak)" class="btn-primary" style="width:100%; min-height:45px; margin-top:11px; border-radius:11px; font-size:13px; font-weight:800;">{{ sudahDalamAntreanHariIni(scannedAnak) ? 'Sudah masuk antrean' : 'Konfirmasi masuk antrean' }}</button>
+              </div>
+              <div style="height:1px; background:#E7EAE5; margin:16px 0;"></div>
+              <div style="font-size:12px; color:#4A5750; font-weight:700; margin-bottom:7px;">Pencarian manual</div>
               <div style="display:flex; align-items:center; gap:8px; border:2px solid #DCE0DA; border-radius:13px; padding:0 13px; height:50px;"><i class="ph-bold ph-magnifying-glass" style="color:#4A5750;"></i><input v-model="queueSearch" placeholder="Nama atau NIK…" style="width:100%; border:0; outline:0; background:transparent; font:inherit; font-size:14px;"></div>
               <div style="display:flex; flex-direction:column; gap:9px; margin-top:13px; max-height:430px; overflow-y:auto;">
                 <button v-for="anak in anakUntukAntrean" :key="anak.id" type="button" @click="tambahAntrean(anak)" class="queue-child-option" :disabled="sudahDalamAntreanHariIni(anak)" :style="{opacity:sudahDalamAntreanHariIni(anak)?.6:1}"><div style="width:42px; height:42px; border-radius:12px; background:#FFFFFF; color:#0F6E44; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; flex-shrink:0;">{{ anak.inisial }}</div><div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ anak.nama }}</div><div style="font-size:12px; color:#4A5750;">RT {{ anak.rt }} · {{ anak.umurBulan }} bulan</div></div><i :class="sudahDalamAntreanHariIni(anak) ? 'ph-fill ph-check-circle' : 'ph-bold ph-plus-circle'" :style="{color:sudahDalamAntreanHariIni(anak)?'#14713D':'#0F6E44',fontSize:'21px'}"></i></button>
@@ -616,6 +628,7 @@
               <h3 style="margin:0;font-size:26px;font-weight:800">Periksa dulu sebelum disimpan</h3>
               <p style="margin:0;font-size:18px;color:#4A5750">{{ activeAnak.nama }}, {{ activeAnak.umurBulan }} bulan · {{ tanggalUkur }}. Data langsung diamankan di penyimpanan Android.</p>
               <div v-if="isEditingRecord" style="padding:12px 14px;border-radius:12px;background:#FFFAEB;border:1px solid #FEDF89;color:#B54708;font-size:15px;font-weight:700;">Catatan pada periode ini sudah ada. Penyimpanan akan membuat revisi pada catatan yang sama, bukan entri baru.</div>
+              <div v-if="peringatanPengukuran.length" style="padding:12px 14px;border-radius:12px;background:#FFF1F0;border:1px solid #FDA29B;color:#B42318;font-size:14px;font-weight:700;"><div style="font-size:16px; margin-bottom:5px;"><i class="ph-bold ph-warning"></i> Ulangi pengukuran sebelum menyimpan</div><div v-for="warning in peringatanPengukuran" :key="warning">• {{ warning }}</div></div>
             </div>
             <div style="border:1px solid #DCE0DA;border-radius:12px;overflow:hidden">
               <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#F6F7F5;border-bottom:1px solid #DCE0DA">
@@ -850,6 +863,7 @@
         queueEntries: initialQueue,
         queueSearch: '',
         activeQueueId: null,
+        scannedAnak: null,
 
         // State Form Pengukuran
         formVals: { bb: '', pb: '', lila: '', lika: '' },
@@ -910,6 +924,9 @@
           .filter(anak => !q || anak.nama.toLowerCase().includes(q) || String(anak.nik || anak.id || '').includes(q))
           .slice(0, 12);
       },
+      kekuranganSkriningScan() {
+        return this.scannedAnak ? this.kekuranganSkrining(this.scannedAnak) : [];
+      },
       filteredAnak() {
         if (!this.searchQuery) return this.daftarAnak;
         const q = this.searchQuery.toLowerCase();
@@ -935,6 +952,23 @@
         const record = this.recordBulanTerpilih || {};
         const item = (label, value, unit) => ({ label, value: value && value !== 'N/A' ? value : 'N/A', unit: value && value !== 'N/A' ? unit : '' });
         return [item('Berat Badan', record.bb, 'kg'), item('Panjang / Tinggi', record.pb, 'cm'), item('LILA', record.lila, 'cm'), item('LIKA', record.lika, 'cm')];
+      },
+      peringatanPengukuran() {
+        if (!this.activeAnak) return [];
+        const previous = this.pengukuranSebelumnya(this.tanggalUkur);
+        if (!previous) return [];
+        const warnings = [];
+        const bb = this.angkaPengukuran(this.formVals.bb);
+        const pb = this.angkaPengukuran(this.formVals.pb);
+        const prevBb = this.angkaPengukuran(previous.bb);
+        const prevPb = this.angkaPengukuran(previous.pb);
+        if (bb !== null && prevBb !== null) {
+          const delta = bb - prevBb;
+          if (delta > 2) warnings.push(`BB naik ${delta.toFixed(1)} kg dari catatan sebelumnya (${prevBb} kg).`);
+          if (delta < -1.5) warnings.push(`BB turun ${Math.abs(delta).toFixed(1)} kg dari catatan sebelumnya (${prevBb} kg).`);
+        }
+        if (pb !== null && prevPb !== null && prevPb - pb > 0.5) warnings.push(`TB/PB berkurang ${(prevPb - pb).toFixed(1)} cm dari catatan sebelumnya (${prevPb} cm).`);
+        return warnings;
       },
     },
     methods: {
@@ -1076,7 +1110,58 @@
       },
       bukaAntrean() {
         this.queueSearch = '';
+        this.scannedAnak = null;
         this.setView('queue');
+      },
+      mulaiScanKartu() {
+        if (!window.AndroidBridge || typeof window.AndroidBridge.scanKartuSasaran !== 'function') {
+          alert('[Kamera Tidak Tersedia]\n\nGunakan pencarian nama atau NIK secara manual.');
+          return false;
+        }
+        const result = JSON.parse(window.AndroidBridge.scanKartuSasaran());
+        if (!result.ok) alert('[Pemindaian Gagal]\n\n' + (result.error || 'Kamera tidak dapat dibuka.'));
+        return !!result.ok;
+      },
+      prosesHasilScanKartu(rawValue) {
+        const value = String(rawValue || '').trim();
+        const parts = value.split(':');
+        const isPayload = parts.length >= 4 && parts[0].toUpperCase() === 'SIMPATIK' && parts[1].toUpperCase() === 'SASARAN' && parts[2] === '1';
+        const sourceId = isPayload ? parts[3] : (value.toUpperCase().startsWith('SPT-') ? String(Number(value.slice(4))) : '');
+        const nik = isPayload && parts.length >= 5 ? parts[4].replace(/\D/g, '') : value.replace(/\D/g, '');
+        const matches = this.daftarAnak.filter(anak => {
+          const childNik = String(anak.nik || '').replace(/\D/g, '');
+          const childSourceId = String(anak.sourceId || anak.idSasaran || '').trim();
+          const childCode = String(anak.kodeKartu || '').replace(/\s/g, '').toUpperCase();
+          return (nik.length === 16 && childNik === nik) ||
+            (sourceId && childSourceId === sourceId) ||
+            (childCode && childCode === value.replace(/\s/g, '').toUpperCase());
+        });
+        if (matches.length !== 1) {
+          this.scannedAnak = null;
+          alert(matches.length > 1
+            ? '[Kartu Tidak Unik]\n\nDitemukan lebih dari satu sasaran. Sinkronkan ulang daftar dari portal.'
+            : '[Sasaran Belum Ada di Perangkat]\n\nKartu valid, tetapi data sasaran belum diterbitkan ke perangkat ini. Tekan Sinkronisasi lalu pindai ulang.');
+          return false;
+        }
+        this.scannedAnak = matches[0];
+        this.queueSearch = '';
+        return true;
+      },
+      kekuranganSkrining(anak) {
+        const missing = [];
+        if (String(anak.nik || '').replace(/\D/g, '').length !== 16) missing.push('NIK anak belum lengkap');
+        if (!anak.tglLahir) missing.push('Tanggal lahir belum tercatat');
+        if (!anak.jk) missing.push('Jenis kelamin belum tercatat');
+        if (!anak.namaOrtu || anak.namaOrtu === 'N/A') missing.push('Nama orang tua belum tercatat');
+        if (!anak.nikOrtu || anak.nikOrtu === 'N/A') missing.push('NIK orang tua belum tercatat');
+        if (!anak.rt) missing.push('RT belum tercatat');
+        if (!anak.anakKe || anak.anakKe === 'N/A') missing.push('Urutan anak belum tercatat');
+        if (!anak.bbLahir || anak.bbLahir === 'N/A') missing.push('Berat lahir belum tercatat');
+        if (!anak.pbLahir || anak.pbLahir === 'N/A') missing.push('Panjang lahir belum tercatat');
+        if (!anak.bukuKia || anak.bukuKia === 'N/A' || anak.bukuKia === false) missing.push('Buku KIA perlu dikonfirmasi');
+        if (!anak.imd || anak.imd === 'N/A' || anak.imd === false) missing.push('IMD perlu dikonfirmasi');
+        if (anak.imunisasiLengkap !== true) missing.push('Status imunisasi perlu dikonfirmasi');
+        return missing;
       },
       identitasAnak(anak) {
         return String((anak && (anak.nik || anak.id)) || '').trim();
@@ -1341,6 +1426,8 @@
 
             anakMap[a.nik] = {
               id: a.nik,
+              sourceId: a.id_sasaran || a.id_anak || a.id || null,
+              kodeKartu: a.kode_kartu || null,
               nik: a.nik,
               nama: a.nama_anak,
               inisial: inisial,
@@ -1355,6 +1442,7 @@
               pbLahir: a.pb_lahir || 'N/A',
               bukuKia: a.buku_kia || 'N/A',
               imd: a.imd || 'N/A',
+              imunisasiLengkap: a.imunisasi_lengkap === true,
               pbTerakhir: 'N/A',
               sudahDiukur: false,
               riwayat: {}
@@ -1518,6 +1606,18 @@
           ? this.activeAnak.riwayat[year][date.getMonth()] || null
           : null;
       },
+      pengukuranSebelumnya(tanggal) {
+        if (!this.activeAnak || !this.activeAnak.riwayat || !tanggal) return null;
+        const batas = new Date(tanggal + 'T00:00:00').getTime();
+        const records = [];
+        Object.values(this.activeAnak.riwayat).forEach(byMonth => Object.values(byMonth || {}).forEach(record => {
+          if (!record || !record.tanggalUkur) return;
+          const time = new Date(record.tanggalUkur + 'T00:00:00').getTime();
+          if (time < batas) records.push({ record, time });
+        }));
+        records.sort((a, b) => b.time - a.time);
+        return records.length ? records[0].record : null;
+      },
       validasiPengukuran() {
         if (!this.activeAnak) return 'Balita belum dipilih.';
         const identity = String(this.activeAnak.nik || this.activeAnak.id || '').trim();
@@ -1530,13 +1630,13 @@
         const values = {
           'Berat badan': [this.angkaPengukuran(this.formVals.bb), 1, 40, true],
           'Panjang/tinggi badan': [this.angkaPengukuran(this.formVals.pb), 30, 130, true],
-          'LILA': [this.angkaPengukuran(this.formVals.lila), 5, 40, false],
-          'LIKA': [this.angkaPengukuran(this.formVals.lika), 20, 65, false]
+          'LILA': [this.angkaPengukuran(this.formVals.lila), 8, 25, false],
+          'LIKA': [this.angkaPengukuran(this.formVals.lika), 30, 60, false]
         };
         for (const [label, rule] of Object.entries(values)) {
           const [value, min, max, required] = rule;
           if (required && value === null) return `${label} wajib diisi dengan angka yang valid.`;
-          if (value !== null && (value < min || value > max)) return `${label} berada di luar rentang wajar (${min}–${max}). Periksa kembali penulisannya.`;
+          if (value !== null && (value < min || value > max)) return `${label} berada di luar rentang wajar (${min}–${max}). Ulangi pengukuran dan periksa penulisannya.`;
         }
         return '';
       },
@@ -1728,6 +1828,9 @@
     mounted() {
       // Pasang handler tombol back hardware/gesture Android
       window.handleAndroidBack = () => this.handleAndroidBack();
+      window.handleScanKartuSasaran = value => this.prosesHasilScanKartu(value);
+      window.handleScanKartuDibatalkan = () => {};
+      window.handleScanKartuGagal = message => alert('[Pemindaian Gagal]\n\n' + message + '\n\nGunakan pencarian manual jika kamera belum siap.');
       setTimeout(() => { this.showSplash = false; }, 1600);
 
       // SQLite Android menjadi salinan tahan lama; localStorage tetap menjadi cache UI cepat.

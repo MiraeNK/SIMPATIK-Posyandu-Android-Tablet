@@ -28,6 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.simpatikposyandu.ui.theme.SIMPATIKPosyanduTheme
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 
 import androidx.activity.OnBackPressedCallback
 import org.json.JSONArray
@@ -162,8 +165,8 @@ private class PosyanduDatabase(context: Context) :
         }
         validateRange("Berat badan", number("bb_kg", true), 1.0..40.0)
         validateRange("Panjang/tinggi badan", number("panjang_tinggi_cm", true), 30.0..130.0)
-        validateRange("LILA", number("lila", false), 5.0..40.0)
-        validateRange("LIKA", number("lika", false), 20.0..65.0)
+        validateRange("LILA", number("lila", false), 8.0..25.0)
+        validateRange("LIKA", number("lika", false), 30.0..60.0)
 
         val db = writableDatabase
         var revision = 1
@@ -296,7 +299,10 @@ private class PosyanduDatabase(context: Context) :
 
 // Jembatan antara JavaScript (Vue/HTML) dan penyimpanan SQLite Android.
 @Keep
-class AndroidAppBridge(private val activity: ComponentActivity) {
+class AndroidAppBridge(
+    private val activity: ComponentActivity,
+    private val webViewProvider: () -> WebView?
+) {
     private val database = PosyanduDatabase(activity.applicationContext)
 
     @JavascriptInterface
@@ -350,6 +356,41 @@ class AndroidAppBridge(private val activity: ComponentActivity) {
     } catch (error: Exception) {
         Log.e("PosyanduDatabase", "Gagal membaca antrean layanan", error)
         "[]"
+    }
+
+    @JavascriptInterface
+    fun scanKartuSasaran(): String {
+        activity.runOnUiThread {
+            val options = GmsBarcodeScannerOptions.Builder()
+                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                .enableAutoZoom()
+                .build()
+            GmsBarcodeScanning.getClient(activity, options)
+                .startScan()
+                .addOnSuccessListener { barcode ->
+                    val value = barcode.rawValue.orEmpty().trim()
+                    if (value.isNotEmpty()) {
+                        webViewProvider()?.evaluateJavascript(
+                            "window.handleScanKartuSasaran && window.handleScanKartuSasaran(${JSONObject.quote(value)})",
+                            null
+                        )
+                    }
+                }
+                .addOnCanceledListener {
+                    webViewProvider()?.evaluateJavascript(
+                        "window.handleScanKartuDibatalkan && window.handleScanKartuDibatalkan()",
+                        null
+                    )
+                }
+                .addOnFailureListener { error ->
+                    Log.e("SasaranScanner", "Pemindaian kartu gagal", error)
+                    webViewProvider()?.evaluateJavascript(
+                        "window.handleScanKartuGagal && window.handleScanKartuGagal(${JSONObject.quote(error.message ?: "Pemindaian kartu gagal")})",
+                        null
+                    )
+                }
+        }
+        return JSONObject().put("ok", true).put("status", "started").toString()
     }
 
     @JavascriptInterface
@@ -428,7 +469,7 @@ fun PosyanduWebView(
                 }
                 
                 // Mendaftarkan objek 'AndroidBridge' ke dalam window Javascript
-                addJavascriptInterface(AndroidAppBridge(activity), "AndroidBridge")
+                addJavascriptInterface(AndroidAppBridge(activity) { this }, "AndroidBridge")
                 
                 // Memuat file HTML kita yang ada di folder assets
                 loadUrl("file:///android_asset/index.html")

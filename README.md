@@ -1,6 +1,6 @@
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
-Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.5 mencakup antrean layanan harian, pendaftaran anak, pengukuran, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
+Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.6 mencakup pemindaian kartu sasaran, skrining awal, antrean layanan harian, pendaftaran anak, pengukuran, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
 
 ## Ruang lingkup tablet
 
@@ -9,6 +9,8 @@ Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.5 
 - Mencari balita berdasarkan nama atau NIK.
 - Mendaftarkan balita baru dan mencegah NIK ganda.
 - Mendaftarkan kehadiran anak ke antrean harian dan mencegah antrean ganda.
+- Memindai QR kartu sasaran dari Portal SIMPATIK memakai kamera perangkat.
+- Menampilkan kekurangan identitas, Buku KIA, IMD, dan imunisasi sebelum check-in.
 - Memanggil, melewati, membatalkan, dan memulai layanan pengukuran dari antrean.
 - Menyelesaikan antrean secara otomatis setelah pengukuran tersimpan.
 - Menyimpan antrean ke SQLite Android agar tetap tersedia setelah aplikasi ditutup.
@@ -62,6 +64,8 @@ APK debug dihasilkan di `app/build/outputs/apk/debug/app-debug.apk`.
 - `CHANGELOG.md` — riwayat perubahan per versi.
 - `PROGRESS.md` — posisi pekerjaan, hasil verifikasi, dan pekerjaan lanjutan.
 - `WALKTHROUGH-ANDROID-ANTREAN-v1.5.md` — alur antrean dan pengukuran terbaru untuk kader.
+- `WALKTHROUGH-KARTU-ANTREAN-v1.6.md` — alur kartu, skrining, antrean, dan ulang ukur.
+- `CROSSCHECK-ANDROID-WEB-v1.6.md` — pembagian fitur dan status koneksi Android–web.
 - `TESTING-2026-09-10.md` — laporan pengujian versi 1.2.
 
 ## Cabang pengembangan

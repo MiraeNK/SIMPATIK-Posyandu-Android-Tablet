@@ -273,13 +273,44 @@ test('daily service queue prevents duplicates and completes after measurement', 
   assert.equal(h.app.antreanSelesai[0].childIdentity, second.nik);
 });
 
+test('published card payload finds exactly one target before queueing', () => {
+  const h = harness();
+  const child = {
+    id: '3273010101220001', sourceId: 110, nik: '3273010101220001', nama: 'Anak Kartu',
+    namaOrtu: 'Ibu Kartu', nikOrtu: '3273010101220099', tglLahir: '2024-01-01', jk: 'P',
+    rt: '01', anakKe: 1, bbLahir: 3.1, pbLahir: 49, bukuKia: true, imd: true,
+    imunisasiLengkap: true, riwayat: {},
+  };
+  h.app.daftarAnak = [child];
+  h.app.queueEntries = [];
+  assert.equal(h.app.prosesHasilScanKartu('SIMPATIK:SASARAN:1:110:3273010101220001'), true);
+  assert.equal(h.app.scannedAnak, child);
+  assert.equal(h.app.kekuranganSkriningScan.length, 0);
+  assert.equal(h.app.tambahAntrean(h.app.scannedAnak), true);
+  assert.equal(h.app.tambahAntrean(h.app.scannedAnak), false);
+  assert.match(h.alerts.pop(), /Antrean Sudah Ada/);
+});
+
+test('measurement comparison asks kader to repeat an implausible decrease', () => {
+  const { app } = harness();
+  app.activeAnak = {
+    id: '3273010101220001', nik: '3273010101220001', tglLahir: '2022-01-01',
+    riwayat: { '2026': { 7: { tanggalUkur: '2026-08-10', bb: '15', pb: '95', lila: '15', lika: '48' } } },
+  };
+  app.tanggalUkur = '2026-09-10';
+  app.formVals = { bb: '13', pb: '93', lila: '15', lika: '48' };
+  assert.match(app.peringatanPengukuran.join(' '), /BB turun 2\.0 kg/);
+  assert.match(app.peringatanPengukuran.join(' '), /TB\/PB berkurang 2\.0 cm/);
+});
+
 test('tablet UI exposes operational modules without portal analytics modules', () => {
   assert.match(html, /Pencatatan Lapangan/);
   assert.match(html, /Pencatatan Langsung/);
   assert.match(html, /Riwayat Bulanan/);
   assert.match(html, /Pendaftaran Balita Baru/);
   assert.match(html, /Antrean Hari Ini/);
-  assert.match(html, /Tambah antrean/);
+  assert.match(html, /Scan & skrining/);
+  assert.match(html, /Pindai kartu dengan kamera/);
   assert.match(html, /Daftar layanan/);
   assert.match(html, /Politeknik Manufaktur Bandung/);
   assert.match(html, /© 2026 POLMAN Bandung/);

@@ -286,9 +286,24 @@ test('published card payload finds exactly one target before queueing', () => {
   assert.equal(h.app.prosesHasilScanKartu('SIMPATIK:SASARAN:1:110:3273010101220001'), true);
   assert.equal(h.app.scannedAnak, child);
   assert.equal(h.app.kekuranganSkriningScan.length, 0);
-  assert.equal(h.app.tambahAntrean(h.app.scannedAnak), true);
-  assert.equal(h.app.tambahAntrean(h.app.scannedAnak), false);
+  assert.equal(h.app.tambahAntrean(child), true);
+  assert.equal(h.app.tambahAntrean(child), false);
   assert.match(h.alerts.pop(), /Antrean Sudah Ada/);
+});
+
+test('manual queue search waits for two characters and returns to queue after adding', () => {
+  const h = harness();
+  const child = { id: '1', nik: '3273010101220001', nama: 'Aisyah Putri', inisial: 'AP', umurBulan: 20, namaOrtu: 'Ibu Aisyah', rt: '01', riwayat: {} };
+  h.app.daftarAnak = [child];
+  h.app.queueEntries = [];
+  h.app.queueTab = 'add';
+  h.app.queueSearch = 'a';
+  assert.equal(h.app.anakUntukAntrean.length, 0);
+  h.app.queueSearch = 'ai';
+  assert.equal(h.app.anakUntukAntrean.length, 1);
+  assert.equal(h.app.tambahAntrean(child), true);
+  assert.equal(h.app.queueTab, 'list');
+  assert.equal(h.app.queueSearch, '');
 });
 
 test('measurement comparison asks kader to repeat an implausible decrease', () => {
@@ -309,8 +324,9 @@ test('tablet UI exposes operational modules without portal analytics modules', (
   assert.match(html, /Riwayat Bulanan/);
   assert.match(html, /Pendaftaran Balita Baru/);
   assert.match(html, /Antrean Hari Ini/);
-  assert.match(html, /Scan & skrining/);
-  assert.match(html, /Pindai kartu dengan kamera/);
+  assert.match(html, /Tambah Anak ke Antrean/);
+  assert.match(html, /Pindai Kartu dengan Kamera/);
+  assert.match(html, /Ketik sedikitnya 2 huruf/);
   assert.match(html, /Daftar layanan/);
   assert.match(html, /Politeknik Manufaktur Bandung/);
   assert.match(html, /© 2026 POLMAN Bandung/);

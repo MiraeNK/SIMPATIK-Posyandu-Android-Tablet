@@ -2,6 +2,22 @@
 
 Terakhir diperbarui: 24 September 2026
 
+### Verifikasi versi 1.6.1
+
+- [x] Memindahkan pencarian manual dari panel kanan ke tab khusus selebar layar.
+- [x] Memperbesar target sentuh, teks hasil, kolom pencarian, dan tombol tambah.
+- [x] Membatasi hasil hingga pengguna mengetik sedikitnya dua karakter.
+- [x] Menjaga scan kamera dan skrining pada tab Tambah Anak yang sama.
+- [x] Menjalankan 18 pengujian regresi JavaScript; seluruhnya lulus.
+- [x] Menjalankan unit test Gradle, Android lint, dan assembleDebug; seluruhnya lulus.
+- [x] Uji Pixel Tablet: perpindahan dua tab, pencarian nama, hasil pencarian, dan penambahan anak ke antrean berjalan baik.
+
+APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.6.1_pencarian-mudah.apk`
+
+SHA-256: `B3B9F4CF7D006AD703EF8B051D3104C82FECB634E837745698D894A8652164E0`
+
+Ukuran: 13.821.259 byte.
+
 ### Verifikasi versi 1.6
 
 - [x] Menambahkan scan QR kartu sasaran dengan kamera perangkat tanpa meminta izin kamera langsung pada aplikasi.

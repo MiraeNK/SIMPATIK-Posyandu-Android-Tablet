@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.1 — Pencarian Antrean Ramah Pengguna
+
+- Memisahkan **Daftar Antrean** dan **Tambah Anak ke Antrean** menjadi dua tab besar.
+- Menghapus pencarian manual dari panel kanan yang sempit.
+- Memperbesar kolom pencarian, nama anak, identitas wali, dan tombol tindakan.
+- Menampilkan hasil dalam kartu dua kolom dengan tombol teks **Tambahkan**.
+- Hasil baru muncul setelah dua karakter agar daftar tidak padat dan lebih mudah dipahami.
+- Setelah anak ditambahkan, aplikasi otomatis kembali ke tab Daftar Antrean.
+- Tombol kembali dari tab Tambah Anak kembali ke Daftar Antrean terlebih dahulu.
+
 ## 1.6.0 — Kartu Sasaran dan Skrining Awal
 
 - Pemindaian QR kartu sasaran melalui Google Code Scanner pada kamera perangkat.

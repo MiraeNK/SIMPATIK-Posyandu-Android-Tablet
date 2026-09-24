@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.0 — Kartu Sasaran dan Skrining Awal
+
+- Pemindaian QR kartu sasaran melalui Google Code Scanner pada kamera perangkat.
+- Kontrak kartu bersama web: `SIMPATIK:SASARAN:1:<id>:<nik>`.
+- Skrining kekurangan identitas, Buku KIA, IMD, dan status imunisasi sebelum masuk antrean.
+- Pencocokan sasaran harus menghasilkan tepat satu anak; kartu yang belum diterbitkan ke perangkat ditolak dengan arahan sinkronisasi.
+- Antrean tetap mencegah anak yang sama masuk dua kali pada tanggal yang sama.
+- Validasi rentang BB, TB/PB, LILA, dan LIKA diselaraskan dengan pengaturan web.
+- Peringatan ulang pengukuran bila BB naik lebih dari 2 kg, turun lebih dari 1,5 kg, atau TB/PB berkurang lebih dari 0,5 cm dibanding catatan sebelumnya.
+- Versi aplikasi menjadi `versionCode 6` / `versionName 1.6`.
+
 ## 1.5.0 — Antrean Layanan Android
 
 ### Ditambahkan

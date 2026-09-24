@@ -2,6 +2,19 @@
 
 Terakhir diperbarui: 24 September 2026
 
+### Verifikasi versi 1.6
+
+- [x] Menambahkan scan QR kartu sasaran dengan kamera perangkat tanpa meminta izin kamera langsung pada aplikasi.
+- [x] Menyamakan payload QR dengan kartu yang diterbitkan Portal SIMPATIK.
+- [x] Menampilkan skrining awal sebelum konfirmasi antrean.
+- [x] Menolak hasil scan yang tidak ditemukan atau tidak unik.
+- [x] Menambahkan peringatan ulang pengukuran berdasarkan catatan sebelumnya.
+- [x] Menjalankan 17 pengujian regresi JavaScript; seluruhnya lulus.
+- [x] Menjalankan unit test Gradle, Android lint, dan assembleDebug; seluruhnya lulus.
+- [x] Uji Pixel Tablet: beranda, halaman antrean, pembukaan kamera Google Code Scanner, dan panel hasil skrining.
+
+APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.6_scan-skrining.apk`
+
 ## Selesai
 
 - [x] Membuat branch `codex/fokus-input-tablet` dari versi terbaru `main` (`7ffbc19`).

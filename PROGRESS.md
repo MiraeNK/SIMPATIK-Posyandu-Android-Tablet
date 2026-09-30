@@ -1,6 +1,40 @@
 # Progress Pengembangan
 
-Terakhir diperbarui: 24 September 2026
+Terakhir diperbarui: 30 September 2026
+
+### Migrasi Supabase versi 1.8.0
+
+- [x] Mengganti URL proyek lama dengan proyek KKN POSYANDU TULIP.
+- [x] Memakai publishable key pada APK; secret key tetap hanya untuk proses server.
+- [x] Mengirim token login pengguna pada seluruh operasi data cloud.
+- [x] Mengubah pendaftaran dan pengukuran menjadi RPC atomik yang memakai skema utama Portal.
+- [x] Menjalankan 7 migrasi cloud dan mengisi 906 baris standar WHO-2006.
+- [x] Memverifikasi RLS pada 7 tabel domain serta 2 view dan 2 RPC tablet.
+- [ ] Membuat akun Supabase Auth kader/admin dan menguji alur login langsung.
+- [x] Menjalankan 18 pengujian regresi JavaScript; seluruhnya lulus.
+- [x] Menjalankan unit test Gradle, Android lint, dan assembleDebug; seluruhnya lulus.
+
+APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.8.0_supabase-kkn.apk`
+
+SHA-256: `E61611914714D7D0D82436E447F6D586207F2DF7A880B9D7A437D2BE8D256445`
+
+Ukuran: 13.822.495 byte.
+
+### Verifikasi versi 1.7.1
+
+- [x] Merapikan tata letak formulir pengukuran setelah penambahan catatan antrean.
+- [x] Menampilkan BB, TB/PB, LILA, dan LIKA secara utuh pada layar tablet.
+- [x] Menyusun LILA dan LIKA dalam dua kartu sejajar.
+- [x] Memadatkan keypad, panel catatan, dan footer tanpa mengecilkan target sentuh utama.
+- [x] Menjalankan 18 pengujian regresi JavaScript; seluruhnya lulus.
+- [x] Menjalankan unit test Gradle, Android lint, dan assembleDebug; seluruhnya lulus.
+- [x] Uji Pixel Tablet: seluruh kolom pengukuran, keypad, catatan, dan tombol Simpan tampil utuh tanpa tumpang tindih.
+
+APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.7.1_form-pengukuran-rapi.apk`
+
+SHA-256: `B60D59CD08D2EEF1267E6D994ED9C86721694659B8B03933AE22F3672701D5A5`
+
+Ukuran: 13.822.563 byte.
 
 ### Verifikasi versi 1.7.0
 

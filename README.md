@@ -1,6 +1,8 @@
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
-Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.7.0 mencakup pemindaian kartu sasaran, skrining awal, antrean layanan harian, catatan pendaftaran, pencatatan berbasis antrean, pendaftaran anak, pengukuran, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
+Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.8.0 mencakup pemindaian kartu sasaran, skrining awal, antrean layanan harian, catatan pendaftaran, pencatatan berbasis antrean, formulir pengukuran yang dioptimalkan untuk tablet, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
+
+Versi 1.8 memakai proyek Supabase KKN POSYANDU TULIP. APK hanya menyimpan publishable key dan selalu menggunakan token sesi pengguna untuk operasi data. Secret key Supabase tidak dimasukkan ke aplikasi maupun repository.
 
 ## Ruang lingkup tablet
 

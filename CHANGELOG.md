@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.8.0 — Migrasi Supabase KKN
+
+- Memindahkan endpoint aplikasi ke proyek Supabase KKN POSYANDU TULIP.
+- Mengganti kunci lama dengan publishable key yang aman untuk aplikasi klien.
+- Menggunakan token sesi pengguna untuk seluruh pembacaan dan penulisan data.
+- Menyatukan kontrak Android dengan skema Portal melalui view dan RPC atomik.
+- Mencegah akses data sasaran tanpa login melalui Row Level Security.
+- Versi aplikasi menjadi `versionCode 11` / `versionName 1.8.0`.
+
+## 1.7.1 — Perapihan Formulir Pengukuran
+
+- Memadatkan panel catatan antrean agar tidak mendorong formulir ke bawah.
+- Menjaga kolom BB dan TB/PB tetap besar dan mudah disentuh.
+- Menyusun LILA dan LIKA berdampingan agar seluruh input terlihat tanpa terpotong.
+- Menyeimbangkan lebar formulir dan keypad serta merapikan footer Simpan.
+- Versi aplikasi menjadi `versionCode 10` / `versionName 1.7.1`.
+
 ## 1.7.0 — Pencatatan Berbasis Antrean
 
 - Menambahkan tab **Dari Antrean** sebagai tampilan pertama pada menu Pencatatan.

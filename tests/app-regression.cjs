@@ -167,6 +167,7 @@ test('saving twice in one child-period updates one stable record', async () => {
 
 test('cloud sync uses upsert and marks a queued record as synced', async () => {
   const h = harness();
+  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ access_token: 'user-token' }));
   const marked = [];
   h.context.window.AndroidBridge = {
     ambilPengukuranTertunda: () => JSON.stringify([{ id_pengukuran: 'ukur_1_202609', nik: '1', id_periode: 'periode_2026_9', tanggal_ukur: '2026-09-10' }]),
@@ -174,8 +175,9 @@ test('cloud sync uses upsert and marks a queued record as synced', async () => {
   };
   h.app.registryConfig.activeProvider = 'supabase_cloud';
   h.context.fetch = async (url, request) => {
-    assert.match(url, /on_conflict=id_pengukuran/);
-    assert.match(request.headers.Prefer, /merge-duplicates/);
+    assert.match(url, /\/rest\/v1\/rpc\/simpan_pengukuran_tablet/);
+    assert.equal(request.headers.Authorization, 'Bearer user-token');
+    assert.equal(JSON.parse(request.body).payload.id_pengukuran, 'ukur_1_202609');
     return { ok: true, status: 201 };
   };
   assert.equal(await h.app.sinkronkanDataTertunda(), 0);
@@ -184,6 +186,7 @@ test('cloud sync uses upsert and marks a queued record as synced', async () => {
 
 test('failed cloud upload remains queued for automatic retry', async () => {
   const h = harness();
+  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ access_token: 'user-token' }));
   const payload = { id_pengukuran: 'ukur_2_202609', nik: '2', id_periode: 'periode_2026_9', tanggal_ukur: '2026-09-10' };
   h.context.window.AndroidBridge = {
     ambilPengukuranTertunda: () => JSON.stringify([payload]),
@@ -212,13 +215,14 @@ test('child registration is stored locally and duplicate NIK is rejected', async
 
 test('pending child registration is upserted and marked as synced', async () => {
   const h = harness();
+  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ access_token: 'user-token' }));
   const child = { id: '3273010101220002', nik: '3273010101220002', nama: 'Anak Server', tglLahir: '2023-02-01', jk: 'P', namaOrtu: 'Ibu Server', rt: '02', syncStatus: 'pending', riwayat: {} };
   h.app.daftarAnak = [child];
   h.app.registryConfig.activeProvider = 'supabase_cloud';
   h.context.fetch = async (url, request) => {
-    assert.match(url, /\/rest\/v1\/anak\?on_conflict=nik/);
-    assert.match(request.headers.Prefer, /merge-duplicates/);
-    const payload = JSON.parse(request.body)[0];
+    assert.match(url, /\/rest\/v1\/rpc\/daftar_anak_tablet/);
+    assert.equal(request.headers.Authorization, 'Bearer user-token');
+    const payload = JSON.parse(request.body).payload;
     assert.equal(payload.nama_anak, 'Anak Server');
     return { ok: true, status: 201 };
   };

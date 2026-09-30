@@ -842,24 +842,18 @@
         },
 
         // Local Registry Database & Server Switcher
-        selectedProviderView: 'supabase', // 'supabase', 'personal', 'offline'
+        selectedProviderView: 'portal',
         registryConfig: (() => {
           const cfg = JSON.parse(localStorage.getItem('SIMPATIK_REGISTRY_CONFIG') || 'null');
           if (cfg) {
-            if (!cfg.supabase) cfg.supabase = {};
-            // Migrasikan konfigurasi perangkat lama ke proyek KKN resmi.
-            cfg.supabase.url = 'https://ptcelfakgdodpvmsurtp.supabase.co';
-            cfg.supabase.anonKey = 'sb_publishable_zLhpgS3fHjHpv_EeDt_LPA_2BcmXtqT';
-            cfg.supabase.status = 'Online & Terhubung';
+            delete cfg.supabase;
+            cfg.activeProvider = 'portal_api';
+            cfg.portalApi = cfg.portalApi || { url: 'http://10.0.2.2:4321/api/v1', status: 'Siap' };
             return cfg;
           }
           return {
-            activeProvider: 'supabase_cloud', // 'supabase_cloud', 'personal_server', 'json_offline'
-            supabase: {
-              url: 'https://ptcelfakgdodpvmsurtp.supabase.co',
-              anonKey: 'sb_publishable_zLhpgS3fHjHpv_EeDt_LPA_2BcmXtqT',
-              status: 'Online & Terhubung'
-            },
+            activeProvider: 'portal_api',
+            portalApi: { url: 'http://10.0.2.2:4321/api/v1', status: 'Siap' },
             personalServer: {
               host: '10.0.2.2',
               port: '5432',
@@ -1033,41 +1027,28 @@
           return;
         }
 
-        let email = u;
-        if (!email.includes('@')) {
-          if (u === 'admin') email = 'admin@posyandu.id';
-          else if (u === 'kader') email = 'kader@posyandu.id';
-          else email = u + '@posyandu.id';
-        }
-
         this.isLoggingIn = true;
 
         try {
-          const url = (this.registryConfig && this.registryConfig.supabase && this.registryConfig.supabase.url) || 'https://ptcelfakgdodpvmsurtp.supabase.co';
-          const key = (this.registryConfig && this.registryConfig.supabase && this.registryConfig.supabase.anonKey) || 'sb_publishable_zLhpgS3fHjHpv_EeDt_LPA_2BcmXtqT';
-
-          const res = await fetch(url + '/auth/v1/token?grant_type=password', {
+          const url = this.registryConfig.portalApi.url;
+          const res = await fetch(url + '/masuk', {
             method: 'POST',
-            headers: {
-              'apikey': key,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email: email, password: p })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, kataSandi: p })
           });
 
           if (res.ok) {
             const authData = await res.json();
-            const role = (authData.user && authData.user.user_metadata && authData.user.user_metadata.role) || (email.includes('admin') ? 'admin' : 'kader');
-            const name = (authData.user && authData.user.user_metadata && authData.user.user_metadata.name) || (role === 'admin' ? 'Administrator SIMPATIK' : 'Ibu Sri Wahyuni');
+            const role = authData.pengguna.peran;
+            const name = authData.pengguna.nama;
 
             this.currentUser = {
-              username: u,
-              email: email,
+              username: authData.pengguna.username,
               name: name,
               role: role,
+              rt: authData.pengguna.rt,
               verifiedAt: new Date().toISOString()
             };
-            // Simpan sesi permanen di perangkat
             localStorage.setItem('SIMPATIK_SESSION', JSON.stringify(authData));
             localStorage.setItem('SIMPATIK_CURRENT_USER', JSON.stringify(this.currentUser));
 
@@ -1078,23 +1059,21 @@
             let errMsg = "Nama pengguna atau kata sandi yang Anda masukkan salah.";
             try {
               const errJson = await res.json();
-              if (errJson.error_description) errMsg = errJson.error_description;
-              else if (errJson.msg) errMsg = errJson.msg;
+              if (errJson.galat) errMsg = errJson.galat;
             } catch(e) {}
             alert("[Verifikasi Database Gagal]\n\n" + errMsg + "\n\nPastikan kredensial Anda sudah terdaftar pada database server.");
           }
         } catch (netErr) {
-          alert("[Koneksi Terputus]\n\nTidak dapat memverifikasi akun ke server database: " + netErr.message + "\n\nPastikan tablet terhubung ke jaringan internet.");
+          alert("[Koneksi Terputus]\n\nTidak dapat menghubungi REST API Portal: " + netErr.message + "\n\nPastikan server website aktif dan tablet berada di jaringan yang benar.");
         } finally {
           this.isLoggingIn = false;
         }
       },
-      supabaseHeaders(json = false) {
-        const key = this.registryConfig && this.registryConfig.supabase && this.registryConfig.supabase.anonKey;
+      apiHeaders(json = false) {
         const session = JSON.parse(localStorage.getItem('SIMPATIK_SESSION') || 'null');
-        const token = session && session.access_token;
-        if (!key || !token) throw new Error('Sesi login telah berakhir. Silakan masuk kembali.');
-        const headers = { 'apikey': key, 'Authorization': 'Bearer ' + token };
+        const token = session && session.token;
+        if (!token) throw new Error('Sesi login telah berakhir. Silakan masuk kembali.');
+        const headers = { 'Authorization': 'Bearer ' + token };
         if (json) headers['Content-Type'] = 'application/json';
         return headers;
       },
@@ -1412,14 +1391,13 @@
         this.sinkronkanSatuAnak(child).catch(error => console.warn('Pendaftaran menunggu sinkronisasi:', error));
       },
       async sinkronkanSatuAnak(child) {
-        if (!this.registryConfig || this.registryConfig.activeProvider !== 'supabase_cloud') return false;
-        const url = this.registryConfig.supabase && this.registryConfig.supabase.url;
-        const key = this.registryConfig.supabase && this.registryConfig.supabase.anonKey;
-        if (!url || !key) return false;
-        const response = await fetch(url + '/rest/v1/rpc/daftar_anak_tablet', {
+        if (!this.registryConfig || this.registryConfig.activeProvider !== 'portal_api') return false;
+        const url = this.registryConfig.portalApi && this.registryConfig.portalApi.url;
+        if (!url) return false;
+        const response = await fetch(url + '/anak', {
           method: 'POST',
-          headers: this.supabaseHeaders(true),
-          body: JSON.stringify({ payload: { nik: child.nik, nama_anak: child.nama, tgl_lahir: child.tglLahir, jk: child.jk, nama_ortu: child.namaOrtu, rt: child.rt } })
+          headers: this.apiHeaders(true),
+          body: JSON.stringify({ nik: child.nik, nama: child.nama, tglLahir: child.tglLahir, jk: child.jk, namaOrtu: child.namaOrtu, rt: child.rt })
         });
         if (!response.ok) throw new Error('Server menolak pendaftaran (HTTP ' + response.status + ')');
         child.syncStatus = 'synced';
@@ -1439,33 +1417,16 @@
         return remaining;
       },
       async muatDataDariSupabase(showNotification = false) {
-        const url = (this.registryConfig && this.registryConfig.supabase && this.registryConfig.supabase.url) || 'https://ptcelfakgdodpvmsurtp.supabase.co';
-        const key = this.registryConfig && this.registryConfig.supabase && this.registryConfig.supabase.anonKey;
-        if (!key) {
-          if (showNotification) alert("Kunci Anon Key Supabase belum diisi!");
-          return false;
-        }
+        const url = this.registryConfig.portalApi && this.registryConfig.portalApi.url;
+        if (!url) return false;
         this.isLoadingSupabase = true;
         this.cloudSyncStatus = 'Mengunduh...';
         try {
-          const headers = this.supabaseHeaders(false);
-
-          // 1. Ambil master data anak dari Supabase
-          const rAnak = await fetch(url + '/rest/v1/tablet_anak?select=*&order=nama_anak.asc', { headers });
-          if (!rAnak.ok) throw new Error('Gagal memuat data anak (HTTP ' + rAnak.status + ')');
-          const rawAnak = await rAnak.json();
-
-          // 2. Ambil seluruh riwayat pengukuran dengan pagination
-          let rawPeng = [];
-          let offset = 0;
-          while (true) {
-            const rPeng = await fetch(url + '/rest/v1/tablet_pengukuran?select=*&offset=' + offset + '&limit=1000', { headers });
-            if (!rPeng.ok) throw new Error('Gagal memuat riwayat pengukuran (HTTP ' + rPeng.status + ')');
-            const rows = await rPeng.json();
-            rawPeng = rawPeng.concat(rows);
-            if (rows.length < 1000) break;
-            offset += 1000;
-          }
+          const response = await fetch(url + '/sinkronisasi', { headers: this.apiHeaders(false) });
+          if (!response.ok) throw new Error('Gagal memuat data Portal (HTTP ' + response.status + ')');
+          const paket = await response.json();
+          const rawAnak = paket.anak || [];
+          const rawPeng = paket.pengukuran || [];
 
           // 3. Transformasi master data dan riwayat ringkas untuk membantu input.
           const anakMap = {};
@@ -1532,11 +1493,11 @@
             this.daftarAnak = list;
             this.persistDaftarAnak();
             this.registryConfig.lastSyncTime = new Date().toLocaleString('id-ID');
-            this.registryConfig.supabase.status = 'Online & Sinkron';
+            this.registryConfig.portalApi.status = 'Online & Sinkron';
             this.cloudSyncStatus = 'Tersinkron';
             this.simpanRegistryConfig();
             if (showNotification) {
-              alert("[Full Retrieve Supabase Berhasil!]\n\nBerhasil memuat " + list.length + " balita dan " + rawPeng.length + " catatan pengukuran riil langsung dari Supabase Cloud.\n\nData tersimpan aman di cache offline tablet.");
+              alert("[Sinkronisasi Portal Berhasil!]\n\nBerhasil memuat " + list.length + " balita dan " + rawPeng.length + " catatan pengukuran melalui REST API website.\n\nData tersimpan aman di cache offline tablet.");
             }
             return true;
           }
@@ -1766,14 +1727,13 @@
         }
       },
       async sinkronkanSatuPengukuran(payload) {
-        if (!this.registryConfig || this.registryConfig.activeProvider !== 'supabase_cloud') return false;
-        const url = this.registryConfig.supabase && this.registryConfig.supabase.url;
-        const key = this.registryConfig.supabase && this.registryConfig.supabase.anonKey;
-        if (!url || !key) return false;
-        const response = await fetch(url + '/rest/v1/rpc/simpan_pengukuran_tablet', {
+        if (!this.registryConfig || this.registryConfig.activeProvider !== 'portal_api') return false;
+        const url = this.registryConfig.portalApi && this.registryConfig.portalApi.url;
+        if (!url) return false;
+        const response = await fetch(url + '/pengukuran', {
           method: 'POST',
-          headers: this.supabaseHeaders(true),
-          body: JSON.stringify({ payload })
+          headers: this.apiHeaders(true),
+          body: JSON.stringify(payload)
         });
         if (!response.ok) throw new Error('Server menolak sinkronisasi (HTTP ' + response.status + ')');
         this.tandaiTersinkron(payload);
@@ -1920,7 +1880,7 @@
       this.pendingSyncCount = this.ambilAntreanPengukuran().length;
       this.sinkronkanAnakTertunda().then(async remainingChildren => {
         const remainingMeasurements = await this.sinkronkanDataTertunda();
-        if (remainingChildren === 0 && remainingMeasurements === 0 && this.registryConfig && this.registryConfig.activeProvider === 'supabase_cloud') {
+        if (remainingChildren === 0 && remainingMeasurements === 0 && this.registryConfig && this.registryConfig.activeProvider === 'portal_api') {
           this.muatDataDariSupabase(false);
         }
       });

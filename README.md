@@ -2,7 +2,9 @@
 
 Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.8.0 mencakup pemindaian kartu sasaran, skrining awal, antrean layanan harian, catatan pendaftaran, pencatatan berbasis antrean, formulir pengukuran yang dioptimalkan untuk tablet, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
 
-Versi 1.8 memakai proyek Supabase KKN POSYANDU TULIP. APK hanya menyimpan publishable key dan selalu menggunakan token sesi pengguna untuk operasi data. Secret key Supabase tidak dimasukkan ke aplikasi maupun repository.
+Versi 1.8 berkomunikasi hanya dengan REST API Portal SIMPATIK. REST API yang
+memegang koneksi PostgreSQL Supabase; APK tidak menyimpan URL proyek, publishable
+key, secret key, maupun kredensial database.
 
 ## Ruang lingkup tablet
 
@@ -50,7 +52,7 @@ Tablet hanya menampilkan pengukuran sebelumnya secara ringkas untuk membantu kad
 4. Data divalidasi lalu disimpan atomik di SQLite Android; antrean anak otomatis menjadi **Selesai**.
 5. Satu anak hanya memiliki satu catatan untuk satu periode; penyimpanan ulang memperbarui catatan yang sama.
 6. Data masuk antrean sinkronisasi.
-7. Saat jaringan tersedia, aplikasi melakukan upsert ke server.
+7. Saat jaringan tersedia, aplikasi melakukan upsert ke REST API Portal.
 8. Website mengolah data menjadi status gizi, KMS, analitik, dan laporan.
 
 ## Build dan pengujian

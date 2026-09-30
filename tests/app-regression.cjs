@@ -60,9 +60,9 @@ for (const role of ['admin', 'kader']) test(`${role}: login, session restore, an
   const h = harness();
   h.app.loginData = { username: ` ${role.toUpperCase()} `, password: 'test-password' };
   h.context.fetch = async (url, request) => {
-    assert.ok(url.endsWith('/auth/v1/token?grant_type=password'));
-    assert.equal(JSON.parse(request.body).email, `${role}@posyandu.id`);
-    return { ok: true, json: async () => ({ access_token: 'test-only', user: { user_metadata: { role, name: 'Test' } } }) };
+    assert.ok(url.endsWith('/masuk'));
+    assert.equal(JSON.parse(request.body).username, role);
+    return { ok: true, json: async () => ({ token: 'test-only', pengguna: { username: role, peran: role, nama: 'Test', rt: role === 'kader' ? '01' : null } }) };
   };
   await h.app.doLogin();
   assert.equal(h.app.currentUser.role, role);
@@ -167,17 +167,17 @@ test('saving twice in one child-period updates one stable record', async () => {
 
 test('cloud sync uses upsert and marks a queued record as synced', async () => {
   const h = harness();
-  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ access_token: 'user-token' }));
+  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'user-token' }));
   const marked = [];
   h.context.window.AndroidBridge = {
     ambilPengukuranTertunda: () => JSON.stringify([{ id_pengukuran: 'ukur_1_202609', nik: '1', id_periode: 'periode_2026_9', tanggal_ukur: '2026-09-10' }]),
     tandaiPengukuranTersinkron: id => { marked.push(id); return true; },
   };
-  h.app.registryConfig.activeProvider = 'supabase_cloud';
+  h.app.registryConfig.activeProvider = 'portal_api';
   h.context.fetch = async (url, request) => {
-    assert.match(url, /\/rest\/v1\/rpc\/simpan_pengukuran_tablet/);
+    assert.match(url, /\/api\/v1\/pengukuran/);
     assert.equal(request.headers.Authorization, 'Bearer user-token');
-    assert.equal(JSON.parse(request.body).payload.id_pengukuran, 'ukur_1_202609');
+    assert.equal(JSON.parse(request.body).id_pengukuran, 'ukur_1_202609');
     return { ok: true, status: 201 };
   };
   assert.equal(await h.app.sinkronkanDataTertunda(), 0);
@@ -186,13 +186,13 @@ test('cloud sync uses upsert and marks a queued record as synced', async () => {
 
 test('failed cloud upload remains queued for automatic retry', async () => {
   const h = harness();
-  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ access_token: 'user-token' }));
+  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'user-token' }));
   const payload = { id_pengukuran: 'ukur_2_202609', nik: '2', id_periode: 'periode_2026_9', tanggal_ukur: '2026-09-10' };
   h.context.window.AndroidBridge = {
     ambilPengukuranTertunda: () => JSON.stringify([payload]),
     tandaiPengukuranTersinkron: () => { throw new Error('must not be called'); },
   };
-  h.app.registryConfig.activeProvider = 'supabase_cloud';
+  h.app.registryConfig.activeProvider = 'portal_api';
   h.context.fetch = async () => ({ ok: false, status: 503 });
   assert.equal(await h.app.sinkronkanDataTertunda(), 1);
   assert.equal(h.app.pendingSyncCount, 1);
@@ -215,15 +215,15 @@ test('child registration is stored locally and duplicate NIK is rejected', async
 
 test('pending child registration is upserted and marked as synced', async () => {
   const h = harness();
-  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ access_token: 'user-token' }));
+  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'user-token' }));
   const child = { id: '3273010101220002', nik: '3273010101220002', nama: 'Anak Server', tglLahir: '2023-02-01', jk: 'P', namaOrtu: 'Ibu Server', rt: '02', syncStatus: 'pending', riwayat: {} };
   h.app.daftarAnak = [child];
-  h.app.registryConfig.activeProvider = 'supabase_cloud';
+  h.app.registryConfig.activeProvider = 'portal_api';
   h.context.fetch = async (url, request) => {
-    assert.match(url, /\/rest\/v1\/rpc\/daftar_anak_tablet/);
+    assert.match(url, /\/api\/v1\/anak/);
     assert.equal(request.headers.Authorization, 'Bearer user-token');
-    const payload = JSON.parse(request.body).payload;
-    assert.equal(payload.nama_anak, 'Anak Server');
+    const payload = JSON.parse(request.body);
+    assert.equal(payload.nama, 'Anak Server');
     return { ok: true, status: 201 };
   };
   assert.equal(await h.app.sinkronkanAnakTertunda(), 0);

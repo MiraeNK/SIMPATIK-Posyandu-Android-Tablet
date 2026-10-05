@@ -10,13 +10,13 @@ function harness() {
   const alerts = [];
   let options;
   const context = vm.createContext({
-    window: { addEventListener: () => {} }, console, Date, setTimeout, clearTimeout,
+    window: { addEventListener: () => {} }, console, Date, URL, setTimeout, clearTimeout,
     localStorage: {
       getItem: key => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, value),
       removeItem: key => storage.delete(key),
     },
-    alert: message => alerts.push(message),
+    alert: message => alerts.push(message), confirm: () => true,
     fetch: async () => { throw new Error('Unexpected network request'); },
     Vue: { createApp: value => { options = value; return { mount: () => ({}) }; } },
   });
@@ -54,6 +54,18 @@ test('incorrect credentials and connection failures do not create a session', as
   assert.match(h.alerts.pop(), /Koneksi Terputus/);
   assert.equal(h.app.isLoggingIn, false);
   assert.equal(h.storage.has('SIMPATIK_SESSION'), false);
+});
+
+test('LAN QA profile uses the PC API and verifies API plus database health', async () => {
+  const h = harness();
+  assert.equal(h.app.registryConfig.portalApi.url, 'http://192.168.6.13:4321/api/v1');
+  h.context.fetch = async url => {
+    assert.equal(url, 'http://192.168.6.13:4321/api/v1/kesehatan');
+    return { ok: true, json: async () => ({ status: 'siap', database: 'terhubung' }) };
+  };
+  await h.app.ujiKoneksiPortal();
+  assert.equal(h.app.registryConfig.portalApi.status, 'API & database siap');
+  assert.match(h.alerts.pop(), /Koneksi Berhasil/);
 });
 
 for (const role of ['admin', 'kader']) test(`${role}: login, session restore, and logout`, async () => {
@@ -287,8 +299,11 @@ test('recording defaults to queue, carries notes, and completes only after save'
   assert.equal(h.app.antreanSelesai[0].childIdentity, second.nik);
 });
 
-test('published card payload finds exactly one target before queueing', () => {
+test('published card payload automatically creates an active queue number', () => {
   const h = harness();
+  h.context.window.AndroidBridge = {
+    simpanAntrean: () => JSON.stringify({ ok: true }),
+  };
   const child = {
     id: '3273010101220001', sourceId: 110, nik: '3273010101220001', nama: 'Anak Kartu',
     namaOrtu: 'Ibu Kartu', nikOrtu: '3273010101220099', tglLahir: '2024-01-01', jk: 'P',
@@ -298,26 +313,95 @@ test('published card payload finds exactly one target before queueing', () => {
   h.app.daftarAnak = [child];
   h.app.queueEntries = [];
   assert.equal(h.app.prosesHasilScanKartu('SIMPATIK:SASARAN:1:110:3273010101220001'), true);
-  assert.equal(h.app.scannedAnak, child);
-  assert.equal(h.app.kekuranganSkriningScan.length, 0);
-  assert.equal(h.app.tambahAntrean(child), true);
-  assert.equal(h.app.tambahAntrean(child), false);
+  assert.equal(h.app.scannedAnak, null);
+  assert.equal(h.app.antreanAktif.length, 1);
+  assert.equal(h.app.antreanAktif[0].childIdentity, child.nik);
+  assert.equal(h.app.formatNomorAntrean(h.app.antreanAktif[0].number), 'A01');
+  assert.equal(h.app.queueTab, 'list');
+  assert.equal(h.app.notice.type, 'success');
+  assert.match(h.app.notice.message, /A01 · Anak Kartu masuk antrean/);
+  assert.equal(h.app.prosesHasilScanKartu('SIMPATIK:SASARAN:1:110:3273010101220001'), false);
   assert.match(h.alerts.pop(), /Antrean Sudah Ada/);
 });
 
-test('manual queue search waits for two characters and returns to queue after adding', () => {
+test('printed SPT fallback code finds the same child as the QR payload', () => {
   const h = harness();
-  const child = { id: '1', nik: '3273010101220001', nama: 'Aisyah Putri', inisial: 'AP', umurBulan: 20, namaOrtu: 'Ibu Aisyah', rt: '01', riwayat: {} };
+  const child = { id: '3273010101220001', sourceId: 23, kodeKartu: 'SPT-00000023', nik: '3273010101220001', nama: 'Anak Kartu', riwayat: {} };
   h.app.daftarAnak = [child];
+  assert.equal(h.app.prosesHasilScanKartu('SPT-00000023'), true);
+  assert.equal(h.app.antreanAktif.length, 1);
+  assert.equal(h.app.antreanAktif[0].childIdentity, child.nik);
+});
+
+test('published targets are immediately visible and search narrows the roster', () => {
+  const h = harness();
+  const child = { id: '1', nik: '3273010101220001', nama: 'Aisyah Putri', inisial: 'AP', umurBulan: 20, namaOrtu: 'Ibu Aisyah', rt: '01', statusSasaran: 'menunggu', riwayat: {} };
+  const completed = { id: '2', nik: '3273010101220002', nama: 'Budi Selesai', statusSasaran: 'selesai', riwayat: {} };
+  h.app.daftarAnak = [child, completed];
   h.app.queueEntries = [];
   h.app.queueTab = 'add';
-  h.app.queueSearch = 'a';
-  assert.equal(h.app.anakUntukAntrean.length, 0);
-  h.app.queueSearch = 'ai';
+  h.app.queueSearch = '';
   assert.equal(h.app.anakUntukAntrean.length, 1);
+  assert.equal(h.app.anakUntukAntrean[0].nama, 'Aisyah Putri');
+  h.app.queueSearch = 'a';
+  assert.equal(h.app.anakUntukAntrean.length, 1);
+  h.app.queueSearch = 'tidak ada';
+  assert.equal(h.app.anakUntukAntrean.length, 0);
   assert.equal(h.app.tambahAntrean(child), true);
   assert.equal(h.app.queueTab, 'list');
   assert.equal(h.app.queueSearch, '');
+});
+
+test('opening queue shows active check-ins or falls back to all pending targets', () => {
+  const h = harness();
+  h.app.daftarAnak = [{ id: '1', nama: 'Sasaran Live', statusSasaran: 'menunggu' }];
+  h.app.queueEntries = [];
+  h.app.bukaAntrean();
+  assert.equal(h.app.queueTab, 'add');
+  assert.equal(h.app.anakBelumBulanIni, 1);
+  assert.equal(h.app.anakUntukAntrean.length, 1);
+  h.app.queueEntries = [{ id: 'q1', date: h.app.tanggalHariIniISO, childIdentity: '1', status: 'waiting', sortOrder: 1, number: 1 }];
+  h.app.bukaAntrean();
+  assert.equal(h.app.queueTab, 'list');
+});
+
+test('calling and recalling a child repeats the audible queue announcement', () => {
+  const h = harness();
+  const announcements = [];
+  h.context.window.AndroidBridge = {
+    simpanAntrean: () => JSON.stringify({ ok: true }),
+    ucapkanPanggilan: (number, name) => { announcements.push({ number, name }); return true; },
+  };
+  h.app.queueEntries = [{
+    id: 'q1', date: h.app.tanggalHariIniISO, number: 7, sortOrder: 1,
+    childIdentity: '327301', name: 'Adzkiya Rumaysita', status: 'waiting',
+  }];
+  const item = h.app.antreanAktif[0];
+  h.app.panggilAntrean(item);
+  assert.equal(item.status, 'called');
+  h.app.panggilAntrean(item);
+  assert.equal(item.status, 'called');
+  assert.deepEqual(announcements, [
+    { number: 'A07', name: 'Adzkiya Rumaysita' },
+    { number: 'A07', name: 'Adzkiya Rumaysita' },
+  ]);
+});
+
+test('queue measurement date stays inside the active target period', () => {
+  const h = harness();
+  h.app.periodeSasaran = { periode: '2026-09', label: 'September 2026' };
+  assert.equal(h.app.tanggalUkurSasaranAktif(), '2026-09-30');
+  const child = { id: '3277304902244330', nik: '3277304902244330', nama: 'ADZKIYA RUMAYSITA', umurBulan: 32, riwayat: {} };
+  h.app.daftarAnak = [child];
+  h.app.listMode = 'record';
+  h.app.queueEntries = [{
+    id: 'q-adzkiya', date: h.app.tanggalHariIniISO, number: 1, sortOrder: 1,
+    childIdentity: child.nik, name: child.nama, status: 'called',
+  }];
+  h.app.goToList('record');
+  const queuedChild = h.app.filteredAnak[0];
+  h.app.pilihAnak(queuedChild);
+  assert.equal(h.app.tanggalUkur, '2026-09-30');
 });
 
 test('measurement comparison asks kader to repeat an implausible decrease', () => {
@@ -332,26 +416,75 @@ test('measurement comparison asks kader to repeat an implausible decrease', () =
   assert.match(app.peringatanPengukuran.join(' '), /TB\/PB berkurang 2\.0 cm/);
 });
 
+test('closing a session marks every remaining target absent without deleting children', async () => {
+  const h = harness();
+  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'session-token' }));
+  h.app.periodeSasaran = {
+    periodeId: 7,
+    label: 'September 2026',
+    ringkasan: { total: 3, menunggu: 2, selesai: 1, tidakHadir: 0, pindah: 0 },
+  };
+  h.app.daftarAnak = [
+    { id: '1', nama: 'Satu', statusSasaran: 'menunggu' },
+    { id: '2', nama: 'Dua', statusSasaran: 'menunggu' },
+    { id: '3', nama: 'Tiga', statusSasaran: 'selesai' },
+  ];
+  h.app.queueEntries = [{ id: 'q1', date: h.app.tanggalHariIniISO, childIdentity: '1', status: 'waiting' }];
+  h.context.fetch = async (url, request) => {
+    assert.equal(url, 'http://192.168.6.13:4321/api/v1/sasaran/tutup-sesi');
+    assert.equal(request.headers.Authorization, 'Bearer session-token');
+    assert.deepEqual(JSON.parse(request.body), { periodeId: 7, konfirmasi: true });
+    return { ok: true, json: async () => ({ hasil: { ditandaiTidakHadir: 2, sesiDitutupPada: '2026-09-10T05:00:00Z' } }) };
+  };
+  await h.app.konfirmasiTutupSesi();
+  assert.deepEqual(h.app.daftarAnak.map(item => item.statusSasaran), ['tidak_hadir', 'tidak_hadir', 'selesai']);
+  assert.equal(h.app.periodeSasaran.ringkasan.menunggu, 0);
+  assert.equal(h.app.periodeSasaran.ringkasan.tidakHadir, 2);
+  assert.equal(h.app.queueEntries[0].status, 'cancelled');
+  assert.match(h.alerts.pop(), /Sesi Berhasil Ditutup/);
+});
+
 test('tablet UI exposes operational modules without portal analytics modules', () => {
   assert.match(html, /Pencatatan Lapangan/);
   assert.match(html, /Pencatatan Langsung/);
   assert.match(html, /Riwayat Bulanan/);
   assert.match(html, /Pendaftaran Balita Baru/);
   assert.match(html, /Antrean Hari Ini/);
-  assert.match(html, /Tambah Anak ke Antrean/);
+  assert.match(html, /Sasaran Belum Dilayani/);
   assert.match(html, /Pindai Kartu dengan Kamera/);
-  assert.match(html, /Ketik sedikitnya 2 huruf/);
+  assert.match(html, /Kosongkan pencarian untuk melihat semuanya/);
   assert.match(html, /Daftar layanan/);
   assert.match(html, /Dari Antrean/);
   assert.match(html, /Semua Balita/);
-  assert.match(html, /Catatan untuk petugas pencatatan/);
+  assert.match(html, /Mode cepat aktif/);
   assert.match(html, /Diselesaikan dari Pencatatan/);
+  assert.match(html, /Panggil Lagi/);
   assert.doesNotMatch(html, /Mulai Pengukuran/);
   assert.match(html, /Politeknik Manufaktur Bandung/);
   assert.match(html, /© 2026 POLMAN Bandung/);
-  assert.match(html, /Progres pencatatan bulan ini/);
+  assert.match(html, /Progres sasaran/);
+  assert.match(html, /Konfirmasi beres sesi/);
+  assert.match(html, /sasaran\/tutup-sesi/);
   assert.doesNotMatch(html, /view === 'nutrition_detail'/);
   assert.doesNotMatch(html, /view === 'settings'/);
   assert.doesNotMatch(html, /kartuHasil\(\)/);
   assert.doesNotMatch(html, /hasilSimulasiZScore\(\)/);
+});
+
+test('application notices replace raw WebView alerts with semantic styled dialogs', () => {
+  const { app } = harness();
+  app.tampilkanNotifikasi('[Data Belum Valid]\n\nBerat badan wajib diisi sebelum menyimpan.');
+  assert.equal(app.notice.visible, true);
+  assert.equal(app.notice.type, 'error');
+  assert.equal(app.notice.title, 'Data Belum Valid');
+  assert.equal(app.notice.message, 'Berat badan wajib diisi sebelum menyimpan.');
+  assert.equal(app.ikonNotifikasi(), 'ph-fill ph-x-circle');
+  app.tutupNotifikasi();
+  assert.equal(app.notice.visible, false);
+
+  app.tampilkanNotifikasi('[Masuk Antrean]\n\nA01 · ADZKIYA RUMAYSITA masuk antrean.');
+  assert.equal(app.notice.type, 'success');
+  assert.equal(app.notice.title, 'Masuk Antrean');
+  assert.match(html, /role="alertdialog"/);
+  assert.match(html, />Mengerti<\/button>/);
 });

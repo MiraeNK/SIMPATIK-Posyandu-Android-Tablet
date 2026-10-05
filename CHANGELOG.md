@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.9.0 — Sasaran Bulanan Live
+
+- Mengambil daftar sasaran periode aktif dari REST API Portal, bukan seluruh data induk balita.
+- Menyimpan identitas sasaran dan status layanan agar QR hanya membuka anak yang masih aktif.
+- Menyelesaikan status sasaran otomatis setelah hasil pengukuran tersimpan.
+- Menambahkan tombol **Konfirmasi beres sesi** untuk menandai sasaran tersisa sebagai tidak hadir tanpa menghapus anak, kartu, atau riwayat.
+- Mengganti cache sasaran secara aman ketika admin Portal menerbitkan periode atau daftar baru.
+- Menambahkan penemuan otomatis server REST API di jaringan lokal, dengan alamat manual sebagai cadangan.
+- Versi aplikasi menjadi `versionCode 13` / `versionName 1.9.0`.
+
+## 1.8.1 — QA REST API melalui LAN
+
+- Mengarahkan tablet fisik ke REST API Portal pada IP LAN PC, bukan alamat emulator.
+- Menambahkan pengaturan alamat API dan pemeriksaan jalur API sampai PostgreSQL pada layar masuk.
+- Mengizinkan HTTP lokal hanya pada APK debug untuk QA; build rilis tetap disiapkan untuk HTTPS.
+- Menghapus fallback data sasaran contoh agar tablet tidak mencampur data mock dengan data live.
+- Mempertahankan kontrak QR Portal `SIMPATIK:SASARAN:1:<id>:<nik>` dan kode manual `SPT-########`.
+- Versi aplikasi menjadi `versionCode 12` / `versionName 1.8.1`.
+
 ## 1.8.0 — Migrasi Supabase KKN
 
 - Memindahkan endpoint aplikasi ke proyek Supabase KKN POSYANDU TULIP.

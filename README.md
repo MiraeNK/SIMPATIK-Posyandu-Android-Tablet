@@ -1,15 +1,15 @@
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
-Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.8.0 mencakup pemindaian kartu sasaran, skrining awal, antrean layanan harian, catatan pendaftaran, pencatatan berbasis antrean, formulir pengukuran yang dioptimalkan untuk tablet, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
+Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.9.0 mencakup daftar sasaran bulanan dari Portal, pemindaian kartu, skrining awal, antrean layanan harian, pencatatan berbasis antrean, konfirmasi penutupan sesi, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
 
-Versi 1.8 berkomunikasi hanya dengan REST API Portal SIMPATIK. REST API yang
+Versi 1.9 berkomunikasi hanya dengan REST API Portal SIMPATIK. REST API yang
 memegang koneksi PostgreSQL Supabase; APK tidak menyimpan URL proyek, publishable
 key, secret key, maupun kredensial database.
 
 ## Ruang lingkup tablet
 
 - Login kader menggunakan autentikasi server.
-- Mengunduh dan menyimpan daftar balita untuk pencarian offline.
+- Mengunduh dan menyimpan daftar sasaran periode aktif untuk pencarian offline.
 - Mencari balita berdasarkan nama atau NIK.
 - Mendaftarkan balita baru dan mencegah NIK ganda.
 - Mendaftarkan kehadiran anak ke antrean harian dan mencegah antrean ganda.
@@ -29,6 +29,7 @@ key, secret key, maupun kredensial database.
 - Memperbaiki nilai pengukuran dari riwayat tanpa membuat entri ganda.
 - Mengantrekan dan mencoba kembali sinkronisasi ketika jaringan tersedia.
 - Menampilkan progres operasional bulan berjalan dan jumlah antrean sinkron.
+- Menandai sasaran yang belum dilayani sebagai **Tidak hadir** melalui konfirmasi beres sesi tanpa menghapus data induk anak.
 
 ## Batas dengan Portal SIMPATIK
 
@@ -46,14 +47,15 @@ Tablet hanya menampilkan pengukuran sebelumnya secara ringkas untuk membantu kad
 
 ## Alur data
 
-1. Kader menambahkan anak beserta catatan yang diperlukan melalui **Antrean Hari Ini**.
-2. Kader menekan **Panggil** sehingga status anak menjadi **Dalam Proses**.
-3. Petugas pencatatan membuka **Pencatatan Langsung**; tab **Dari Antrean** tampil pertama dan membawa catatan pendaftaran.
-4. Data divalidasi lalu disimpan atomik di SQLite Android; antrean anak otomatis menjadi **Selesai**.
-5. Satu anak hanya memiliki satu catatan untuk satu periode; penyimpanan ulang memperbarui catatan yang sama.
-6. Data masuk antrean sinkronisasi.
-7. Saat jaringan tersedia, aplikasi melakukan upsert ke REST API Portal.
-8. Website mengolah data menjadi status gizi, KMS, analitik, dan laporan.
+1. Admin Portal mengimpor atau mengganti daftar sasaran periode; tablet mengambil daftar tersebut saat sinkronisasi.
+2. Kader memindai kartu sasaran atau mencari anak dari daftar periode yang diterbitkan Portal, lalu menambahkan catatan operasional saat anak masuk **Antrean Hari Ini**.
+3. Kader menekan **Panggil** sehingga status anak menjadi **Dalam Proses**.
+4. Petugas pencatatan membuka **Pencatatan Langsung**; tab **Dari Antrean** tampil pertama dan membawa catatan pendaftaran.
+5. Data divalidasi lalu disimpan atomik di SQLite Android; antrean anak otomatis menjadi **Selesai**.
+6. Satu anak hanya memiliki satu catatan untuk satu periode; penyimpanan ulang memperbarui catatan yang sama.
+7. Data masuk antrean sinkronisasi lalu dikirim ke REST API Portal saat jaringan tersedia.
+8. Setelah layanan berakhir, **Konfirmasi beres sesi** menandai sasaran tersisa sebagai tidak hadir.
+9. Website mengolah data menjadi status gizi, KMS, analitik, dan laporan.
 
 ## Build dan pengujian
 
@@ -66,6 +68,20 @@ node .\tests\app-regression.cjs
 ```
 
 APK debug dihasilkan di `app/build/outputs/apk/debug/app-debug.apk`.
+
+### Uji pada tablet fisik melalui LAN
+
+1. Jalankan `.\mulai-qa-lan.ps1` dari repo Portal pada PC.
+2. Sambungkan PC dan tablet ke router/hotspot yang sama.
+3. Pasang APK debug, buka bagian **Koneksi QA jaringan lokal** pada layar masuk,
+   gunakan penemuan server otomatis atau isi alamat LAN yang dicetak Portal,
+   lalu tekan **Uji koneksi API**.
+4. Masuk dengan akun live, lakukan sinkronisasi, kemudian pindai QR kartu yang
+   dicetak dari menu **Kartu Balita** di Portal.
+
+Gunakan IP LAN PC, bukan `localhost` atau `10.0.2.2`. Alamat `10.0.2.2` hanya
+berlaku untuk emulator Android. Bila koneksi gagal walau SSID sama, gunakan
+hotspot/router privat karena sebagian AP mengisolasi perangkat klien.
 
 ## Dokumentasi
 

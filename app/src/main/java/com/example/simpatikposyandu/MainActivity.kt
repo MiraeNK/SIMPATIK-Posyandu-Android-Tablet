@@ -6,6 +6,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
@@ -33,6 +34,12 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 
 import androidx.activity.OnBackPressedCallback
+import android.net.wifi.WifiManager
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.HttpURLConnection
+import java.net.InetAddress
+import java.net.URL
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -42,10 +49,23 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
     private var webViewInstance: WebView? = null
     private var lastBackPressTime: Long = 0L
+    private var queueSpeaker: TextToSpeech? = null
+    @Volatile private var queueSpeakerReady: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        queueSpeaker = TextToSpeech(applicationContext) { status ->
+            queueSpeakerReady = status == TextToSpeech.SUCCESS
+            if (queueSpeakerReady) {
+                val languageResult = queueSpeaker?.setLanguage(Locale.forLanguageTag("id-ID"))
+                queueSpeakerReady = languageResult != TextToSpeech.LANG_MISSING_DATA &&
+                    languageResult != TextToSpeech.LANG_NOT_SUPPORTED
+                queueSpeaker?.setSpeechRate(0.88f)
+                queueSpeaker?.setPitch(1.0f)
+            }
+        }
 
         // Handle Tombol Back Hardware / Gesture Android
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -86,6 +106,37 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    fun announceQueue(queueNumber: String, childName: String): Boolean {
+        val safeNumber = queueNumber.trim().uppercase(Locale.ROOT)
+        val safeName = childName.trim()
+        if (safeNumber.isEmpty() || safeName.isEmpty()) return false
+        if (!queueSpeakerReady) {
+            runOnUiThread {
+                Toast.makeText(this, "Suara antrean belum siap. Coba tekan Panggil Lagi.", Toast.LENGTH_SHORT).show()
+            }
+            return false
+        }
+        val digits = safeNumber.removePrefix("A").map { it.toString() }.joinToString(" ")
+        val announcement = "Nomor antrean A $digits. Atas nama $safeName. Silakan menuju meja pengukuran."
+        runOnUiThread {
+            queueSpeaker?.speak(
+                announcement,
+                TextToSpeech.QUEUE_FLUSH,
+                null,
+                "queue_${System.currentTimeMillis()}"
+            )
+        }
+        return true
+    }
+
+    override fun onDestroy() {
+        queueSpeaker?.stop()
+        queueSpeaker?.shutdown()
+        queueSpeaker = null
+        queueSpeakerReady = false
+        super.onDestroy()
     }
 }
 
@@ -300,7 +351,7 @@ private class PosyanduDatabase(context: Context) :
 // Jembatan antara JavaScript (Vue/HTML) dan penyimpanan SQLite Android.
 @Keep
 class AndroidAppBridge(
-    private val activity: ComponentActivity,
+    private val activity: MainActivity,
     private val webViewProvider: () -> WebView?
 ) {
     private val database = PosyanduDatabase(activity.applicationContext)
@@ -399,6 +450,170 @@ class AndroidAppBridge(
             Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
         }
     }
+
+    @JavascriptInterface
+    fun ucapkanPanggilan(queueNumber: String, childName: String): Boolean =
+        activity.announceQueue(queueNumber, childName)
+
+    @JavascriptInterface
+    fun dapatkanInfoJaringan(): String {
+        return try {
+            val wifiManager = activity.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            val dhcp = wifiManager?.dhcpInfo
+            val gatewayIp = if (dhcp != null && dhcp.gateway != 0) {
+                String.format(
+                    Locale.US, "%d.%d.%d.%d",
+                    dhcp.gateway and 0xff,
+                    dhcp.gateway shr 8 and 0xff,
+                    dhcp.gateway shr 16 and 0xff,
+                    dhcp.gateway shr 24 and 0xff
+                )
+            } else ""
+            val myIp = if (dhcp != null && dhcp.ipAddress != 0) {
+                String.format(
+                    Locale.US, "%d.%d.%d.%d",
+                    dhcp.ipAddress and 0xff,
+                    dhcp.ipAddress shr 8 and 0xff,
+                    dhcp.ipAddress shr 16 and 0xff,
+                    dhcp.ipAddress shr 24 and 0xff
+                )
+            } else ""
+            JSONObject().apply {
+                put("ok", true)
+                put("ipTablet", myIp)
+                put("gateway", gatewayIp)
+            }.toString()
+        } catch (e: Exception) {
+            JSONObject().put("ok", false).put("error", e.message ?: "Gagal membaca info jaringan").toString()
+        }
+    }
+
+    @JavascriptInterface
+    fun temukanServer() {
+        Thread {
+            try {
+                val wifiManager = activity.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+                val multicastLock = wifiManager?.createMulticastLock("SimpatikDiscovery")?.apply {
+                    setReferenceCounted(true)
+                    acquire()
+                }
+
+                var serverFoundJson: String? = null
+
+                // 1. Coba UDP Broadcast ke port 43210 (Auto-Discovery)
+                try {
+                    val socket = DatagramSocket().apply {
+                        broadcast = true
+                        soTimeout = 1200
+                    }
+                    val probeData = "SIMPATIK_DISCOVER_SERVER".toByteArray(Charsets.UTF_8)
+                    val broadcastAddr = InetAddress.getByName("255.255.255.255")
+                    val packet = DatagramPacket(probeData, probeData.size, broadcastAddr, 43210)
+                    socket.send(packet)
+
+                    val buffer = ByteArray(2048)
+                    val receivePacket = DatagramPacket(buffer, buffer.size)
+                    socket.receive(receivePacket)
+
+                    val responseText = String(receivePacket.data, 0, receivePacket.length, Charsets.UTF_8)
+                    val senderIp = receivePacket.address.hostAddress ?: ""
+                    socket.close()
+
+                    if (responseText.contains("simpatik-posyandu") && senderIp.isNotEmpty()) {
+                        val obj = JSONObject(responseText)
+                        val port = obj.optInt("portaApi", 4321)
+                        val path = obj.optString("jalurApi", "/api/v1")
+                        val apiUrl = "http://$senderIp:$port$path"
+                        serverFoundJson = JSONObject().apply {
+                            put("ok", true)
+                            put("ip", senderIp)
+                            put("port", port)
+                            put("apiUrl", apiUrl)
+                            put("metode", "udp_broadcast")
+                        }.toString()
+                    }
+                } catch (e: Exception) {
+                    Log.d("Discovery", "UDP broadcast note: ${e.message}")
+                } finally {
+                    try { multicastLock?.release() } catch (_: Exception) {}
+                }
+
+                // 2. Jika UDP broadcast belum membuahkan hasil (misal AP isolation/multicast diblokir), coba probe Gateway & IP hotspot umum
+                if (serverFoundJson == null) {
+                    val candidates = mutableListOf<String>()
+
+                    val dhcp = wifiManager?.dhcpInfo
+                    if (dhcp != null && dhcp.gateway != 0) {
+                        val gatewayIp = String.format(
+                            Locale.US, "%d.%d.%d.%d",
+                            dhcp.gateway and 0xff,
+                            dhcp.gateway shr 8 and 0xff,
+                            dhcp.gateway shr 16 and 0xff,
+                            dhcp.gateway shr 24 and 0xff
+                        )
+                        if (gatewayIp != "0.0.0.0") candidates.add(gatewayIp)
+                    }
+
+                    // Tambahkan IP host hotspot populer
+                    candidates.add("192.168.43.1")  // Hotspot Android
+                    candidates.add("192.168.137.1") // Hotspot Windows
+                    candidates.add("172.20.10.1")   // Hotspot iOS
+                    candidates.add("192.168.1.1")   // Router bawaan
+                    candidates.add("192.168.0.1")
+
+                    for (ip in candidates.distinct()) {
+                        try {
+                            val testUrl = "http://$ip:4321/api/v1/kesehatan"
+                            val connection = (URL(testUrl).openConnection() as HttpURLConnection).apply {
+                                connectTimeout = 400
+                                readTimeout = 400
+                                requestMethod = "GET"
+                            }
+                            if (connection.responseCode == 200) {
+                                val stream = connection.inputStream.bufferedReader()
+                                val body = stream.readText()
+                                stream.close()
+                                if (body.contains("siap")) {
+                                    val apiUrl = "http://$ip:4321/api/v1"
+                                    serverFoundJson = JSONObject().apply {
+                                        put("ok", true)
+                                        put("ip", ip)
+                                        put("port", 4321)
+                                        put("apiUrl", apiUrl)
+                                        put("metode", "gateway_probe")
+                                    }.toString()
+                                    break
+                                }
+                            }
+                        } catch (_: Exception) {}
+                    }
+                }
+
+                // Kirim hasil kembali ke WebView
+                activity.runOnUiThread {
+                    if (serverFoundJson != null) {
+                        webViewProvider()?.evaluateJavascript(
+                            "window.handleServerDitemukan && window.handleServerDitemukan(${JSONObject.quote(serverFoundJson)})",
+                            null
+                        )
+                    } else {
+                        webViewProvider()?.evaluateJavascript(
+                            "window.handleServerGagal && window.handleServerGagal('Tidak dapat menemukan server secara otomatis. Pastikan PC dan tablet terhubung ke Hotspot/Wi-Fi yang sama.')",
+                            null
+                        )
+                    }
+                }
+            } catch (err: Exception) {
+                Log.e("Discovery", "Gagal auto-discovery", err)
+                activity.runOnUiThread {
+                    webViewProvider()?.evaluateJavascript(
+                        "window.handleServerGagal && window.handleServerGagal(${JSONObject.quote(err.message ?: "Galat pencarian server")})",
+                        null
+                    )
+                }
+            }
+        }.start()
+    }
 }
 
 @Suppress("DEPRECATION")
@@ -406,7 +621,7 @@ class AndroidAppBridge(
 @Composable
 fun PosyanduWebView(
     modifier: Modifier = Modifier,
-    activity: ComponentActivity,
+    activity: MainActivity,
     onWebViewCreated: ((WebView) -> Unit)? = null
 ) {
     AndroidView(

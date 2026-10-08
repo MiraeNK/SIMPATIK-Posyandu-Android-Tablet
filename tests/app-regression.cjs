@@ -5,12 +5,14 @@ const { test } = require('node:test');
 const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '../app/src/main/assets/index.html'), 'utf8');
+const portalApiBawaan = html.match(/const PORTAL_API_BAWAAN = '([^']+)'/)[1];
 function harness() {
   const storage = new Map();
   const alerts = [];
   let options;
   const context = vm.createContext({
     window: { addEventListener: () => {} }, console, Date, URL, setTimeout, clearTimeout,
+    setInterval: () => 1, clearInterval: () => {}, AbortController,
     localStorage: {
       getItem: key => storage.get(key) ?? null,
       setItem: (key, value) => storage.set(key, value),
@@ -56,16 +58,69 @@ test('incorrect credentials and connection failures do not create a session', as
   assert.equal(h.storage.has('SIMPATIK_SESSION'), false);
 });
 
-test('LAN QA profile uses the PC API and verifies API plus database health', async () => {
+test('login role is assigned by the authenticated server account', () => {
+  assert.doesNotMatch(html, /loginRole/);
+  assert.doesNotMatch(html, /Masuk sebagai/);
+  assert.match(html, /Hak akses diterapkan otomatis sesuai klasifikasi akun di server/);
+  assert.match(html, /autocomplete="username"/);
+  assert.match(html, /autocomplete="current-password"/);
+});
+
+test('ngrok profile uses one fixed HTTPS API and verifies database health', async () => {
   const h = harness();
-  assert.equal(h.app.registryConfig.portalApi.url, 'http://192.168.6.13:4321/api/v1');
-  h.context.fetch = async url => {
-    assert.equal(url, 'http://192.168.6.13:4321/api/v1/kesehatan');
+  assert.equal(h.app.registryConfig.portalApi.url, portalApiBawaan);
+  assert.match(portalApiBawaan, /^https:\/\/[a-zA-Z0-9.-]+\.(?:ngrok-free\.dev|ngrok-free\.app|ngrok\.app)\/api\/v1$/);
+  h.context.fetch = async (url, request) => {
+    assert.equal(url, portalApiBawaan + '/kesehatan');
+    assert.equal(request.headers['ngrok-skip-browser-warning'], 'true');
     return { ok: true, json: async () => ({ status: 'siap', database: 'terhubung' }) };
   };
   await h.app.ujiKoneksiPortal();
   assert.equal(h.app.registryConfig.portalApi.status, 'API & database siap');
   assert.match(h.alerts.pop(), /Koneksi Berhasil/);
+});
+
+test('splash checks the server only for a saved session and keeps offline data available', async () => {
+  const fresh = harness();
+  await fresh.app.inisialisasiKoneksiAwal();
+  assert.equal(fresh.app.view, 'login');
+  assert.equal(fresh.app.splashStatus, '');
+
+  const returning = harness();
+  returning.storage.set('SIMPATIK_CURRENT_USER', JSON.stringify({ username: 'kader', name: 'Kader', role: 'kader' }));
+  returning.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'saved-token' }));
+  returning.app.$nextTick = callback => callback();
+  returning.app.ujiKoneksiPortal = async () => false;
+  await returning.app.inisialisasiKoneksiAwal();
+  assert.equal(returning.app.view, 'home');
+  assert.equal(returning.app.showSplash, false);
+  assert.equal(returning.app.notice.type, 'warning');
+  assert.match(returning.app.notice.message, /Data tetap dapat dicatat/);
+
+  assert.match(html, /Menyambungkan ke server/);
+  assert.doesNotMatch(html, /Koneksi Server PC/);
+  assert.doesNotMatch(html, /Opsi alamat IP manual/);
+});
+
+test('splash rejects a stale local session before showing cached monthly targets', async () => {
+  const h = harness();
+  h.storage.set('SIMPATIK_CURRENT_USER', JSON.stringify({ username: 'admin', name: 'Admin', role: 'admin' }));
+  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'stale-token' }));
+  h.app.currentUser = { username: 'admin', name: 'Admin', role: 'admin' };
+  h.app.$nextTick = callback => callback();
+  h.app.ujiKoneksiPortal = async () => true;
+  h.app.validasiSesiPortal = async () => {
+    h.app.akhiriSesiPortalTidakBerlaku();
+    return 'invalid';
+  };
+
+  await h.app.inisialisasiKoneksiAwal();
+
+  assert.equal(h.app.view, 'login');
+  assert.equal(h.app.currentUser, null);
+  assert.equal(h.storage.has('SIMPATIK_SESSION'), false);
+  assert.equal(h.storage.has('SIMPATIK_CURRENT_USER'), false);
+  assert.match(h.app.notice.message, /masuk kembali/);
 });
 
 for (const role of ['admin', 'kader']) test(`${role}: login, session restore, and logout`, async () => {
@@ -431,7 +486,7 @@ test('closing a session marks every remaining target absent without deleting chi
   ];
   h.app.queueEntries = [{ id: 'q1', date: h.app.tanggalHariIniISO, childIdentity: '1', status: 'waiting' }];
   h.context.fetch = async (url, request) => {
-    assert.equal(url, 'http://192.168.6.13:4321/api/v1/sasaran/tutup-sesi');
+    assert.equal(url, portalApiBawaan + '/sasaran/tutup-sesi');
     assert.equal(request.headers.Authorization, 'Bearer session-token');
     assert.deepEqual(JSON.parse(request.body), { periodeId: 7, konfirmasi: true });
     return { ok: true, json: async () => ({ hasil: { ditandaiTidakHadir: 2, sesiDitutupPada: '2026-09-10T05:00:00Z' } }) };
@@ -463,6 +518,7 @@ test('tablet UI exposes operational modules without portal analytics modules', (
   assert.match(html, /Politeknik Manufaktur Bandung/);
   assert.match(html, /© 2026 POLMAN Bandung/);
   assert.match(html, /Progres sasaran/);
+  assert.match(html, /daftarAnak\.length \+ ' sasaran tersedia'/);
   assert.match(html, /Konfirmasi beres sesi/);
   assert.match(html, /sasaran\/tutup-sesi/);
   assert.doesNotMatch(html, /view === 'nutrition_detail'/);

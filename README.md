@@ -1,14 +1,16 @@
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
-Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.9.0 mencakup daftar sasaran bulanan dari Portal, pemindaian kartu, skrining awal, antrean layanan harian, pencatatan berbasis antrean, konfirmasi penutupan sesi, riwayat bulanan, koreksi nilai, dan sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
+Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.10.3 memakai static domain ngrok, memeriksa server dan keabsahan sesi pada splash screen, serta menentukan hak akses otomatis dari akun yang berhasil login. Aplikasi tetap mendukung daftar sasaran bulanan, pemindaian kartu, skrining awal, antrean layanan, pencatatan, riwayat, koreksi nilai, serta sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
 
-Versi 1.9 berkomunikasi hanya dengan REST API Portal SIMPATIK. REST API yang
+Versi 1.10 berkomunikasi hanya dengan REST API Portal SIMPATIK. REST API yang
 memegang koneksi PostgreSQL Supabase; APK tidak menyimpan URL proyek, publishable
 key, secret key, maupun kredensial database.
 
 ## Ruang lingkup tablet
 
 - Login kader menggunakan autentikasi server.
+- Memeriksa koneksi domain ngrok tetap pada splash screen bila sesi login tersimpan.
+- Tetap membuka data lokal dengan pemberitahuan yang jelas saat server belum menyala.
 - Mengunduh dan menyimpan daftar sasaran periode aktif untuk pencarian offline.
 - Mencari balita berdasarkan nama atau NIK.
 - Mendaftarkan balita baru dan mencegah NIK ganda.
@@ -69,19 +71,21 @@ node .\tests\app-regression.cjs
 
 APK debug dihasilkan di `app/build/outputs/apk/debug/app-debug.apk`.
 
-### Uji pada tablet fisik melalui LAN
+### Koneksi website melalui ngrok
 
-1. Jalankan `.\mulai-qa-lan.ps1` dari repo Portal pada PC.
-2. Sambungkan PC dan tablet ke router/hotspot yang sama.
-3. Pasang APK debug, buka bagian **Koneksi QA jaringan lokal** pada layar masuk,
-   gunakan penemuan server otomatis atau isi alamat LAN yang dicetak Portal,
-   lalu tekan **Uji koneksi API**.
-4. Masuk dengan akun live, lakukan sinkronisasi, kemudian pindai QR kartu yang
+1. Siapkan authtoken dan static domain pada `.env.ngrok` di repo Portal.
+2. Pastikan `PORTAL_API_BAWAAN` memakai static domain yang sama dengan akhiran
+   `/api/v1`.
+3. Klik dua kali `mulai-ngrok.bat` pada repo Portal dan biarkan jendela aktif.
+4. Buka aplikasi. Bila sesi login tersimpan, splash menampilkan
+   **Menyambungkan ke server…** sampai pemeriksaan selesai.
+5. Masuk dengan akun live, lakukan sinkronisasi, kemudian pindai QR kartu yang
    dicetak dari menu **Kartu Balita** di Portal.
 
-Gunakan IP LAN PC, bukan `localhost` atau `10.0.2.2`. Alamat `10.0.2.2` hanya
-berlaku untuk emulator Android. Bila koneksi gagal walau SSID sama, gunakan
-hotspot/router privat karena sebagian AP mengisolasi perangkat klien.
+Jika server belum menyala, pengguna yang pernah login tetap masuk ke aplikasi
+dan mendapat pemberitahuan bahwa data akan disimpan di Android. Pengguna yang
+belum pernah login langsung melihat halaman login yang bersih tanpa pengaturan
+koneksi teknis.
 
 ## Dokumentasi
 

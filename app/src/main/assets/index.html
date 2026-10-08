@@ -87,6 +87,25 @@
     border: 1px solid rgba(255,255,255,0.28);
     box-shadow: 0 24px 60px rgba(0,0,0,0.2);
   }
+  .app-splash__connection {
+    min-height: 28px;
+    margin-top: 26px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255,255,255,0.9);
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .app-splash__spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.28);
+    border-top-color: #FFFFFF;
+    border-radius: 50%;
+    animation: splash-spin 0.8s linear infinite;
+  }
+  @keyframes splash-spin { to { transform: rotate(360deg); } }
 
   /* Notifikasi aplikasi: menggantikan alert browser/WebView yang terasa seperti error development. */
   .notice-layer {
@@ -267,11 +286,15 @@
     <div class="app-splash__mark"><span style="font-size:42px; font-weight:800; letter-spacing:-0.05em;">SI</span></div>
     <div style="font-size:34px; font-weight:800; margin-top:24px; letter-spacing:-0.02em;">SIMPATIK Posyandu</div>
     <div style="font-size:17px; margin-top:6px; color:rgba(255,255,255,0.82);">Program KKN Politeknik Manufaktur Bandung</div>
+    <div v-if="splashStatus" class="app-splash__connection" role="status" aria-live="polite">
+      <span class="app-splash__spinner" aria-hidden="true"></span>
+      <span>{{ splashStatus }}</span>
+    </div>
     <div style="position:absolute; bottom:34px; font-size:13px; color:rgba(255,255,255,0.68);">© 2026 POLMAN Bandung · Hak cipta dilindungi</div>
   </div>
   <!-- ================== LOGIN VIEW ================== -->
   <div v-if="view === 'login'" class="login-shell">
-        <!-- Bagian Kiri: Form & Selector Role -->
+        <!-- Bagian Kiri: Form login; peran ditentukan server dari akun. -->
         <div class="login-panel">
 
           <div style="display:flex; align-items:center; gap:16px; margin-bottom:28px;">
@@ -285,71 +308,22 @@
           </div>
 
           <h1 style="font-size:36px; font-weight:800; color:#16211C; margin:0 0 8px; letter-spacing:-0.02em;">Selamat Datang</h1>
-          <p style="font-size:16px; color:#4A5750; margin:0 0 24px;">Pilih peran pengguna dan masuk ke dalam sistem.</p>
-
-          <!-- Role Selector Tabs (Kader vs Admin) -->
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px; background:#F6F7F5; padding:6px; border-radius:16px; border:1px solid #DCE0DA;">
-            <button @click="loginRole = 'kader'"
-                    :style="{
-                      background: loginRole === 'kader' ? '#FFFFFF' : 'transparent',
-                      color: loginRole === 'kader' ? '#0F6E44' : '#4A5750',
-                      boxShadow: loginRole === 'kader' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                      borderColor: loginRole === 'kader' ? '#A3D9B5' : 'transparent'
-                    }"
-                    style="padding:14px 16px; border-radius:12px; border:1px solid; font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; transition:all 0.2s;">
-              <i class="ph-bold ph-user" style="font-size:18px;"></i>
-              <span>Kader Posyandu</span>
-            </button>
-            <button @click="loginRole = 'admin'"
-                    :style="{
-                      background: loginRole === 'admin' ? '#FFFFFF' : 'transparent',
-                      color: loginRole === 'admin' ? '#7C3AED' : '#4A5750',
-                      boxShadow: loginRole === 'admin' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                      borderColor: loginRole === 'admin' ? '#C4B5FD' : 'transparent'
-                    }"
-                    style="padding:14px 16px; border-radius:12px; border:1px solid; font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; transition:all 0.2s;">
-              <i class="ph-bold ph-shield-star" style="font-size:18px;"></i>
-              <span>Administrator</span>
-            </button>
-          </div>
+          <p style="font-size:16px; color:#4A5750; margin:0 0 24px;">Masukkan akun Anda. Hak akses diterapkan otomatis sesuai klasifikasi akun di server.</p>
 
           <div style="display:flex; flex-direction:column; gap:18px; margin-bottom:24px;">
             <div>
-              <label style="font-size:14px; font-weight:700; color:#16211C; margin-bottom:6px; display:block;">
-                {{ loginRole === 'kader' ? 'Nama Pengguna / Email Kader' : 'Username / Email Administrator' }}
-              </label>
-              <input type="text" v-model="loginData.username" :placeholder="loginRole === 'kader' ? 'Contoh: kader atau kader@posyandu.id' : 'Contoh: admin atau admin@posyandu.id'" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
+              <label for="login-username" style="font-size:14px; font-weight:700; color:#16211C; margin-bottom:6px; display:block;">Nama Pengguna</label>
+              <input id="login-username" type="text" v-model="loginData.username" autocomplete="username" autocapitalize="none" placeholder="Masukkan nama pengguna" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
             </div>
             <div>
-              <label style="font-size:14px; font-weight:700; color:#16211C; margin-bottom:6px; display:block;">
-                {{ loginRole === 'kader' ? 'Kata Sandi Kader' : 'Kata Sandi Administrator' }}
-              </label>
-              <input type="password" v-model="loginData.password" :placeholder="loginRole === 'kader' ? 'Masukkan kata sandi kader' : 'Masukkan kata sandi admin'" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" @keyup.enter="doLogin" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
+              <label for="login-password" style="font-size:14px; font-weight:700; color:#16211C; margin-bottom:6px; display:block;">Kata Sandi</label>
+              <input id="login-password" type="password" v-model="loginData.password" autocomplete="current-password" placeholder="Masukkan kata sandi" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" @keyup.enter="doLogin" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
             </div>
           </div>
 
-          <details style="margin:-6px 0 18px; border:1px solid #DCE0DA; border-radius:14px; background:#F8FAF8; padding:12px 14px;">
-            <summary style="cursor:pointer; color:#27332D; font-size:14px; font-weight:800;">Koneksi QA jaringan lokal</summary>
-            <div style="margin-top:12px; display:flex; flex-direction:column; gap:9px;">
-              <label for="portal-api-url" style="font-size:13px; font-weight:700; color:#4A5750;">Alamat REST API pada PC</label>
-              <input id="portal-api-url" type="url" v-model.trim="registryConfig.portalApi.url" @change="simpanAlamatPortal" placeholder="http://192.168.1.20:4321/api/v1" style="width:100%; padding:12px 14px; border-radius:11px; border:1px solid #AEB7B0; background:#FFFFFF; font:inherit; font-size:14px; outline:none;">
-              <p style="margin:0; font-size:12px; line-height:1.45; color:#66736C;">PC dan tablet harus berada pada Wi-Fi yang sama. Gunakan IP PC, bukan localhost.</p>
-              <button type="button" @click="ujiKoneksiPortal" :disabled="isTestingPortal" style="min-height:42px; border:1px solid #0F6E44; border-radius:11px; background:#FFFFFF; color:#0F6E44; font:inherit; font-size:14px; font-weight:800; cursor:pointer;">
-                {{ isTestingPortal ? 'Menguji koneksi…' : 'Uji koneksi API' }}
-              </button>
-            </div>
-          </details>
-
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; font-size:13px; color:#4A5750;">
-            <span style="display:flex; align-items:center; gap:6px;">
-              <span style="width:8px; height:8px; border-radius:50%; background:#14713D; display:inline-block; box-shadow:0 0 6px #14713D;"></span>
-              REST API Portal pada PC
-            </span>
-            <span style="color:#0F6E44; font-weight:700;">{{ registryConfig.portalApi.status }}</span>
-          </div>
           <button @click="doLogin" class="btn-primary" :disabled="isLoggingIn" style="width:100%; padding:18px; border-radius:14px; font-size:17px; font-weight:800; box-shadow:0 10px 20px rgba(15,110,68,0.2); display:flex; align-items:center; justify-content:center; gap:10px;">
             <i v-if="isLoggingIn" class="ph-bold ph-spinner ph-spin" style="font-size:22px;"></i>
-            <span>{{ isLoggingIn ? 'Memverifikasi ke Server...' : 'Masuk sebagai ' + (loginRole === 'kader' ? 'Kader' : 'Administrator') }}</span>
+            <span>{{ isLoggingIn ? 'Memverifikasi ke Server...' : 'Masuk' }}</span>
           </button>
         </div>
 
@@ -473,7 +447,7 @@
         <header class="queue-page-header" style="background:#FFFFFF; padding:18px 28px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; gap:18px; position:sticky; top:0; z-index:10;">
           <button @click="setView('home')" class="btn-outline" style="width:54px; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-arrow-left" style="font-size:25px;"></i></button>
           <div style="flex:1;"><div style="font-size:12px; color:#0F6E44; font-weight:800; letter-spacing:.08em;">LAYANAN POSYANDU</div><h2 style="margin:1px 0 0; font-size:27px; font-weight:800;">Antrean Hari Ini</h2></div>
-          <div class="queue-header-user" style="text-align:right;"><div style="font-size:14px; font-weight:800;">{{ periodeSasaran ? periodeSasaran.label : tanggalHariIni }}</div><div style="font-size:13px; color:#4A5750;">{{ periodeSasaran ? periodeSasaran.ringkasan.total + ' sasaran dari Portal' : 'Belum ada sasaran aktif' }}</div></div>
+          <div class="queue-header-user" style="text-align:right;"><div style="font-size:14px; font-weight:800;">{{ periodeSasaran ? periodeSasaran.label : tanggalHariIni }}</div><div style="font-size:13px; color:#4A5750;">{{ periodeSasaran ? daftarAnak.length + ' sasaran tersedia' : 'Belum ada sasaran aktif' }}</div></div>
           <button v-if="periodeSasaran" type="button" @click="konfirmasiTutupSesi" :disabled="isClosingSession || sesiSasaranSelesai" class="btn-outline" :style="{color:sesiSasaranSelesai?'#14713D':'#B42318',borderColor:sesiSasaranSelesai?'#8DCEA2':'#FDA29B'}" style="min-height:54px; padding:0 17px; border-radius:14px; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px;"><i :class="sesiSasaranSelesai ? 'ph-fill ph-check-circle' : 'ph-bold ph-door'" style="font-size:20px;"></i>{{ isClosingSession ? 'Menutup sesi…' : (sesiSasaranSelesai ? 'Sesi sudah beres' : 'Konfirmasi beres sesi') }}</button>
         </header>
 
@@ -896,7 +870,9 @@
     }
   ];
 
-  const PORTAL_API_BAWAAN = 'http://192.168.6.13:4321/api/v1';
+  // Domain ini diganti satu kali dengan static domain dari akun ngrok.
+  // Setelah itu URL tidak berubah saat PC, Wi-Fi, atau alamat IP berganti.
+  const PORTAL_API_BAWAAN = 'https://jaye-earthy-nonmeteorically.ngrok-free.dev/api/v1';
   const { createApp } = Vue;
 
   window.vm = createApp({
@@ -939,8 +915,8 @@
         isTestingPortal: false,
         isSyncing: false,
         isClosingSession: false,
-        loginRole: 'kader',
         showSplash: true,
+        splashStatus: savedUser && savedSession ? 'Menyambungkan ke server…' : '',
         notice: { visible: false, type: 'info', title: 'Informasi', message: '' },
         noticePreviousFocus: null,
 
@@ -958,9 +934,7 @@
           if (cfg) {
             delete cfg.supabase;
             cfg.activeProvider = 'portal_api';
-            if (!cfg.portalApi || !cfg.portalApi.url || cfg.portalApi.url.includes('10.0.2.2')) {
-              cfg.portalApi = { url: PORTAL_API_BAWAAN, status: 'Belum diuji' };
-            }
+            cfg.portalApi = { url: PORTAL_API_BAWAAN, status: 'Belum diuji' };
             return cfg;
           }
           return {
@@ -1015,6 +989,7 @@
         isEditingRecord: false,
         editingOriginal: null,
         isSaving: false,
+        isSearchingServer: false,
         pendingSyncCount: 0,
         months: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
         selectedMonthIndex: new Date().getMonth(),
@@ -1023,6 +998,10 @@
       }
     },
     computed: {
+      isConnectedToPortal() {
+        const s = this.registryConfig?.portalApi?.status || '';
+        return s.includes('siap') || s.includes('Online') || s.includes('Tersinkron');
+      },
       tanggalHariIni() {
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         return new Date().toLocaleDateString('id-ID', options);
@@ -1171,6 +1150,70 @@
       setView(v) {
         this.view = v;
       },
+      async sinkronkanSetelahTerhubung() {
+        const remainingChildren = await this.sinkronkanAnakTertunda();
+        const remainingMeasurements = await this.sinkronkanDataTertunda();
+        if (remainingChildren === 0 && remainingMeasurements === 0) {
+          await this.muatDataDariSupabase(false);
+        }
+      },
+      async inisialisasiKoneksiAwal() {
+        const savedUser = localStorage.getItem('SIMPATIK_CURRENT_USER');
+        const savedSession = localStorage.getItem('SIMPATIK_SESSION');
+
+        if (!savedUser || !savedSession) {
+          this.view = 'login';
+          this.splashStatus = '';
+          setTimeout(() => { this.showSplash = false; }, 650);
+          return;
+        }
+
+        this.view = 'home';
+        this.splashStatus = 'Menyambungkan ke server…';
+        const connected = await this.ujiKoneksiPortal(true);
+
+        if (connected) {
+          const sessionStatus = await this.validasiSesiPortal();
+          this.showSplash = false;
+          if (sessionStatus === 'invalid') {
+            const tampilkanSesiBerakhir = () => this.tampilkanNotifikasi(
+              '[Sesi Berakhir]\n\nSilakan masuk kembali agar daftar sasaran terbaru dapat diambil dari server.',
+              'warning'
+            );
+            if (typeof this.$nextTick === 'function') this.$nextTick(tampilkanSesiBerakhir);
+            else setTimeout(tampilkanSesiBerakhir, 0);
+            return;
+          }
+          this.kirimHeartbeat();
+          this.sinkronkanSetelahTerhubung().catch(error => {
+            console.warn('Sinkronisasi awal tertunda:', error);
+          });
+          return;
+        }
+
+        this.showSplash = false;
+
+        const tampilkanPeringatan = () => {
+          this.tampilkanNotifikasi(
+            '[Server Tidak Terhubung]\n\nWebsite SIMPATIK belum dapat dijangkau. Data tetap dapat dicatat dan disimpan di Android, lalu akan tersinkron otomatis saat server kembali menyala.',
+            'warning'
+          );
+        };
+        if (typeof this.$nextTick === 'function') this.$nextTick(tampilkanPeringatan);
+        else setTimeout(tampilkanPeringatan, 0);
+      },
+      async pulihkanKoneksiDanSinkronkan() {
+        if (!localStorage.getItem('SIMPATIK_SESSION') || this.isTestingPortal) return;
+        const wasConnected = this.isConnectedToPortal;
+        const connected = await this.ujiKoneksiPortal(true);
+        if (!connected) return;
+        this.kirimHeartbeat();
+        if (!wasConnected) {
+          this.sinkronkanSetelahTerhubung().catch(error => {
+            console.warn('Sinkronisasi setelah koneksi pulih tertunda:', error);
+          });
+        }
+      },
       async doLogin() {
         const u = (this.loginData.username || '').trim().toLowerCase();
         const p = (this.loginData.password || '').trim();
@@ -1192,7 +1235,10 @@
           this.simpanRegistryConfig();
           const res = await fetch(url + '/masuk', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'ngrok-skip-browser-warning': 'true'
+            },
             body: JSON.stringify({ username: u, kataSandi: p })
           });
 
@@ -1223,7 +1269,7 @@
             alert("[Verifikasi Database Gagal]\n\n" + errMsg + "\n\nPastikan kredensial Anda sudah terdaftar pada database server.");
           }
         } catch (netErr) {
-          alert("[Koneksi Terputus]\n\nTidak dapat menghubungi REST API Portal: " + netErr.message + "\n\nPastikan server website aktif dan tablet berada di jaringan yang benar.");
+          alert("[Koneksi Terputus]\n\nTidak dapat menghubungi server SIMPATIK: " + netErr.message + "\n\nPastikan website dan tunnel ngrok sedang berjalan.");
         } finally {
           this.isLoggingIn = false;
         }
@@ -1232,9 +1278,33 @@
         const session = JSON.parse(localStorage.getItem('SIMPATIK_SESSION') || 'null');
         const token = session && session.token;
         if (!token) throw new Error('Sesi login telah berakhir. Silakan masuk kembali.');
-        const headers = { 'Authorization': 'Bearer ' + token };
+        const headers = {
+          'Authorization': 'Bearer ' + token,
+          'ngrok-skip-browser-warning': 'true'
+        };
         if (json) headers['Content-Type'] = 'application/json';
         return headers;
+      },
+      akhiriSesiPortalTidakBerlaku() {
+        localStorage.removeItem('SIMPATIK_SESSION');
+        localStorage.removeItem('SIMPATIK_CURRENT_USER');
+        this.currentUser = null;
+        this.loginData.password = '';
+        this.view = 'login';
+      },
+      async validasiSesiPortal() {
+        try {
+          const url = this.normalisasiAlamatPortal();
+          const response = await fetch(url + '/sasaran', { headers: this.apiHeaders(false) });
+          if (response.status === 401) {
+            this.akhiriSesiPortalTidakBerlaku();
+            return 'invalid';
+          }
+          return response.ok ? 'valid' : 'unavailable';
+        } catch (error) {
+          console.warn('Sesi Portal belum dapat diperiksa:', error);
+          return 'unavailable';
+        }
       },
       handleAndroidBack() {
         if (this.bukaDialog) {
@@ -1300,26 +1370,93 @@
           this.registryConfig.portalApi.status = 'Alamat tidak valid';
         }
       },
-      async ujiKoneksiPortal() {
-        if (this.isTestingPortal) return;
+      async ujiKoneksiPortal(tanpaAlert = false) {
+        if (this.isTestingPortal) return false;
         this.isTestingPortal = true;
         try {
           const url = this.normalisasiAlamatPortal();
           this.registryConfig.portalApi.url = url;
-          const response = await fetch(url + '/kesehatan');
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3500);
+          const response = await fetch(url + '/kesehatan', {
+            signal: controller.signal,
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+          });
+          clearTimeout(timeoutId);
           if (!response.ok) throw new Error('HTTP ' + response.status);
           const health = await response.json();
           if (health.status !== 'siap' || health.database !== 'terhubung') throw new Error('Respons server tidak dikenali.');
           this.registryConfig.portalApi.status = 'API & database siap';
           this.simpanRegistryConfig();
-          alert('[Koneksi Berhasil]\n\nTablet dapat menjangkau REST API pada PC dan database PostgreSQL siap digunakan.');
+          if (!tanpaAlert) {
+            alert('[Koneksi Berhasil]\n\nTablet dapat menjangkau server SIMPATIK dan database siap digunakan.');
+          }
+          return true;
         } catch (error) {
           this.registryConfig.portalApi.status = 'Tidak terhubung';
           this.simpanRegistryConfig();
-          alert('[Koneksi Gagal]\n\n' + error.message + '\n\nPastikan server QA aktif, IP PC benar, dan kedua perangkat berada pada jaringan yang sama.');
+          if (!tanpaAlert) {
+            alert('[Koneksi Gagal]\n\n' + error.message + '\n\nPastikan website SIMPATIK dan tunnel ngrok sedang berjalan.');
+          }
+          return false;
         } finally {
           this.isTestingPortal = false;
         }
+      },
+      temukanServerOtomatis() {
+        if (this.isSearchingServer) return;
+        this.isSearchingServer = true;
+        this.registryConfig.portalApi.status = 'Mencari server...';
+
+        if (window.AndroidBridge && typeof window.AndroidBridge.temukanServer === 'function') {
+          window.AndroidBridge.temukanServer();
+          setTimeout(() => {
+            if (this.isSearchingServer) {
+              this.isSearchingServer = false;
+              if (!this.isConnectedToPortal) {
+                this.registryConfig.portalApi.status = 'Tidak terhubung';
+              }
+            }
+          }, 5000);
+        } else {
+          this.ujiKoneksiPortal(false).finally(() => {
+            this.isSearchingServer = false;
+          });
+        }
+      },
+      terapkanServerOtomatis(apiUrl, ip, metode) {
+        this.isSearchingServer = false;
+        this.registryConfig.portalApi.url = apiUrl;
+        this.registryConfig.portalApi.status = 'Ditemukan, memverifikasi...';
+        this.simpanRegistryConfig();
+        this.ujiKoneksiPortal(true).then((berhasil) => {
+          if (berhasil) {
+            console.log('[AutoDiscovery] Terhubung ke ' + ip + ' via ' + metode);
+            if (window.AndroidBridge && typeof window.AndroidBridge.tampilkanPesan === 'function') {
+              window.AndroidBridge.tampilkanPesan('Terhubung otomatis ke PC (' + ip + ')');
+            }
+            this.kirimHeartbeat();
+          }
+        });
+      },
+      async kirimHeartbeat() {
+        const url = this.registryConfig.portalApi && this.registryConfig.portalApi.url;
+        if (!url || !this.isConnectedToPortal) return;
+        try {
+          await fetch(url + '/heartbeat', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({
+              deviceId: 'tablet-posyandu',
+              namaPerangkat: 'Tablet Posyandu Tulip',
+              versiAplikasi: 'v1.10.0',
+              antreanTertunda: this.totalPendingCount || 0
+            })
+          });
+        } catch {}
       },
       persistAntrean() {
         const serialized = JSON.stringify(this.queueEntries);
@@ -1695,6 +1832,14 @@
         this.cloudSyncStatus = 'Mengunduh...';
         try {
           const response = await fetch(url + '/sinkronisasi', { headers: this.apiHeaders(false) });
+          if (response.status === 401) {
+            this.akhiriSesiPortalTidakBerlaku();
+            this.tampilkanNotifikasi(
+              '[Sesi Berakhir]\n\nSilakan masuk kembali agar daftar sasaran terbaru dapat diambil dari server.',
+              'warning'
+            );
+            return false;
+          }
           if (!response.ok) throw new Error('Gagal memuat data Portal (HTTP ' + response.status + ')');
           const paket = await response.json();
           const rawAnak = paket.anak || [];
@@ -2159,6 +2304,8 @@
       }
     },
     mounted() {
+      window.__simpatikApp = this;
+
       // Pasang handler tombol back hardware/gesture Android
       window.handleAndroidBack = () => this.handleAndroidBack();
       window.handleScanKartuSasaran = value => this.prosesHasilScanKartu(value);
@@ -2168,13 +2315,12 @@
       window.addEventListener('keydown', event => {
         if (event.key === 'Escape' && this.notice.visible) this.tutupNotifikasi();
       });
-      setTimeout(() => { this.showSplash = false; }, 1600);
 
       // SQLite Android menjadi salinan tahan lama; localStorage tetap menjadi cache UI cepat.
       if (!this.pulihkanDaftarAnakAndroid()) this.persistDaftarAnak();
       if (!this.pulihkanAntreanAndroid()) this.persistAntrean();
 
-      // Periksa Sesi Permanen Pengguna
+      // Pulihkan identitas lokal sebelum splash memeriksa koneksi server.
       try {
         const savedUser = localStorage.getItem('SIMPATIK_CURRENT_USER');
         const savedSession = localStorage.getItem('SIMPATIK_SESSION');
@@ -2185,21 +2331,16 @@
           this.view = 'login';
         }
       } catch (e) {
-        console.warn("Gagal membaca sesi pengguna:", e);
+        console.warn('Gagal membaca sesi pengguna:', e);
       }
 
-      // Kirim revisi lokal lebih dahulu agar unduhan cloud tidak menimpa perubahan yang belum terkirim.
       this.pendingSyncCount = this.ambilAntreanPengukuran().length;
-      this.sinkronkanAnakTertunda().then(async remainingChildren => {
-        const remainingMeasurements = await this.sinkronkanDataTertunda();
-        if (remainingChildren === 0 && remainingMeasurements === 0 && this.registryConfig && this.registryConfig.activeProvider === 'portal_api') {
-          this.muatDataDariSupabase(false);
-        }
-      });
-      window.addEventListener('online', () => {
-        this.sinkronkanAnakTertunda();
-        this.sinkronkanDataTertunda();
-      });
+      this.inisialisasiKoneksiAwal();
+
+      // Saat website dinyalakan kembali, aplikasi memulihkan koneksi dan
+      // mengirim antrean lokal tanpa meminta kader membuka pengaturan.
+      setInterval(() => this.pulihkanKoneksiDanSinkronkan(), 15000);
+      window.addEventListener('online', () => this.pulihkanKoneksiDanSinkronkan());
     },
   }).mount('#app')
 </script>

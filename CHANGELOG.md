@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.10.3 — Login Berdasarkan Akun
+
+- Menghapus pilihan Kader dan Administrator dari layar login.
+- Menentukan peran, nama pengguna, dan cakupan RT otomatis dari klasifikasi akun di server.
+- Menyederhanakan form menjadi Nama Pengguna, Kata Sandi, dan satu tombol Masuk.
+- Versi aplikasi menjadi `versionCode 17` / `versionName 1.10.3`.
+
+## 1.10.2 — Validasi Sesi Server
+
+- Memeriksa sesi login ke endpoint terlindungi setelah koneksi server berhasil.
+- Mengarahkan pengguna kembali ke login bila token lokal tidak lagi berlaku, sehingga cache bulan lama tidak dianggap sebagai data terbaru.
+- Menangani respons HTTP 401 saat sinkronisasi dengan pesan masuk ulang yang jelas.
+- Versi aplikasi menjadi `versionCode 16` / `versionName 1.10.2`.
+
+## 1.10.1 — Domain Akun Ngrok Aktif
+
+- Mengarahkan REST API Android ke static domain milik akun ngrok yang aktif.
+- Memastikan domain menjawab pemeriksaan kesehatan dengan status database terhubung sebelum APK dipasang ke tablet.
+- Menyamakan angka sasaran pada beranda dan halaman antrean berdasarkan data yang benar-benar tersedia di tablet.
+- Versi aplikasi menjadi `versionCode 15` / `versionName 1.10.1`.
+
+## 1.10.0 — Koneksi Domain Tetap
+
+- Mengarahkan REST API Android ke satu static domain ngrok ber-HTTPS.
+- Menghapus pemeriksaan koneksi dan alamat teknis dari halaman login.
+- Memeriksa kesehatan server pada splash screen untuk pengguna yang sudah login.
+- Membuka aplikasi dalam mode offline dengan pemberitahuan bila website belum menyala.
+- Mencoba koneksi dan sinkronisasi ulang otomatis setelah server tersedia kembali.
+- Versi aplikasi menjadi `versionCode 14` / `versionName 1.10.0`.
+
 ## 1.9.0 — Sasaran Bulanan Live
 
 - Mengambil daftar sasaran periode aktif dari REST API Portal, bukan seluruh data induk balita.

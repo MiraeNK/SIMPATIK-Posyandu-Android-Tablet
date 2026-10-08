@@ -110,7 +110,10 @@ class MainActivity : ComponentActivity() {
 
     fun announceQueue(queueNumber: String, childName: String): Boolean {
         val safeNumber = queueNumber.trim().uppercase(Locale.ROOT)
-        val safeName = childName.trim()
+        // Nama sasaran sering tersimpan kapital semua; beberapa mesin TTS
+        // menganggap kapital sebagai singkatan lalu mengeja setiap huruf.
+        val safeName = childName.trim().replace(Regex("\\s+"), " ")
+            .lowercase(Locale.forLanguageTag("id-ID"))
         if (safeNumber.isEmpty() || safeName.isEmpty()) return false
         if (!queueSpeakerReady) {
             runOnUiThread {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.4 — Splash Screen dan Suara Antrean
+
+- Menampilkan splash screen minimal 3 detik dengan logo SIMPATIK dan kredit “Dibuat oleh POLMAN Bandung”.
+- Menormalkan nama anak menjadi huruf kecil sebelum dikirim ke Text to Speech agar dibaca sebagai nama, bukan dieja sebagai huruf kapital.
+- Versi aplikasi menjadi `versionCode 18` / `versionName 1.10.4`.
+
 ## 1.10.3 — Login Berdasarkan Akun
 
 - Menghapus pilihan Kader dan Administrator dari layar login.

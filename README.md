@@ -1,6 +1,6 @@
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
-Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.10.3 memakai static domain ngrok, memeriksa server dan keabsahan sesi pada splash screen, serta menentukan hak akses otomatis dari akun yang berhasil login. Aplikasi tetap mendukung daftar sasaran bulanan, pemindaian kartu, skrining awal, antrean layanan, pencatatan, riwayat, koreksi nilai, serta sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
+Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.10.4 memakai splash screen minimal 3 detik dengan logo aplikasi dan kredit POLMAN, serta mengucapkan nama panggilan antrean sebagai nama, bukan huruf satu per satu. Versi ini juga memakai static domain ngrok, memeriksa server dan keabsahan sesi, serta menentukan hak akses otomatis dari akun yang berhasil login. Aplikasi tetap mendukung daftar sasaran bulanan, pemindaian kartu, skrining awal, antrean layanan, pencatatan, riwayat, koreksi nilai, serta sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
 
 Versi 1.10 berkomunikasi hanya dengan REST API Portal SIMPATIK. REST API yang
 memegang koneksi PostgreSQL Supabase; APK tidak menyimpan URL proyek, publishable

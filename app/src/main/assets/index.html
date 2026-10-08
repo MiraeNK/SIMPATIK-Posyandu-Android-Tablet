@@ -77,16 +77,19 @@
     color: #FFFFFF;
   }
   .app-splash__mark {
-    width: 112px;
-    height: 112px;
-    border-radius: 32px;
+    width: 184px;
+    height: 184px;
+    padding: 14px;
+    border-radius: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255,255,255,0.14);
-    border: 1px solid rgba(255,255,255,0.28);
+    overflow: hidden;
+    background: #FFFFFF;
     box-shadow: 0 24px 60px rgba(0,0,0,0.2);
   }
+  .app-splash__logo { display:block; width:100%; height:100%; object-fit:contain; }
+  .app-splash__credit { margin-top:8px; color:rgba(255,255,255,0.82); font-size:15px; font-weight:700; }
   .app-splash__connection {
     min-height: 28px;
     margin-top: 26px;
@@ -283,9 +286,9 @@
     </section>
   </div>
   <div v-if="showSplash" class="app-splash" aria-label="Layar pembuka SIMPATIK Posyandu">
-    <div class="app-splash__mark"><span style="font-size:42px; font-weight:800; letter-spacing:-0.05em;">SI</span></div>
+    <div class="app-splash__mark"><img class="app-splash__logo" src="simpatik-logo.png" alt="Logo SIMPATIK Posyandu"></div>
     <div style="font-size:34px; font-weight:800; margin-top:24px; letter-spacing:-0.02em;">SIMPATIK Posyandu</div>
-    <div style="font-size:17px; margin-top:6px; color:rgba(255,255,255,0.82);">Program KKN Politeknik Manufaktur Bandung</div>
+    <div class="app-splash__credit">Dibuat oleh POLMAN Bandung</div>
     <div v-if="splashStatus" class="app-splash__connection" role="status" aria-live="polite">
       <span class="app-splash__spinner" aria-hidden="true"></span>
       <span>{{ splashStatus }}</span>
@@ -1157,14 +1160,20 @@
           await this.muatDataDariSupabase(false);
         }
       },
+      async akhiriSplashMinimal(mulaiPada) {
+        const sisaDurasi = Math.max(0, 3000 - (Date.now() - mulaiPada));
+        if (sisaDurasi > 0) await new Promise(resolve => setTimeout(resolve, sisaDurasi));
+        this.showSplash = false;
+      },
       async inisialisasiKoneksiAwal() {
+        const splashMulaiPada = Date.now();
         const savedUser = localStorage.getItem('SIMPATIK_CURRENT_USER');
         const savedSession = localStorage.getItem('SIMPATIK_SESSION');
 
         if (!savedUser || !savedSession) {
           this.view = 'login';
           this.splashStatus = '';
-          setTimeout(() => { this.showSplash = false; }, 650);
+          await this.akhiriSplashMinimal(splashMulaiPada);
           return;
         }
 
@@ -1174,7 +1183,7 @@
 
         if (connected) {
           const sessionStatus = await this.validasiSesiPortal();
-          this.showSplash = false;
+          await this.akhiriSplashMinimal(splashMulaiPada);
           if (sessionStatus === 'invalid') {
             const tampilkanSesiBerakhir = () => this.tampilkanNotifikasi(
               '[Sesi Berakhir]\n\nSilakan masuk kembali agar daftar sasaran terbaru dapat diambil dari server.',
@@ -1191,7 +1200,7 @@
           return;
         }
 
-        this.showSplash = false;
+        await this.akhiriSplashMinimal(splashMulaiPada);
 
         const tampilkanPeringatan = () => {
           this.tampilkanNotifikasi(
@@ -1452,7 +1461,7 @@
             body: JSON.stringify({
               deviceId: 'tablet-posyandu',
               namaPerangkat: 'Tablet Posyandu Tulip',
-              versiAplikasi: 'v1.10.0',
+              versiAplikasi: 'v1.10.4',
               antreanTertunda: this.totalPendingCount || 0
             })
           });
@@ -1632,7 +1641,8 @@
           window.AndroidBridge.ucapkanPanggilan(queueNumber, item.name);
         } else if ('speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined') {
           window.speechSynthesis.cancel();
-          const speech = new SpeechSynthesisUtterance(`Nomor antrean ${queueNumber}. Atas nama ${item.name}. Silakan menuju meja pengukuran.`);
+          const spokenName = String(item.name || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('id-ID');
+          const speech = new SpeechSynthesisUtterance(`Nomor antrean ${queueNumber}. Atas nama ${spokenName}. Silakan menuju meja pengukuran.`);
           speech.lang = 'id-ID';
           speech.rate = 0.88;
           window.speechSynthesis.speak(speech);

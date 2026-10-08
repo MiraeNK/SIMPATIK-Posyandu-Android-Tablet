@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.simpatikposyandu"
         minSdk = 24
         targetSdk = 37
-        versionCode = 17
-        versionName = "1.10.3"
+        versionCode = 18
+        versionName = "1.10.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

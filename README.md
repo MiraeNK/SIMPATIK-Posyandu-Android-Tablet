@@ -1,6 +1,6 @@
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
-Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.10.4 memakai splash screen minimal 3 detik dengan logo aplikasi dan kredit POLMAN, serta mengucapkan nama panggilan antrean sebagai nama, bukan huruf satu per satu. Versi ini juga memakai static domain ngrok, memeriksa server dan keabsahan sesi, serta menentukan hak akses otomatis dari akun yang berhasil login. Aplikasi tetap mendukung daftar sasaran bulanan, pemindaian kartu, skrining awal, antrean layanan, pencatatan, riwayat, koreksi nilai, serta sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
+Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.10.8 memisahkan batas kegagalan login antarperangkat, membedakan jenis pesan kesalahan login, dan menata ulang halaman utama, antrean, pencatatan, riwayat, serta pendaftaran untuk layar HP. Versi sebelumnya menambahkan pendataan susulan setelah sesi ditutup; nilai LILA/LIKA bulan sebelumnya juga ditampilkan sebagai konteks pada form bulan berikutnya. Aplikasi memakai static domain ngrok, memeriksa server dan keabsahan sesi, serta menentukan hak akses otomatis dari akun yang berhasil login. Aplikasi tetap mendukung daftar sasaran bulanan, pemindaian kartu, skrining awal, antrean layanan, pencatatan, riwayat, koreksi nilai, serta sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
 
 Versi 1.10 berkomunikasi hanya dengan REST API Portal SIMPATIK. REST API yang
 memegang koneksi PostgreSQL Supabase; APK tidak menyimpan URL proyek, publishable
@@ -32,6 +32,9 @@ key, secret key, maupun kredensial database.
 - Mengantrekan dan mencoba kembali sinkronisasi ketika jaringan tersedia.
 - Menampilkan progres operasional bulan berjalan dan jumlah antrean sinkron.
 - Menandai sasaran yang belum dilayani sebagai **Tidak hadir** melalui konfirmasi beres sesi tanpa menghapus data induk anak.
+- Setelah sesi ditutup, membuka tab **Susulan di Luar Sesi** pada menu Pencatatan untuk mengukur anak tidak hadir secara manual.
+- Menetapkan tanggal ukur susulan ke periode sasaran, menyimpan offline dahulu, lalu menandai **Pendataan susulan tersimpan** hanya setelah API berhasil menyimpan.
+- Mengisi LILA/LIKA dari pengukuran sebelumnya sebagai konteks. Kader tetap diminta mengukur ulang setelah interval tiga bulan.
 
 ## Batas dengan Portal SIMPATIK
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.10.8 — Login Multi-Tablet dan Tampilan HP
+
+- Memisahkan batas kegagalan login per perangkat, dengan batas jaringan bersama yang lebih longgar untuk mencegah penguncian semua tablet oleh satu perangkat.
+- Mengirim ID instalasi aplikasi saat login, menjaga spasi kata sandi apa adanya, serta membedakan pesan kredensial salah, login ditahan, dan server bermasalah.
+- Merapikan layout login, antrean, pencatatan, riwayat, dan pendaftaran untuk layar HP Android.
+- Versi aplikasi menjadi `versionCode 22` / `versionName 1.10.8`.
+
+## 1.10.7 — Pendataan Susulan di Luar Sesi
+
+- Menambahkan tab **Susulan di Luar Sesi** di menu Pencatatan setelah sesi ditutup, berisi sasaran yang ditandai tidak hadir.
+- Mengarahkan kader untuk memilih anak, mengukur manual, dan menyimpan data pada periode sasaran yang benar.
+- Menampilkan status **menunggu sinkron** untuk data lokal dan **Pendataan susulan tersimpan** setelah server mengonfirmasi penyimpanan.
+- Menyimpan penanda pendataan susulan pada catatan sasaran di database Portal.
+- Memastikan nilai LILA/LIKA bulan sebelumnya tetap terisi sebagai konteks; nilai warisan tidak dihitung sebagai pengukuran baru dan tetap mengikuti interval ukur ulang.
+- Versi aplikasi menjadi `versionCode 21` / `versionName 1.10.7`.
+
 ## 1.10.4 — Splash Screen dan Suara Antrean
 
 - Menampilkan splash screen minimal 3 detik dengan logo SIMPATIK dan kredit “Dibuat oleh POLMAN Bandung”.

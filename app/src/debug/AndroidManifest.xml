@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- HTTP hanya untuk APK debug yang dipakai QA melalui jaringan lokal. -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

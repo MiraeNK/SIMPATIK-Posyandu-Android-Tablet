@@ -6,10 +6,15 @@ local.properties
 build/
 */build/
 captures/
+.artifacts/
 .externalNativeBuild
 .cxx
 *.apk
 *.aab
 .DS_Store
 Thumbs.db
-
+9.6.0/
+buildOutputCleanup/
+configuration-cache/
+file-system.probe
+vcs-1/

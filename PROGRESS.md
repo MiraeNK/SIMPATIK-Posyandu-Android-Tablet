@@ -1,6 +1,34 @@
 # Progress Pengembangan
 
-Terakhir diperbarui: 30 September 2026
+Terakhir diperbarui: 10 Oktober 2026
+
+### 1.10.8 — Login multi-tablet dan layout HP
+
+- [x] Membatasi percobaan salah per identitas instalasi, bukan berbagi ambang rendah antarsemua tablet di alamat jaringan yang sama.
+- [x] Menambahkan batas jaringan cadangan yang lebih longgar untuk mencegah percobaan login tersebar tanpa mengunci tablet hanya karena satu perangkat salah ketik.
+- [x] Mempertahankan spasi kata sandi dan menampilkan pesan sesuai status HTTP login.
+- [x] Menambahkan layout layar kecil untuk antrean, daftar pencatatan, riwayat, pendaftaran, dan halaman login.
+- [x] Menjalankan 32 pengujian regresi; seluruhnya lulus.
+- [x] Menjalankan pemeriksaan tipe API server; lulus.
+- [x] Menjalankan `assembleDebug`; build APK 1.10.8 berhasil.
+
+### 1.10.7 — Pendataan susulan setelah sesi ditutup
+
+- [x] Menambahkan tab pencatatan khusus untuk sasaran tidak hadir setelah sesi ditutup.
+- [x] Memungkinkan kader mengisi pengukuran secara manual pada periode sasaran semula.
+- [x] Menunjukkan status menunggu sinkron saat data baru aman di perangkat.
+- [x] Menulis penanda pendataan susulan ke catatan sasaran bersama pengukuran dalam transaksi server.
+- [x] Menampilkan status tersimpan setelah server mengonfirmasi data.
+- [x] Mengisi LILA/LIKA dari bulan sebelumnya tanpa menyimpan ulang nilai lama sebagai pengukuran baru.
+- [x] Menjalankan 31 pengujian regresi; seluruhnya lulus.
+- [x] Menjalankan pemeriksaan tipe API server; lulus.
+- [x] Menjalankan `assembleDebug`; build berhasil.
+
+APK debug: `app/build/outputs/apk/debug/app-debug.apk`
+
+SHA-256: `C42173B7C091A531ADB31397031EF92AC7F4D251EB3E1F23BA747D0CC341BE67`
+
+Ukuran: 13.882.017 byte.
 
 ### Migrasi Supabase versi 1.8.0
 

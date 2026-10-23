@@ -1856,6 +1856,7 @@ const connected = await this.ujiKoneksiPortal(true);
       },
       kirimSnapshotCluster() {
         if (!this.nearbyWorkspaceId || !window.AndroidBridge || typeof window.AndroidBridge.kirimSnapshotNearby !== 'function') return 0;
+        try {
         const snapshot = {
           workspaceId: this.nearbyWorkspaceId,
           capturedAt: new Date().toISOString(),
@@ -1866,6 +1867,7 @@ const connected = await this.ujiKoneksiPortal(true);
             ? JSON.parse(window.AndroidBridge.ambilSnapshotPengukuranTertunda()) : [],
         };
         return window.AndroidBridge.kirimSnapshotNearby(JSON.stringify(snapshot));
+        } catch (error) { console.warn('Radio Nearby belum siap; data tetap tersimpan lokal:', error); return 0; }
       },
       terapkanSnapshotCluster(raw) {
         try {
@@ -1897,7 +1899,7 @@ const connected = await this.ujiKoneksiPortal(true);
             for (const item of measurements) {
               const record = item && item.payload;
               if (!record || !record.tanggal_ukur || !pendingIds.has(record.id_pengukuran)) continue;
-              const child = this.daftarAnak.find(anak => String(anak.nik || '').trim() === String(record.nik || '').trim());
+              const child = this.daftarAnak.find(anak => this.identitasAnak(anak) === String(record.nik || ('ANAK-' + record.id_anak)));
               if (!child) continue;
               const date = new Date(record.tanggal_ukur + 'T00:00:00');
               const year = String(date.getFullYear());
@@ -2851,7 +2853,7 @@ const connected = await this.ujiKoneksiPortal(true);
           for (const local of this.daftarAnak) {
             const identity = this.identitasAnak(local);
             let target = list.find(item => this.identitasAnak(item) === identity);
-            if (!target && (local.syncStatus === 'pending' || this.ambilAntreanPengukuran().some(p => String(p.nik || p.id_anak) === identity))) { list.push(local); continue; }
+            if (!target && (local.syncStatus === 'pending' || this.ambilAntreanPengukuran().some(p => String(p.nik || ('ANAK-' + p.id_anak)) === identity))) { list.push(local); continue; }
             if (!target) continue;
             for (const [year, months] of Object.entries(local.riwayat || {})) for (const [month, record] of Object.entries(months || {})) {
               if (record.syncStatus !== 'pending') continue;
@@ -3173,7 +3175,7 @@ const connected = await this.ujiKoneksiPortal(true);
           }
           const pending = JSON.parse(localStorage.getItem('SIMPATIK_PENDING_MEASUREMENTS') || '[]');
           localStorage.setItem('SIMPATIK_PENDING_MEASUREMENTS', JSON.stringify(pending.filter(item => item.id_pengukuran !== payload.id_pengukuran)));
-          const child = this.daftarAnak.find(item => String(item.nik || item.sourceId || item.id) === String(payload.nik || payload.id_anak));
+          const child = this.daftarAnak.find(item => this.identitasAnak(item) === String(payload.nik || ('ANAK-' + payload.id_anak)));
           const date = new Date(payload.tanggal_ukur + 'T00:00:00');
           const record = child?.riwayat?.[String(date.getFullYear())]?.[date.getMonth()];
           if (record?.idPengukuran === payload.id_pengukuran) record.syncStatus = 'synced';
@@ -3202,7 +3204,7 @@ const connected = await this.ujiKoneksiPortal(true);
         receipts.push(payload);
         localStorage.setItem('SIMPATIK_SYNC_RECEIPTS', JSON.stringify(receipts.slice(-200)));
         this.kirimSnapshotCluster();
-        const child = this.daftarAnak.find(item => this.identitasAnak(item) === String(payload.nik || payload.id_anak || ''));
+        const child = this.daftarAnak.find(item => this.identitasAnak(item) === String(payload.nik || ('ANAK-' + payload.id_anak)));
         if (child) {
           const date = new Date(payload.tanggal_ukur + 'T00:00:00');
           const record = child.riwayat && child.riwayat[date.getFullYear().toString()] && child.riwayat[date.getFullYear().toString()][date.getMonth()];

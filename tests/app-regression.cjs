@@ -847,3 +847,17 @@ test('native discovery and WebView use the same VM hostname', () => {
   let posts=0;b.context.fetch=async()=>{posts++;return{ok:true,json:async()=>({pengukuran:{}})};};
   await b.app.sinkronkanDataTertunda();assert.equal(posts,1);assert.equal(pendingB.length,0);assert.equal(pendingA.length,0);
  });
+
+ test('upload receipt resolves a child without NIK by its server ID', async () => {
+  const h=harness({'SIMPATIK_SESSION':'{"token":"test"}'});
+  h.app.daftarAnak=[{id:'ANAK-77',sourceId:77,nik:null,riwayat:{'2026':{9:{idPengukuran:'no-nik-77',syncStatus:'pending'}}}}];
+  h.context.fetch=async()=>({ok:true,json:async()=>({pengukuran:{}})});
+  await h.app.sinkronkanSatuPengukuran({id_pengukuran:'no-nik-77',id_anak:77,nik:null,tanggal_ukur:'2026-10-23'});
+  assert.equal(h.app.daftarAnak[0].riwayat['2026'][9].syncStatus,'synced');
+ });
+
+ test('unavailable Nearby radio does not interrupt durable queue persistence',()=>{
+ const h=harness();h.app.nearbyWorkspaceId='rw18';h.context.window.AndroidBridge={kirimSnapshotNearby:()=>{throw Error('radio off');}};
+ h.app.queueEntries=[{id:'q1',date:h.app.tanggalHariIniISO}];
+ assert.doesNotThrow(()=>h.app.persistAntrean());assert.equal(JSON.parse(h.storage.get('SIMPATIK_SERVICE_QUEUE'))[0].id,'q1');
+ });

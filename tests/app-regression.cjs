@@ -6,8 +6,8 @@ const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '../app/src/main/assets/index.html'), 'utf8');
 const portalApiBawaan = html.match(/const PORTAL_API_BAWAAN = '([^']+)'/)[1];
-function harness() {
-  const storage = new Map();
+function harness(initialStorage = {}) {
+  const storage = new Map(Object.entries(initialStorage));
   const alerts = [];
   let options;
   const context = vm.createContext({
@@ -152,7 +152,7 @@ test('device heartbeat is authenticated and does not claim an account or RW from
   assert.equal(await h.app.kirimHeartbeat(), true);
   assert.equal(body.jenisPerangkat, 'android');
   assert.equal(body.modeKoneksi, 'online');
-  assert.equal(body.versiAplikasi, 'v1.12.4');
+  assert.equal(body.versiAplikasi, 'v1.12.5');
   assert.equal(body.posyanduId, undefined);
   assert.equal(body.penggunaId, undefined);
 });
@@ -786,4 +786,27 @@ test('application notices replace raw WebView alerts with semantic styled dialog
   assert.equal(app.notice.title, 'Masuk Antrean');
   assert.match(html, /role="alertdialog"/);
   assert.match(html, />Mengerti<\/button>/);
+});
+
+
+test('VM deployment migrates the saved laptop API without deleting session or offline work', () => {
+  const saved = {
+    SIMPATIK_REGISTRY_CONFIG: JSON.stringify({portalApi:{url:'http://192.168.1.10:4321/api/v1'},connectionMode:'lokal'}),
+    SIMPATIK_SESSION: JSON.stringify({token:'uji-session'}),
+    SIMPATIK_DATA_ANAK: JSON.stringify([{id:'offline-1',nama:'Anak Uji',syncStatus:'pending'}]),
+  };
+  const h = harness(saved);
+  assert.equal(h.app.registryConfig.portalApi.url, portalApiBawaan);
+  assert.equal(h.app.registryConfig.connectionMode, 'online');
+  assert.equal(h.app.registryConfig.portalDeployment, 'vm-2026-10-23');
+  assert.equal(h.storage.get('SIMPATIK_SESSION'), saved.SIMPATIK_SESSION);
+  assert.equal(h.app.daftarAnak[0].syncStatus, 'pending');
+  const ulang = harness({SIMPATIK_REGISTRY_CONFIG:JSON.stringify({...h.app.registryConfig,portalApi:{url:'https://operator.example/api/v1'}})});
+  assert.equal(ulang.app.registryConfig.portalApi.url, 'https://operator.example/api/v1');
+});
+
+test('native discovery and WebView use the same VM hostname', () => {
+  const native = fs.readFileSync(path.join(__dirname,'../app/src/main/java/com/example/simpatikposyandu/MainActivity.kt'),'utf8');
+  const host = native.match(/val cloudflareHost = "([^"]+)"/)[1];
+  assert.equal(host, new URL(portalApiBawaan).hostname);
 });

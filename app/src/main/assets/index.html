@@ -905,7 +905,7 @@
                 <div style="font-size:14px; font-weight:800; color:#5B21B6; margin-bottom:10px;"><i class="ph-bold ph-clipboard-text"></i> Sedang diperiksa KMS · di luar slot antrean</div>
                 <div v-for="item in antreanReviewKms" :key="'kms-' + item.id" style="display:flex; align-items:center; gap:10px; padding:7px 0; color:#34423A;">
                   <span class="queue-number" style="width:40px;height:40px;font-size:15px;flex-shrink:0;">{{ formatNomorAntrean(item.number) }}</span>
-                  <div><strong>{{ item.name }}</strong><div style="font-size:12px;color:#5B21B6;">Hasil ukur tersimpan · menunggu pemeriksaan KMS</div></div>
+                  <div><strong>{{ item.name }}</strong><div style="font-size:12px;color:#5B21B6;">{{ adaUnggahanTertunda(item) ? 'Tersimpan di perangkat · menunggu unggahan' : 'Hasil ukur tersimpan · menunggu pemeriksaan KMS' }}</div></div>
                 </div>
               </div>
               <div v-if="antreanSelesai.length" style="padding:15px 20px; border-top:1px solid #E7EAE5; background:#F8FAF8; font-size:13px; color:#4A5750;"><i class="ph-fill ph-check-circle" style="color:#14713D;"></i> {{ antreanSelesai.length }} anak selesai dilayani hari ini.</div>
@@ -1658,9 +1658,9 @@
       async sinkronkanSetelahTerhubung() {
         const remainingChildren = await this.sinkronkanAnakTertunda();
         const remainingMeasurements = await this.sinkronkanDataTertunda();
-        if (remainingChildren === 0 && remainingMeasurements === 0) {
-          await this.muatDataDariSupabase(false);
-        }
+        await this.muatDataDariSupabase(false);
+        await this.sinkronkanAntreanPortal();
+        this.kirimSnapshotCluster();
       },
       async akhiriSplashMinimal(mulaiPada) {
         const sisaDurasi = Math.max(0, 3000 - (Date.now() - mulaiPada));
@@ -1720,14 +1720,13 @@
       },
       async pulihkanKoneksiDanSinkronkan() {
         if (!localStorage.getItem('SIMPATIK_SESSION') || this.isTestingPortal) return;
-        const wasConnected = this.isConnectedToPortal;
-        const connected = await this.ujiKoneksiPortal(true);
+const connected = await this.ujiKoneksiPortal(true);
         if (!connected) return;
         this.kirimHeartbeat();
-        if (!wasConnected) {
-          this.sinkronkanSetelahTerhubung().catch(error => {
-            console.warn('Sinkronisasi setelah koneksi pulih tertunda:', error);
-          });
+        if (!this._backgroundSync) {
+          this._backgroundSync = this.sinkronkanSetelahTerhubung().catch(error => {
+            console.warn('Sinkronisasi otomatis tertunda:', error);
+          }).finally(() => { this._backgroundSync = null; });
         }
       },
       idPerangkatLogin() {
@@ -1757,7 +1756,7 @@
           const url = this.normalisasiAlamatPortal();
           this.registryConfig.portalApi.url = url;
           this.simpanRegistryConfig();
-          const res = await fetch(url + '/masuk', {
+          const res = await this.fetchDenganBatas(url + '/masuk', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1785,6 +1784,7 @@
             this.loginData.password = '';
             this.showLoginPassword = false;
             this.setView('home');
+            this.sinkronkanSetelahTerhubung().catch(error => console.warn('Sinkronisasi login tertunda:', error));
             this.mulaiClusterPosyandu().catch(error => console.warn('Cluster Nearby belum siap:', error));
             return;
           } else {
@@ -1807,6 +1807,21 @@
           this.isLoggingIn = false;
         }
       },
+      payloadSama(a, b) { return JSON.stringify(a, Object.keys(a || {}).sort()) === JSON.stringify(b, Object.keys(b || {}).sort()); },
+      async fetchDenganBatas(url, options = {}) {
+        const controller = new AbortController();
+        let timer;
+        try {
+          return await Promise.race([
+            (async () => {
+              const response = await fetch(url, { ...options, signal: controller.signal });
+              const body = typeof response.json === 'function' ? await response.json() : {};
+              return { ok: response.ok, status: response.status, json: async () => body };
+            })(),
+            new Promise((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error('Koneksi terlalu lambat; data tetap tersimpan dan akan dicoba lagi.')); }, 12000); })
+          ]);
+        } finally { clearTimeout(timer); }
+      },
       apiHeaders(json = false) {
         const session = JSON.parse(localStorage.getItem('SIMPATIK_SESSION') || 'null');
         const token = session && session.token;
@@ -1824,11 +1839,12 @@
         this.nearbyContextLoading = true;
         try {
           const base = this.normalisasiAlamatPortal();
-          const response = await fetch(base + '/cluster-context', { headers: this.apiHeaders(false), cache: 'no-store' });
+          const response = await this.fetchDenganBatas(base + '/cluster-context', { headers: this.apiHeaders(false), cache: 'no-store' });
           if (!response.ok) throw new Error(response.status === 404 ? 'API cluster belum dipasang di server' : 'Server menolak akses cluster (HTTP ' + response.status + ')');
           const context = await response.json();
           if (!context.workspaceId || !context.clusterKey) throw new Error('Server tidak mengirim identitas cluster yang valid');
           this.nearbyWorkspaceId = context.workspaceId;
+          localStorage.setItem('SIMPATIK_CLUSTER_WORKSPACE', JSON.stringify(context.workspaceId));
           const result = JSON.parse(window.AndroidBridge.mulaiClusterNearby(JSON.stringify(context)));
           if (!result.ok) throw new Error(result.error || 'Tablet tidak dapat memulai Nearby');
           this.nearbyStatus = result.status === 'permission_requested' ? 'Menunggu izin perangkat sekitar' : 'Mencari tablet di Posyandu ' + (context.rw || 'ini') + '…';
@@ -1843,7 +1859,9 @@
         const snapshot = {
           workspaceId: this.nearbyWorkspaceId,
           capturedAt: new Date().toISOString(),
+          pendingChildren: this.daftarAnak.filter(child => child.syncStatus === 'pending'),
           queue: this.queueEntries.filter(item => item.date === this.tanggalHariIniISO),
+          syncedMeasurements: JSON.parse(localStorage.getItem('SIMPATIK_SYNC_RECEIPTS') || '[]'),
           pendingMeasurements: window.AndroidBridge && typeof window.AndroidBridge.ambilSnapshotPengukuranTertunda === 'function'
             ? JSON.parse(window.AndroidBridge.ambilSnapshotPengukuranTertunda()) : [],
         };
@@ -1853,6 +1871,11 @@
         try {
           const snapshot = typeof raw === 'string' ? JSON.parse(raw) : raw;
           if (!snapshot || snapshot.workspaceId !== this.nearbyWorkspaceId || !Array.isArray(snapshot.queue)) return;
+          for (const child of (snapshot.pendingChildren || [])) {
+            if (!/^\d{16}$/.test(String(child?.nik || '')) || !child.nama || !child.tglLahir) continue;
+            if (!this.daftarAnak.some(a => this.identitasAnak(a) === String(child.nik))) this.daftarAnak.push({ ...child, syncStatus: 'pending' });
+          }
+          this.persistDaftarAnak();
           const byId = new Map(this.queueEntries.map(item => [String(item.id), item]));
           for (const incoming of snapshot.queue) {
             if (!incoming || incoming.date !== this.tanggalHariIniISO || !incoming.id) continue;
@@ -1863,12 +1886,17 @@
           }
           this.queueEntries = Array.from(byId.values());
           this.simpanAntreanLokal();
+          for (const receipt of (snapshot.syncedMeasurements || [])) {
+            const pending = this.ambilAntreanPengukuran().find(p => p.id_pengukuran === receipt.id_pengukuran);
+            if (pending && this.payloadSama(pending, receipt)) this.tandaiTersinkron(pending);
+          }
           const measurements = Array.isArray(snapshot.pendingMeasurements) ? snapshot.pendingMeasurements : [];
           if (measurements.length && window.AndroidBridge && typeof window.AndroidBridge.imporSnapshotPengukuranNearby === 'function') {
             window.AndroidBridge.imporSnapshotPengukuranNearby(JSON.stringify(measurements));
+            const pendingIds = new Set(this.ambilAntreanPengukuran().map(p => p.id_pengukuran));
             for (const item of measurements) {
               const record = item && item.payload;
-              if (!record || !record.tanggal_ukur) continue;
+              if (!record || !record.tanggal_ukur || !pendingIds.has(record.id_pengukuran)) continue;
               const child = this.daftarAnak.find(anak => String(anak.nik || '').trim() === String(record.nik || '').trim());
               if (!child) continue;
               const date = new Date(record.tanggal_ukur + 'T00:00:00');
@@ -1891,7 +1919,7 @@
       this.pendingSyncCount = this.ambilAntreanPengukuran().length;
           }
           if (localStorage.getItem('SIMPATIK_SESSION')) setTimeout(() => this.sinkronkanAntreanPortal(), 0);
-          if (localStorage.getItem('SIMPATIK_SESSION') && measurements.length) setTimeout(() => this.sinkronkanDataTertunda(), 0);
+          if (localStorage.getItem('SIMPATIK_SESSION') && (measurements.length || snapshot.pendingChildren?.length)) setTimeout(() => this.sinkronkanSetelahTerhubung(), 0);
         } catch (error) {
           console.warn('Snapshot Nearby tidak dapat diterapkan:', error);
         }
@@ -1907,7 +1935,7 @@
       async validasiSesiPortal() {
         try {
           const url = this.normalisasiAlamatPortal();
-          const response = await fetch(url + '/sasaran', { headers: this.apiHeaders(false) });
+          const response = await this.fetchDenganBatas(url + '/sasaran', { headers: this.apiHeaders(false) });
           if (response.status === 401) {
             this.akhiriSesiPortalTidakBerlaku();
             return 'invalid';
@@ -2095,7 +2123,7 @@
           this.registryConfig.connectionMode = this.informasiKoneksiPortal().mode;
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 3500);
-          const response = await fetch(url + '/kesehatan', {
+          const response = await this.fetchDenganBatas(url + '/kesehatan', {
             signal: controller.signal,
             headers: { 'ngrok-skip-browser-warning': 'true' }
           });
@@ -2157,7 +2185,7 @@
           if (window.AndroidBridge && typeof window.AndroidBridge.dapatkanInfoPerangkat === 'function') {
             try { namaPerangkat = JSON.parse(window.AndroidBridge.dapatkanInfoPerangkat()).namaPerangkat || namaPerangkat; } catch {}
           }
-          const response = await fetch(url + '/heartbeat', {
+          const response = await this.fetchDenganBatas(url + '/heartbeat', {
             method: 'POST',
             headers: this.apiHeaders(true),
             body: JSON.stringify({
@@ -2165,7 +2193,7 @@
               namaPerangkat,
               jenisPerangkat: 'android',
               modeKoneksi: this.informasiKoneksiPortal().mode === 'otomatis' ? 'tidak_diketahui' : this.informasiKoneksiPortal().mode,
-              versiAplikasi: 'v1.12.5',
+              versiAplikasi: 'v1.12.6',
               antreanTertunda: this.totalPendingCount || 0
             })
           });
@@ -2223,7 +2251,7 @@
           const url = this.normalisasiAlamatPortal();
           // Tarik snapshot server lebih dahulu. Jika server baru saja dipulihkan
           // admin, versi server yang lebih baru menang atas cache lokal lama.
-          const awalResponse = await fetch(url + '/antrean?periodeId=' + encodeURIComponent(periodeId) + '&tanggal=' + encodeURIComponent(tanggal), {
+          const awalResponse = await this.fetchDenganBatas(url + '/antrean?periodeId=' + encodeURIComponent(periodeId) + '&tanggal=' + encodeURIComponent(tanggal), {
             headers: this.apiHeaders(false)
           });
           if (!awalResponse.ok) throw new Error('Gagal memuat antrean bersama (HTTP ' + awalResponse.status + ')');
@@ -2254,7 +2282,7 @@
             }
             const child = this.daftarAnak.find(anak => this.identitasAnak(anak) === localItem.childIdentity);
             if (!serverId && Number.isSafeInteger(sasaranId) && sasaranId > 0) {
-              const response = await fetch(url + '/antrean', {
+              const response = await this.fetchDenganBatas(url + '/antrean', {
                 method: 'POST', headers: this.apiHeaders(true),
                 body: JSON.stringify({ periodeId, sasaranId, tanggal, catatan: localItem.note || null })
               });
@@ -2273,7 +2301,7 @@
               serverBySasaran.set(String(canonical.sasaranId), canonical);
             }
             if (serverId && localItem._queueDirty) {
-              const response = await fetch(url + '/antrean/' + encodeURIComponent(serverId), {
+              const response = await this.fetchDenganBatas(url + '/antrean/' + encodeURIComponent(serverId), {
                 method: 'PATCH', headers: this.apiHeaders(true),
                 body: JSON.stringify({
                   status: localItem.status,
@@ -2568,6 +2596,9 @@
         const date = new Date(value);
         return Number.isNaN(date.getTime()) ? '--.--' : date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
       },
+      adaUnggahanTertunda(item) {
+        return this.ambilAntreanPengukuran().some(p => String(p.nik || ('ANAK-' + p.id_anak)) === String(item.childIdentity));
+      },
       labelStatusAntrean(status) {
         return ({ waiting: 'Menunggu dipanggil', called: 'Dipanggil', serving: 'Pengukuran', kms_review: 'Menunggu KMS di web', done: 'Selesai', cancelled: 'Dibatalkan' })[status] || status;
       },
@@ -2592,7 +2623,7 @@
         try {
           const url = this.registryConfig.portalApi && this.registryConfig.portalApi.url;
           if (!url) throw new Error('Alamat REST API Portal belum tersedia.');
-          const response = await fetch(url + '/sasaran/tutup-sesi', {
+          const response = await this.fetchDenganBatas(url + '/sasaran/tutup-sesi', {
             method: 'POST',
             headers: this.apiHeaders(true),
             body: JSON.stringify({ periodeId: this.periodeSasaran.periodeId, konfirmasi: true })
@@ -2705,7 +2736,7 @@
         if (!this.registryConfig || this.registryConfig.activeProvider !== 'portal_api') return false;
         const url = this.registryConfig.portalApi && this.registryConfig.portalApi.url;
         if (!url) return false;
-        const response = await fetch(url + '/anak', {
+        const response = await this.fetchDenganBatas(url + '/anak', {
           method: 'POST',
           headers: this.apiHeaders(true),
           body: JSON.stringify({ nik: child.nik, nama: child.nama, tglLahir: child.tglLahir, jk: child.jk, namaOrtu: child.namaOrtu, rt: child.rt })
@@ -2730,10 +2761,11 @@
       async muatDataDariSupabase(showNotification = false) {
         const url = this.registryConfig.portalApi && this.registryConfig.portalApi.url;
         if (!url) return false;
+        if (this.isLoadingSupabase) return false;
         this.isLoadingSupabase = true;
         this.cloudSyncStatus = 'Mengunduh...';
         try {
-          const response = await fetch(url + '/sinkronisasi', { headers: this.apiHeaders(false) });
+          const response = await this.fetchDenganBatas(url + '/sinkronisasi', { headers: this.apiHeaders(false) });
           if (response.status === 401) {
             this.akhiriSesiPortalTidakBerlaku();
             this.tampilkanNotifikasi(
@@ -2815,6 +2847,18 @@
           });
 
           const list = Object.values(anakMap);
+          // Unduhan tidak boleh menghapus pendaftaran atau hasil ukur tertunda.
+          for (const local of this.daftarAnak) {
+            const identity = this.identitasAnak(local);
+            let target = list.find(item => this.identitasAnak(item) === identity);
+            if (!target && (local.syncStatus === 'pending' || this.ambilAntreanPengukuran().some(p => String(p.nik || p.id_anak) === identity))) { list.push(local); continue; }
+            if (!target) continue;
+            for (const [year, months] of Object.entries(local.riwayat || {})) for (const [month, record] of Object.entries(months || {})) {
+              if (record.syncStatus !== 'pending') continue;
+              target.riwayat[year] ||= {};
+              target.riwayat[year][month] = record;
+            }
+          }
           this.daftarAnak = list;
           this.periodeSasaran = infoSasaran;
           this.persistDaftarAnak();
@@ -3137,7 +3181,7 @@
         if (!this.registryConfig || this.registryConfig.activeProvider !== 'portal_api') return false;
         const url = this.registryConfig.portalApi && this.registryConfig.portalApi.url;
         if (!url) return false;
-        const response = await fetch(url + '/pengukuran', {
+        const response = await this.fetchDenganBatas(url + '/pengukuran', {
           method: 'POST',
           headers: this.apiHeaders(true),
           body: JSON.stringify(payload)
@@ -3145,12 +3189,18 @@
         if (!response.ok) throw new Error('Server menolak sinkronisasi (HTTP ' + response.status + ')');
         const body = typeof response.json === 'function' ? await response.json().catch(() => ({})) : {};
         const hasil = body.pengukuran || {};
+        const stillPending = this.ambilAntreanPengukuran().find(p => p.id_pengukuran === payload.id_pengukuran);
+        if (stillPending && !this.payloadSama(stillPending, payload)) return false;
         this.tandaiTersinkron(payload);
+        const receipts = JSON.parse(localStorage.getItem('SIMPATIK_SYNC_RECEIPTS') || '[]').filter(p => p.id_pengukuran !== payload.id_pengukuran);
+        receipts.push(payload);
+        localStorage.setItem('SIMPATIK_SYNC_RECEIPTS', JSON.stringify(receipts.slice(-200)));
+        this.kirimSnapshotCluster();
         const child = this.daftarAnak.find(item => this.identitasAnak(item) === String(payload.nik || payload.id_anak || ''));
         if (child) {
           const date = new Date(payload.tanggal_ukur + 'T00:00:00');
           const record = child.riwayat && child.riwayat[date.getFullYear().toString()] && child.riwayat[date.getFullYear().toString()][date.getMonth()];
-            if (record) {
+            if (record && record.idPengukuran === payload.id_pengukuran) {
             record.syncStatus = 'synced';
             record.pendataanSusulanPending = false;
             if (hasil.susulan) record.pendataanSusulan = true;
@@ -3176,17 +3226,16 @@
         return Object.values(byId);
       },
       async sinkronkanDataTertunda() {
-        const queue = this.ambilAntreanPengukuran();
-        let remaining = queue.length;
-        for (const payload of queue) {
-          try {
-            if (await this.sinkronkanSatuPengukuran(payload)) remaining--;
-          } catch (error) {
-            console.warn('Data tetap aman dalam antrean Android:', error);
+        if (this._measurementSync) return this._measurementSync;
+        this._measurementSync = (async () => {
+          for (const payload of this.ambilAntreanPengukuran()) {
+            try { await this.sinkronkanSatuPengukuran(payload); }
+            catch (error) { console.warn('Data tetap aman dalam antrean Android:', error); }
           }
-        }
-        this.pendingSyncCount = remaining;
-        return remaining;
+          this.pendingSyncCount = this.ambilAntreanPengukuran().length;
+          return this.pendingSyncCount;
+        })();
+        try { return await this._measurementSync; } finally { this._measurementSync = null; }
       },
       async sinkronkanManual() {
         if (this.isSyncing) return;
@@ -3265,16 +3314,8 @@
               : '[Pengukuran Tersimpan]\n\nHasil ukur diamankan di perangkat. Anak menunggu penjelasan KMS di website sebelum layanan selesai.',
             'success'
           );
-          this.sinkronkanSatuPengukuran(payload).then(result => {
-            if (result && this.activeAnak.riwayat[year] && this.activeAnak.riwayat[year][month]) {
-              this.activeAnak.riwayat[year][month].syncStatus = 'synced';
-              this.activeAnak.riwayat[year][month].pendataanSusulanPending = false;
-              if (result.susulan) {
-                this.activeAnak.riwayat[year][month].pendataanSusulan = true;
-                this.activeAnak.pendataanSusulan = true;
-              }
-              this.persistDaftarAnak();
-            }
+          this.sinkronkanSatuPengukuran(payload).then(() => {
+            this.pendingSyncCount = this.ambilAntreanPengukuran().length;
           }).catch(syncError => {
             this.pendingSyncCount = this.ambilAntreanPengukuran().length;
             console.warn('Pengukuran tersimpan lokal dan menunggu koneksi:', syncError);
@@ -3292,7 +3333,7 @@
 
       // Pasang handler tombol back hardware/gesture Android
       window.handleAndroidBack = () => this.handleAndroidBack();
-      window.handleNearbyStatus = status => { this.nearbyStatus = String(status || ''); };
+      window.handleNearbyStatus = status => { this.nearbyStatus = String(status || ''); this.kirimSnapshotCluster(); };
       window.handleNearbySnapshot = snapshot => this.terapkanSnapshotCluster(snapshot);
       window.handleScanKartuSasaran = value => this.prosesHasilScanKartu(value);
       window.handleScanKartuDibatalkan = () => {};
@@ -3326,6 +3367,7 @@
         if (typeof window.AndroidBridge.mulaiClusterNearbyDariCache === 'function') {
           try {
             const cachedNearby = JSON.parse(window.AndroidBridge.mulaiClusterNearbyDariCache());
+            if (cachedNearby.ok) { this.nearbyWorkspaceId = cachedNearby.workspaceId || JSON.parse(localStorage.getItem('SIMPATIK_CLUSTER_WORKSPACE') || 'null') || ''; }
             if (cachedNearby.ok) this.nearbyStatus = 'Menyambungkan ke cluster Posyandu tersimpan…';
           } catch (error) { console.warn('Cluster offline belum dapat dipulihkan:', error); }
         }
@@ -3336,7 +3378,7 @@
 
       // Saat website dinyalakan kembali, aplikasi memulihkan koneksi dan
       // mengirim antrean lokal tanpa meminta kader membuka pengaturan.
-      setInterval(() => this.pulihkanKoneksiDanSinkronkan(), 15000);
+      setInterval(() => { this.kirimSnapshotCluster(); this.pulihkanKoneksiDanSinkronkan(); }, 15000);
       setInterval(() => {
         const sedangDiAntrean = this.view === 'queue' ||
           (this.view === 'list' && this.listMode === 'record' && this.recordListTab === 'queue');

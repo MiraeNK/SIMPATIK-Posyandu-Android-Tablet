@@ -152,7 +152,7 @@ test('device heartbeat is authenticated and does not claim an account or RW from
   assert.equal(await h.app.kirimHeartbeat(), true);
   assert.equal(body.jenisPerangkat, 'android');
   assert.equal(body.modeKoneksi, 'online');
-  assert.equal(body.versiAplikasi, 'v1.12.6');
+  assert.equal(body.versiAplikasi, 'v1.12.7');
   assert.equal(body.posyanduId, undefined);
   assert.equal(body.penggunaId, undefined);
 });
@@ -391,8 +391,8 @@ test('monthly history opens latest record and correction returns to history', ()
 test('recording defaults to queue and releases the service slot while KMS review stays visible', async () => {
   const h = harness();
   h.app.registryConfig.activeProvider = 'json_offline';
-  const first = { id: '3273010101220001', nik: '3273010101220001', nama: 'Anak Satu', inisial: 'AS', umurBulan: 20, namaOrtu: 'Ibu Satu', rt: '01', tglLahir: '2025-01-01', riwayat: {} };
-  const second = { id: '3273010101220002', nik: '3273010101220002', nama: 'Anak Dua', inisial: 'AD', umurBulan: 30, namaOrtu: 'Ibu Dua', rt: '02', tglLahir: '2024-01-01', riwayat: {} };
+  const first = { idSasaran: 10, statusSasaran: 'menunggu', id: '3273010101220001', nik: '3273010101220001', nama: 'Anak Satu', inisial: 'AS', umurBulan: 20, namaOrtu: 'Ibu Satu', rt: '01', tglLahir: '2025-01-01', riwayat: {} };
+  const second = { idSasaran: 20, statusSasaran: 'menunggu', id: '3273010101220002', nik: '3273010101220002', nama: 'Anak Dua', inisial: 'AD', umurBulan: 30, namaOrtu: 'Ibu Dua', rt: '02', tglLahir: '2024-01-01', riwayat: {} };
   h.app.daftarAnak = [first, second];
   h.app.queueEntries = [];
   h.app.view = 'queue';
@@ -438,7 +438,7 @@ test('published card waits for a note decision before creating an active queue n
     simpanAntrean: () => JSON.stringify({ ok: true }),
   };
   const child = {
-    id: '3273010101220001', sourceId: 110, nik: '3273010101220001', nama: 'Anak Kartu',
+    id: '3273010101220001', idSasaran: 1100, sourceId: 110, nik: '3273010101220001', nama: 'Anak Kartu',
     namaOrtu: 'Ibu Kartu', nikOrtu: '3273010101220099', tglLahir: '2024-01-01', jk: 'P',
     rt: '01', anakKe: 1, bbLahir: 3.1, pbLahir: 49, bukuKia: true, imd: true,
     imunisasiLengkap: true, riwayat: {},
@@ -464,7 +464,7 @@ test('published card waits for a note decision before creating an active queue n
 
 test('printed SPT fallback code finds the same child as the QR payload', () => {
   const h = harness();
-  const child = { id: '3273010101220001', sourceId: 23, kodeKartu: 'SPT-00000023', nik: '3273010101220001', nama: 'Anak Kartu', riwayat: {} };
+  const child = { id: '3273010101220001', idSasaran: 2300, sourceId: 23, kodeKartu: 'SPT-00000023', nik: '3273010101220001', nama: 'Anak Kartu', riwayat: {} };
   h.app.daftarAnak = [child];
   assert.equal(h.app.prosesHasilScanKartu('SPT-00000023'), true);
   assert.equal(h.app.queueNoteDialog, true);
@@ -475,7 +475,7 @@ test('printed SPT fallback code finds the same child as the QR payload', () => {
 
 test('skipping a scan note discards the draft and repeated confirmation cannot duplicate the entry', () => {
   const h = harness();
-  const child = { id: 'scan-skip', sourceId: 923, nama: 'Anak Uji Lewati', riwayat: {} };
+  const child = { id: 'scan-skip', idSasaran: 9230, sourceId: 923, nama: 'Anak Uji Lewati', riwayat: {} };
   h.app.daftarAnak = [child];
   h.app.queueEntries = [];
   assert.equal(h.app.prosesHasilScanKartu('SIMPATIK:SASARAN:1:923'), true);
@@ -490,7 +490,7 @@ test('skipping a scan note discards the draft and repeated confirmation cannot d
 
 test('Android back cancels a scanned card note without registering the child', () => {
   const h = harness();
-  const child = { id: 'scan-cancel', sourceId: 924, nama: 'Anak Uji Batal', riwayat: {} };
+  const child = { id: 'scan-cancel', idSasaran: 9240, sourceId: 924, nama: 'Anak Uji Batal', riwayat: {} };
   h.app.daftarAnak = [child];
   h.app.queueEntries = [];
   h.app.view = 'queue';
@@ -506,8 +506,8 @@ test('Android back cancels a scanned card note without registering the child', (
 
 test('published targets are immediately visible and search narrows the roster', () => {
   const h = harness();
-  const child = { id: '1', nik: '3273010101220001', nama: 'Aisyah Putri', inisial: 'AP', umurBulan: 20, namaOrtu: 'Ibu Aisyah', rt: '01', statusSasaran: 'menunggu', riwayat: {} };
-  const completed = { id: '2', nik: '3273010101220002', nama: 'Budi Selesai', statusSasaran: 'selesai', riwayat: {} };
+  const child = { id: '1', nik: '3273010101220001', nama: 'Aisyah Putri', inisial: 'AP', umurBulan: 20, namaOrtu: 'Ibu Aisyah', rt: '01', idSasaran: 44, statusSasaran: 'menunggu', riwayat: {} };
+  const completed = { id: '2', nik: '3273010101220002', nama: 'Budi Selesai', idSasaran: 44, statusSasaran: 'selesai', riwayat: {} };
   h.app.daftarAnak = [child, completed];
   h.app.queueEntries = [];
   h.app.queueTab = 'add';
@@ -525,7 +525,7 @@ test('published targets are immediately visible and search narrows the roster', 
 
 test('opening queue shows active check-ins or falls back to all pending targets', () => {
   const h = harness();
-  h.app.daftarAnak = [{ id: '1', nama: 'Sasaran Live', statusSasaran: 'menunggu' }];
+  h.app.daftarAnak = [{ id: '1', nama: 'Sasaran Live', idSasaran: 44, statusSasaran: 'menunggu' }];
   h.app.queueEntries = [];
   h.app.bukaAntrean();
   assert.equal(h.app.queueTab, 'add');
@@ -636,8 +636,8 @@ test('queue measurement date stays inside the active target period', () => {
 test('closed-session absentees appear in the manual follow-up list for the target month', () => {
   const h = harness();
   h.app.periodeSasaran = { periodeId: 7, periode: '2026-09', label: 'September 2026', ringkasan: { menunggu: 0 } };
-  const child = { id: '327301', nik: '3273010101220001', nama: 'Anak Susulan', umurBulan: 20, statusSasaran: 'tidak_hadir', riwayat: {} };
-  h.app.daftarAnak = [child, { id: '2', nama: 'Sudah Selesai', statusSasaran: 'selesai', riwayat: {} }];
+  const child = { id: '327301', nik: '3273010101220001', nama: 'Anak Susulan', umurBulan: 20, idSasaran: 44, statusSasaran: 'tidak_hadir', riwayat: {} };
+  h.app.daftarAnak = [child, { id: '2', nama: 'Sudah Selesai', idSasaran: 44, statusSasaran: 'selesai', riwayat: {} }];
   h.app.recordListTab = 'followup';
   h.app.listMode = 'record';
   assert.equal(h.app.sasaranSusulan.length, 1);
@@ -654,7 +654,7 @@ test('late follow-up is marked only after the server confirms its database write
   h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'session-token' }));
   h.app.registryConfig.activeProvider = 'portal_api';
   h.app.registryConfig.portalApi.url = portalApiBawaan;
-  const child = { id: '327301', nik: '3273010101220001', nama: 'Anak Susulan', statusSasaran: 'tidak_hadir', riwayat: { '2026': { 8: { idPengukuran: 'susulan-1', syncStatus: 'pending' } } } };
+  const child = { id: '327301', nik: '3273010101220001', nama: 'Anak Susulan', idSasaran: 44, statusSasaran: 'tidak_hadir', riwayat: { '2026': { 8: { idPengukuran: 'susulan-1', syncStatus: 'pending' } } } };
   h.app.daftarAnak = [child];
   h.context.fetch = async () => ({ ok: true, json: async () => ({ pengukuran: { id: 54, susulan: true } }) });
   const result = await h.app.sinkronkanSatuPengukuran({ id_pengukuran: 'susulan-1', nik: child.nik, tanggal_ukur: '2026-09-30' });
@@ -701,9 +701,9 @@ test('closing a session marks every remaining target absent without deleting chi
     ringkasan: { total: 3, menunggu: 2, selesai: 1, tidakHadir: 0, pindah: 0 },
   };
   h.app.daftarAnak = [
-    { id: '1', nama: 'Satu', statusSasaran: 'menunggu' },
-    { id: '2', nama: 'Dua', statusSasaran: 'menunggu' },
-    { id: '3', nama: 'Tiga', statusSasaran: 'selesai' },
+    { id: '1', nama: 'Satu', idSasaran: 44, statusSasaran: 'menunggu' },
+    { id: '2', nama: 'Dua', idSasaran: 44, statusSasaran: 'menunggu' },
+    { id: '3', nama: 'Tiga', idSasaran: 44, statusSasaran: 'selesai' },
   ];
   h.app.queueEntries = [{ id: 'q1', date: h.app.tanggalHariIniISO, childIdentity: '1', status: 'waiting' }];
   h.app.persistAntrean = () => {};
@@ -744,7 +744,7 @@ test('tablet UI exposes operational modules without portal analytics modules', (
   assert.match(html, /Dibuat oleh POLMAN Bandung/);
   assert.match(html, /© 2026 POLMAN Bandung/);
   assert.match(html, /Progres sasaran/);
-  assert.match(html, /daftarAnak\.length \+ ' sasaran tersedia'/);
+  assert.match(html, /totalSasaran \+ ' sasaran tersedia'/);
   assert.match(html, /Konfirmasi beres sesi/);
   assert.match(html, /sasaran\/tutup-sesi/);
   assert.doesNotMatch(html, /view === 'nutrition_detail'/);
@@ -860,4 +860,24 @@ test('native discovery and WebView use the same VM hostname', () => {
  const h=harness();h.app.nearbyWorkspaceId='rw18';h.context.window.AndroidBridge={kirimSnapshotNearby:()=>{throw Error('radio off');}};
  h.app.queueEntries=[{id:'q1',date:h.app.tanggalHariIniISO}];
  assert.doesNotThrow(()=>h.app.persistAntrean());assert.equal(JSON.parse(h.storage.get('SIMPATIK_SERVICE_QUEUE'))[0].id,'q1');
+ });
+
+ test('monthly target counts and registration use only the 92 published children, not the master roster',()=>{
+ const h=harness();
+ h.app.daftarAnak=Array.from({length:100},(_,i)=>({id:String(i),idSasaran:i<92?i+1:null,nama:'Anak '+i,statusSasaran:i<5?'selesai':i===5?'tidak_hadir':'menunggu',riwayat:{}}));
+ assert.equal(h.app.totalSasaran,92);assert.equal(h.app.anakDiukurBulanIni,5);assert.equal(h.app.anakBelumBulanIni,86);assert.equal(h.app.anakUntukAntrean.length,86);
+ h.app.listMode='history';assert.equal(h.app.filteredAnak.length,100);
+ h.app.listMode='record';h.app.recordListTab='all';assert.equal(h.app.filteredAnak.length,100);
+ assert.equal(h.app.tambahAntrean(h.app.daftarAnak[99]),false);assert.equal(h.app.antreanAktif.length,0);
+ });
+ test('scanning a master child who is not a monthly target cannot open check-in',()=>{
+ const h=harness();h.app.daftarAnak=[{id:'ANAK-999',sourceId:999,idSasaran:null,nama:'Di master saja',riwayat:{}}];
+ assert.equal(h.app.prosesHasilScanKartu('SPT-00000999'),false);assert.equal(h.app.queueNoteDialog,false);assert.match(h.alerts.pop(),/Belum Menjadi Sasaran/);
+ });
+ test('server refresh keeps master children separate and never assigns a default target status',async()=>{
+ const h=harness({'SIMPATIK_SESSION':'{"token":"test"}'});
+ const target={id_anak:1,id_sasaran:10,nama_anak:'Sasaran',tgl_lahir:'2024-01-01',status_sasaran:'menunggu'};
+ const master={id_anak:2,id_sasaran:null,nama_anak:'Master',tgl_lahir:'2024-01-01',status_sasaran:null};
+ h.context.fetch=async()=>({ok:true,json:async()=>({anak:[target],masterAnak:[target,master],pengukuran:[],sasaran:{periodeId:7,label:'Oktober 2026',ringkasan:{total:1,menunggu:1}}})});
+ assert.equal(await h.app.muatDataDariSupabase(),true);assert.equal(h.app.daftarAnak.length,2);assert.equal(h.app.totalSasaran,1);assert.equal(h.app.daftarAnak[1].statusSasaran,null);
  });

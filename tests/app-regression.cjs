@@ -152,7 +152,7 @@ test('device heartbeat is authenticated and does not claim an account or RW from
   assert.equal(await h.app.kirimHeartbeat(), true);
   assert.equal(body.jenisPerangkat, 'android');
   assert.equal(body.modeKoneksi, 'online');
-  assert.equal(body.versiAplikasi, 'v1.12.5');
+  assert.equal(body.versiAplikasi, 'v1.12.6');
   assert.equal(body.posyanduId, undefined);
   assert.equal(body.penggunaId, undefined);
 });
@@ -314,7 +314,7 @@ test('cloud sync uses upsert and marks a queued record as synced', async () => {
   h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'user-token' }));
   const marked = [];
   h.context.window.AndroidBridge = {
-    ambilPengukuranTertunda: () => JSON.stringify([{ id_pengukuran: 'ukur_1_202609', nik: '1', id_periode: 'periode_2026_9', tanggal_ukur: '2026-09-10' }]),
+    ambilPengukuranTertunda: () => marked.length ? '[]' : JSON.stringify([{ id_pengukuran: 'ukur_1_202609', nik: '1', id_periode: 'periode_2026_9', tanggal_ukur: '2026-09-10' }]),
     tandaiPengukuranTersinkron: id => { marked.push(id); return true; },
   };
   h.app.registryConfig.activeProvider = 'portal_api';
@@ -654,7 +654,7 @@ test('late follow-up is marked only after the server confirms its database write
   h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'session-token' }));
   h.app.registryConfig.activeProvider = 'portal_api';
   h.app.registryConfig.portalApi.url = portalApiBawaan;
-  const child = { id: '327301', nik: '3273010101220001', nama: 'Anak Susulan', statusSasaran: 'tidak_hadir', riwayat: { '2026': { 8: { syncStatus: 'pending' } } } };
+  const child = { id: '327301', nik: '3273010101220001', nama: 'Anak Susulan', statusSasaran: 'tidak_hadir', riwayat: { '2026': { 8: { idPengukuran: 'susulan-1', syncStatus: 'pending' } } } };
   h.app.daftarAnak = [child];
   h.context.fetch = async () => ({ ok: true, json: async () => ({ pengukuran: { id: 54, susulan: true } }) });
   const result = await h.app.sinkronkanSatuPengukuran({ id_pengukuran: 'susulan-1', nik: child.nik, tanggal_ukur: '2026-09-30' });
@@ -810,3 +810,40 @@ test('native discovery and WebView use the same VM hostname', () => {
   const host = native.match(/val cloudflareHost = "([^"]+)"/)[1];
   assert.equal(host, new URL(portalApiBawaan).hostname);
 });
+
+ test('healthy connection still retries pending uploads and refreshes the roster', async () => {
+  const h=harness({'SIMPATIK_SESSION':'{"token":"test"}'});let runs=0;
+  h.app.registryConfig.portalApi.status='API & database siap';
+  h.app.ujiKoneksiPortal=async()=>true;h.app.kirimHeartbeat=()=>{};
+  h.app.sinkronkanSetelahTerhubung=async()=>{runs++;};
+  await h.app.pulihkanKoneksiDanSinkronkan();await new Promise(r=>setTimeout(r,0));
+  await h.app.pulihkanKoneksiDanSinkronkan();await new Promise(r=>setTimeout(r,0));
+  assert.equal(runs,2);
+ });
+ test('roster refresh preserves pending registration and unsent measurements', async () => {
+  const h=harness({'SIMPATIK_SESSION':'{"token":"test"}'});
+  h.app.daftarAnak=[{id:'1',nik:'1',riwayat:{'2026':{9:{idPengukuran:'u1',syncStatus:'pending',bb:'12'}}}}, {id:'2',nik:'2',nama:'Baru',syncStatus:'pending',riwayat:{}}];
+  h.context.fetch=async()=>({ok:true,json:async()=>({anak:[{nik:'1',nama_anak:'Lama',tgl_lahir:'2024-01-01',jk:'L'}],pengukuran:[],sasaran:null})});
+  assert.equal(await h.app.muatDataDariSupabase(),true);
+  assert.equal(h.app.daftarAnak.length,2);assert.equal(h.app.daftarAnak[0].riwayat['2026'][9].bb,'12');
+ });
+ test('late upload acknowledgement cannot clear a newer local correction', async () => {
+  const old={id_pengukuran:'u1',nik:'1',tanggal_ukur:'2026-10-23',bb_kg:'12'};
+  const newer={...old,bb_kg:'13'};
+  const h=harness({'SIMPATIK_SESSION':'{"token":"test"}','SIMPATIK_PENDING_MEASUREMENTS':JSON.stringify([old])});
+  h.context.fetch=async()=>{h.storage.set('SIMPATIK_PENDING_MEASUREMENTS',JSON.stringify([newer]));return{ok:true,json:async()=>({pengukuran:{}})};};
+  assert.equal(await h.app.sinkronkanSatuPengukuran(old),false);
+  assert.equal(h.app.ambilAntreanPengukuran()[0].bb_kg,'13');
+ });
+ test('nearby relay uploads through the connected tablet and shares an exact receipt', async () => {
+  const a=harness({'SIMPATIK_SESSION':'{"token":"a"}'}),b=harness({'SIMPATIK_SESSION':'{"token":"b"}'});
+  const payload={id_pengukuran:'relay-1',nik:'1234567890123456',tanggal_ukur:'2026-10-23',bb_kg:'12',panjang_tinggi_cm:'85'};
+  for(const h of [a,b]){h.app.nearbyWorkspaceId='rw18';h.app.daftarAnak=[];h.app.sinkronkanAntreanPortal=async()=>true;}
+  let pendingA=[payload],pendingB=[];
+  a.context.window.AndroidBridge={ambilPengukuranTertunda:()=>JSON.stringify(pendingA),tandaiPengukuranTersinkron:()=>{pendingA=[];}};
+  b.context.window.AndroidBridge={ambilPengukuranTertunda:()=>JSON.stringify(pendingB),imporSnapshotPengukuranNearby:raw=>{pendingB=JSON.parse(raw).map(x=>x.payload);return pendingB.length;},tandaiPengukuranTersinkron:()=>{pendingB=[];},kirimSnapshotNearby:raw=>{a.app.terapkanSnapshotCluster(raw);return 1;},ambilSnapshotPengukuranTertunda:()=>JSON.stringify(pendingB.map(payload=>({payload,updatedAt:1})))};
+  b.app.sinkronkanSetelahTerhubung=async()=>{};
+  b.app.terapkanSnapshotCluster({workspaceId:'rw18',queue:[],pendingMeasurements:[{payload,updatedAt:1}]});
+  let posts=0;b.context.fetch=async()=>{posts++;return{ok:true,json:async()=>({pengukuran:{}})};};
+  await b.app.sinkronkanDataTertunda();assert.equal(posts,1);assert.equal(pendingB.length,0);assert.equal(pendingA.length,0);
+ });

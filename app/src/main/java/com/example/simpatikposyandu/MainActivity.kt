@@ -98,14 +98,14 @@ class MainActivity : ComponentActivity() {
             if (missing.isNotEmpty()) {
                 pendingNearbyContext = context
                 requestPermissions(missing.toTypedArray(), REQUEST_NEARBY_PERMISSIONS)
-                return JSONObject().put("ok", true).put("status", "permission_requested").toString()
+                return JSONObject().put("ok", true).put("status", "permission_requested").put("workspaceId", context.getString("workspaceId")).toString()
             }
             val ok = ensureNearbyManager().start(
                 context.getString("workspaceId"),
                 context.getString("clusterKey"),
                 "SIMPATIK-${(Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "tablet").takeLast(4)}"
             )
-            JSONObject().put("ok", ok).put("status", if (ok) "starting" else "invalid_context").toString()
+            JSONObject().put("ok", ok).put("status", if (ok) "starting" else "invalid_context").put("workspaceId", context.getString("workspaceId")).toString()
         } catch (error: Exception) {
             JSONObject().put("ok", false).put("error", error.message ?: "Gagal memulai koneksi Nearby").toString()
         }

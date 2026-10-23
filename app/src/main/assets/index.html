@@ -3173,6 +3173,12 @@ const connected = await this.ujiKoneksiPortal(true);
           }
           const pending = JSON.parse(localStorage.getItem('SIMPATIK_PENDING_MEASUREMENTS') || '[]');
           localStorage.setItem('SIMPATIK_PENDING_MEASUREMENTS', JSON.stringify(pending.filter(item => item.id_pengukuran !== payload.id_pengukuran)));
+          const child = this.daftarAnak.find(item => String(item.nik || item.sourceId || item.id) === String(payload.nik || payload.id_anak));
+          const date = new Date(payload.tanggal_ukur + 'T00:00:00');
+          const record = child?.riwayat?.[String(date.getFullYear())]?.[date.getMonth()];
+          if (record?.idPengukuran === payload.id_pengukuran) record.syncStatus = 'synced';
+          this.pendingSyncCount = this.ambilAntreanPengukuran().length;
+          this.persistDaftarAnak();
         } catch (error) {
           console.warn('Gagal memperbarui status sinkron lokal:', error);
         }

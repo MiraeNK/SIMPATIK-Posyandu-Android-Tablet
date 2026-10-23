@@ -822,7 +822,7 @@
                 <h2 style="font-size:22px; font-weight:800; margin:0 0 4px; color:#16211C;">{{ periodeSasaran ? 'Progres sasaran ' + periodeSasaran.label : 'Belum ada sasaran aktif' }}</h2>
                 <div style="font-size:14px; color:#4A5750;">{{ periodeSasaran ? 'Daftar ini diterbitkan dari impor Excel di Portal.' : 'Sinkronkan setelah admin mengunggah sasaran bulanan.' }}</div>
               </div>
-              <span style="font-size:14px; font-weight:700; color:#4A5750;">{{ daftarAnak.length }} sasaran tersedia</span>
+              <span style="font-size:14px; font-weight:700; color:#4A5750;">{{ totalSasaran }} sasaran tersedia</span>
             </div>
             <div class="home-progress-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
               <div style="background:#F0F9F4; border:1px solid #A3D9B5; border-radius:18px; padding:20px;">
@@ -855,7 +855,7 @@
         <header class="queue-page-header" style="background:#FFFFFF; padding:18px 28px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; gap:18px; position:sticky; top:0; z-index:10;">
           <button @click="setView('home')" class="btn-outline" style="width:54px; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-arrow-left" style="font-size:25px;"></i></button>
           <div style="flex:1;"><div style="font-size:12px; color:#0F6E44; font-weight:800; letter-spacing:.08em;">LAYANAN POSYANDU</div><h2 style="margin:1px 0 0; font-size:27px; font-weight:800;">Antrean Hari Ini</h2></div>
-          <div class="queue-header-user" style="text-align:right;"><div style="font-size:14px; font-weight:800;">{{ periodeSasaran ? periodeSasaran.label : tanggalHariIni }}</div><div style="font-size:13px; color:#4A5750;">{{ periodeSasaran ? daftarAnak.length + ' sasaran tersedia' : 'Belum ada sasaran aktif' }}</div><div role="status" aria-live="polite" :style="{fontSize:'12px',fontWeight:700,marginTop:'4px',color:queueSyncError?'#B42318':'#14713D'}">{{ isSyncingAntreanPortal ? 'Menyinkronkan antrean…' : (queueSyncError || 'Antrean tersinkron dengan tablet lain') }}</div></div>
+          <div class="queue-header-user" style="text-align:right;"><div style="font-size:14px; font-weight:800;">{{ periodeSasaran ? periodeSasaran.label : tanggalHariIni }}</div><div style="font-size:13px; color:#4A5750;">{{ periodeSasaran ? totalSasaran + ' sasaran tersedia' : 'Belum ada sasaran aktif' }}</div><div role="status" aria-live="polite" :style="{fontSize:'12px',fontWeight:700,marginTop:'4px',color:queueSyncError?'#B42318':'#14713D'}">{{ isSyncingAntreanPortal ? 'Menyinkronkan antrean…' : (queueSyncError || 'Antrean tersinkron dengan tablet lain') }}</div></div>
           <button v-if="periodeSasaran && currentUser && currentUser.role === 'admin'" type="button" @click="konfirmasiTutupSesi" :disabled="isClosingSession || sesiSasaranSelesai" class="btn-outline" :style="{color:sesiSasaranSelesai?'#14713D':'#B42318',borderColor:sesiSasaranSelesai?'#8DCEA2':'#FDA29B'}" style="min-height:54px; padding:0 17px; border-radius:14px; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px;"><i :class="sesiSasaranSelesai ? 'ph-fill ph-check-circle' : 'ph-bold ph-door'" style="font-size:20px;"></i>{{ isClosingSession ? 'Menutup sesi…' : (sesiSasaranSelesai ? 'Sesi sudah beres' : 'Konfirmasi beres sesi') }}</button>
         </header>
 
@@ -1484,17 +1484,20 @@
       tanggalHariIniISO() {
         return tanggalLokalISO();
       },
+      sasaranAktif() {
+        return this.daftarAnak.filter(anak => this.adalahSasaranAktif(anak));
+      },
       totalSasaran() {
-        return this.daftarAnak.length;
+        return this.sasaranAktif.length;
       },
       anakDiukurBulanIni() {
-        return this.daftarAnak.filter(anak => anak.statusSasaran === 'selesai').length;
+        return this.sasaranAktif.filter(anak => anak.statusSasaran === 'selesai').length;
       },
       anakBelumBulanIni() {
-        return this.daftarAnak.filter(anak => anak.statusSasaran === 'menunggu').length;
+        return this.sasaranAktif.filter(anak => anak.statusSasaran === 'menunggu').length;
       },
       sasaranBelumDilayani() {
-        return this.daftarAnak
+        return this.sasaranAktif
           .filter(anak => !['selesai', 'tidak_hadir', 'pindah', 'batal'].includes(anak.statusSasaran))
           .sort((a, b) => String(a.nama || '').localeCompare(String(b.nama || ''), 'id'));
       },
@@ -1551,7 +1554,7 @@
           }).filter(Boolean);
         } else if (this.listMode === 'record' && this.recordListTab === 'followup') {
           source = this.sesiSasaranSelesai
-            ? this.daftarAnak.filter(anak => anak.statusSasaran === 'tidak_hadir')
+            ? this.sasaranAktif.filter(anak => anak.statusSasaran === 'tidak_hadir')
             : [];
         }
         if (!this.searchQuery) return source;
@@ -1560,7 +1563,7 @@
       },
       sasaranSusulan() {
         return this.sesiSasaranSelesai
-          ? this.daftarAnak.filter(anak => anak.statusSasaran === 'tidak_hadir')
+          ? this.sasaranAktif.filter(anak => anak.statusSasaran === 'tidak_hadir')
           : [];
       },
       aktifLabel() {
@@ -2195,7 +2198,7 @@ const connected = await this.ujiKoneksiPortal(true);
               namaPerangkat,
               jenisPerangkat: 'android',
               modeKoneksi: this.informasiKoneksiPortal().mode === 'otomatis' ? 'tidak_diketahui' : this.informasiKoneksiPortal().mode,
-              versiAplikasi: 'v1.12.6',
+              versiAplikasi: 'v1.12.7',
               antreanTertunda: this.totalPendingCount || 0
             })
           });
@@ -2398,6 +2401,11 @@ const connected = await this.ujiKoneksiPortal(true);
             : '[Sasaran Belum Ada di Perangkat]\n\nKartu valid, tetapi data sasaran belum diterbitkan ke perangkat ini. Tekan Sinkronisasi lalu pindai ulang.');
           return false;
         }
+        if (!this.adalahSasaranAktif(matches[0])) {
+          this.scannedAnak = null;
+          alert('[Belum Menjadi Sasaran]\n\nAnak terdaftar di Data Balita, tetapi belum masuk sasaran bulan ini. Minta admin menambahkannya melalui Sasaran & Impor di web, lalu sinkronkan.');
+          return false;
+        }
         if (['selesai', 'tidak_hadir', 'pindah', 'batal'].includes(matches[0].statusSasaran)) {
           this.scannedAnak = null;
           alert('[Sasaran Sudah Ditutup]\n\nStatus kartu ini adalah ' + this.labelStatusSasaran(matches[0].statusSasaran) + '. Sinkronkan ulang bila daftar sasaran baru sudah diterbitkan.');
@@ -2451,6 +2459,9 @@ const connected = await this.ujiKoneksiPortal(true);
         if (anak.imunisasiLengkap !== true) missing.push('Status imunisasi perlu dikonfirmasi');
         return missing;
       },
+      adalahSasaranAktif(anak) {
+        return Number.isSafeInteger(Number(anak?.idSasaran)) && Number(anak.idSasaran) > 0 && anak.statusSasaran !== 'batal';
+      },
       identitasAnak(anak) {
         return String((anak && (anak.nik || anak.id)) || '').trim();
       },
@@ -2459,7 +2470,7 @@ const connected = await this.ujiKoneksiPortal(true);
         return this.antreanHariIni.some(item => item.childIdentity === identity && item.status !== 'cancelled');
       },
       tambahAntrean(anak) {
-        if (this.sesiSasaranSelesai || ['selesai', 'tidak_hadir', 'pindah', 'batal'].includes(anak.statusSasaran)) {
+        if (!this.adalahSasaranAktif(anak) || this.sesiSasaranSelesai || ['selesai', 'tidak_hadir', 'pindah', 'batal'].includes(anak.statusSasaran)) {
           alert('[Sasaran Tidak Aktif]\n\nAnak ini tidak lagi berstatus menunggu pada periode sasaran aktif.');
           return false;
         }
@@ -2636,7 +2647,7 @@ const connected = await this.ujiKoneksiPortal(true);
           }
           const isi = await response.json();
           this.daftarAnak.forEach(anak => {
-            if (anak.statusSasaran === 'menunggu') anak.statusSasaran = 'tidak_hadir';
+            if (this.adalahSasaranAktif(anak) && anak.statusSasaran === 'menunggu') anak.statusSasaran = 'tidak_hadir';
           });
           this.persistDaftarAnak();
           this.queueEntries.forEach(item => {
@@ -2778,7 +2789,7 @@ const connected = await this.ujiKoneksiPortal(true);
           }
           if (!response.ok) throw new Error('Gagal memuat data Portal (HTTP ' + response.status + ')');
           const paket = await response.json();
-          const rawAnak = paket.anak || [];
+          const rawAnak = paket.masterAnak || paket.anak || [];
           const rawPeng = paket.pengukuran || [];
           const infoSasaran = paket.sasaran || null;
 
@@ -2812,7 +2823,7 @@ const connected = await this.ujiKoneksiPortal(true);
               bukuKia: a.buku_kia || 'N/A',
               imd: a.imd || 'N/A',
               imunisasiLengkap: a.imunisasi_lengkap === true,
-              statusSasaran: a.status_sasaran || 'menunggu',
+              statusSasaran: a.status_sasaran || null,
                 catatanSasaran: a.catatan_sasaran || '',
                 pendataanSusulan: String(a.catatan_sasaran || '').includes('Pendataan susulan setelah sesi ditutup.'),
               pbTerakhir: 'N/A',
@@ -3292,7 +3303,7 @@ const connected = await this.ujiKoneksiPortal(true);
           // Pengukuran tersimpan; layanan tetap menunggu penjelasan KMS.
           // Portal KMS yang menutup sasaran setelah konfirmasi.
           const isSusulan = this.recordListTab === 'followup' || this.activeAnak.statusSasaran === 'tidak_hadir';
-          if (!isSusulan) this.activeAnak.statusSasaran = 'menunggu';
+          if (!isSusulan && this.adalahSasaranAktif(this.activeAnak)) this.activeAnak.statusSasaran = 'menunggu';
           this.activeAnak.riwayat[year][month] = {
             idPengukuran: payload.id_pengukuran,
             tanggalUkur: payload.tanggal_ukur,

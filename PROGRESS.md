@@ -250,3 +250,11 @@ Dokumen ini harus diperbarui setiap kali satu tahap verifikasi atau integrasi se
 - Pengujian: 49 regresi JS lulus, termasuk relay dua device simulasi, retry pada koneksi sehat, refresh cache, dan koreksi saat request berlangsung. Uji HTTP/database terisolasi 14 lulus. HP/tablet belum terdeteksi melalui ADB saat pengecekan.
 
 - Tambahan: identitas SQLite dan relay anak tanpa NIK menggunakan ANAK-ID server, bukan nilai null bersama.
+
+### 1.12.7 — Batas sasaran bulanan (23 Oktober 2026)
+
+- Memperbaiki regresi 1.12.6 yang menghitung seluruh master anak sebagai sasaran.
+- Total sasaran, belum dilayani, susulan, pencarian antrean dan scan kartu wajib memakai idSasaran yang sah. Status sasaran kosong tidak lagi otomatis menjadi menunggu.
+- Master tetap tersedia pada riwayat/semua balita. Pendaftaran baru tidak otomatis masuk sasaran; admin menerbitkannya dari web.
+- API kompatibel perangkat lama: anak hanya sasaran, masterAnak terpisah. Tidak mengubah daftar sasaran, pengukuran, atau antrean di database.
+- Pengujian: 52 regresi JS termasuk kasus 92 sasaran (86 menunggu, 5 selesai, 1 tidak hadir) dengan master tambahan; 14 tes HTTP/database terisolasi.

@@ -331,7 +331,9 @@ private class PosyanduDatabase(context: Context) :
     fun upsertMeasurement(payloadText: String): JSONObject {
         val payload = JSONObject(payloadText)
         val id = payload.optString("id_pengukuran").trim()
-        val nik = payload.optString("nik").trim()
+        val nikRaw = payload.optString("nik").trim()
+                val nik = if (nikRaw.matches(Regex("[0-9]{16}"))) nikRaw
+                    else payload.optLong("id_anak", 0L).takeIf { it > 0 }?.let { "ANAK-$it" }.orEmpty()
         val period = payload.optString("id_periode").trim()
         val date = payload.optString("tanggal_ukur").trim()
         require(id.isNotEmpty() && nik.isNotEmpty() && period.isNotEmpty() && date.isNotEmpty()) {
@@ -435,7 +437,9 @@ private class PosyanduDatabase(context: Context) :
                 val wrapper = incoming.optJSONObject(index) ?: continue
                 val payload = wrapper.optJSONObject("payload") ?: continue
                 val id = payload.optString("id_pengukuran").trim()
-                val nik = payload.optString("nik").trim()
+                val nikRaw = payload.optString("nik").trim()
+                val nik = if (nikRaw.matches(Regex("[0-9]{16}"))) nikRaw
+                    else payload.optLong("id_anak", 0L).takeIf { it > 0 }?.let { "ANAK-$it" }.orEmpty()
                 val period = payload.optString("id_periode").trim()
                 val date = payload.optString("tanggal_ukur").trim()
                 val updatedAt = wrapper.optLong("updatedAt", 0L)

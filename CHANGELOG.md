@@ -270,4 +270,4 @@ Fitur tersebut tetap tersedia untuk dikembangkan di Portal SIMPATIK. Branch `mai
 - Snapshot Nearby dikirim berkala dan saat peer tersambung; penerima bisa mengunggah antrean lalu membagikan konfirmasi dengan payload yang cocok. Workspace/RW tetap diverifikasi.
 - Daftar anak ditarik berkala dan setelah login. Pendaftaran serta riwayat pending dipertahankan saat penggabungan cache. Paket server mencakup anak baru di Posyandu walau belum menjadi sasaran bulan aktif; status sasaran tidak dibuat otomatis.
 - Label KMS membedakan tersimpan lokal/menunggu unggahan.
-- Pengujian: 47 regresi JS lulus, termasuk relay dua device simulasi, retry pada koneksi sehat, refresh cache, dan koreksi saat request berlangsung. Uji HTTP/database terisolasi 14 lulus. HP/tablet belum terdeteksi melalui ADB saat pengecekan.
+- Pengujian: 49 regresi JS lulus, termasuk relay dua device simulasi, retry pada koneksi sehat, refresh cache, dan koreksi saat request berlangsung. Uji HTTP/database terisolasi 14 lulus. HP/tablet belum terdeteksi melalui ADB saat pengecekan.

@@ -8,4 +8,4 @@ Daftar terbaru ditarik dari server setiap siklus sehat. Master anak baru tidak h
 
 Data yang tertahan pada perangkat lama tetap berada di perangkat tersebut. Perangkat itu perlu dipasang pembaruan dan dibuka agar data dapat dikirim atau diteruskan. Jangan uninstall/hapus penyimpanan sebelum semua kiriman dikonfirmasi.
 
-Verifikasi: 47 regresi JS, 14 tes HTTP/database pada skema terisolasi. Belum ada pengujian tiga tablet fisik karena ADB tidak mendeteksi perangkat.
+Verifikasi: 49 regresi JS, 14 tes HTTP/database pada skema terisolasi. Belum ada pengujian tiga tablet fisik karena ADB tidak mendeteksi perangkat.

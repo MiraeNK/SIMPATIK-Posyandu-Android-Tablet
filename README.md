@@ -1,6 +1,14 @@
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
-Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.10.8 memisahkan batas kegagalan login antarperangkat, membedakan jenis pesan kesalahan login, dan menata ulang halaman utama, antrean, pencatatan, riwayat, serta pendaftaran untuk layar HP. Versi sebelumnya menambahkan pendataan susulan setelah sesi ditutup; nilai LILA/LIKA bulan sebelumnya juga ditampilkan sebagai konteks pada form bulan berikutnya. Aplikasi memakai static domain ngrok, memeriksa server dan keabsahan sesi, serta menentukan hak akses otomatis dari akun yang berhasil login. Aplikasi tetap mendukung daftar sasaran bulanan, pemindaian kartu, skrining awal, antrean layanan, pencatatan, riwayat, koreksi nilai, serta sinkronisasi offline. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
+Versi **1.12.4** membetulkan label koneksi Cloudflare menjadi **Server online** dan mengirim heartbeat bertoken agar perangkat tampil di daftar perangkat web sesuai Posyandu akun. Perangkat lain perlu memasang APK ini agar laporan barunya ikut diterima. Lihat [panduan koneksi dan perangkat 1.12.4](WALKTHROUGH-PERANGKAT-v1.12.4.md).
+
+Versi **1.12.3** memperbaiki layar kosong pada HP Samsung Android 16, menyediakan tombol **Lihat/Sembunyikan** kata sandi, dan merapikan ukuran tombol serta padding HP portrait. **Daftarkan Balita** memenuhi satu baris di bawah dua pintasan pencatatan/riwayat.
+
+Setelah QR kartu dikenali, popup menawarkan **Lewati catatan** atau **Simpan & masuk antrean**. Catatan dikirim bersama pendaftaran antrean untuk dibaca petugas pengukuran. Menutup popup atau menekan Kembali membatalkan pendaftaran kartu tersebut. Tata letaknya mendukung HP dan tablet, termasuk keyboard di HP.
+
+Lihat [walkthrough UI dan hasil uji 1.12.3](WALKTHROUGH-UI-HP-v1.12.3.md).
+
+Aplikasi Android untuk pencatatan operasional saat kegiatan Posyandu. Versi 1.12.0 menambahkan komunikasi antrean dan hasil ukur tertunda antar-tablet melalui Google Nearby Connections dengan batas cluster sesuai Posyandu akun. Konteks grup diberikan API Portal ber-token dan disimpan terenkripsi melalui Android Keystore. Data yang diterima diteruskan ke server saat jaringan tersedia; server tetap menjadi sumber data utama. Fitur ini memerlukan migration server `018_kunci_cluster_posyandu.sql` dan versi Portal yang menyediakan `/api/v1/cluster-context`. Aplikasi tetap mendukung dua slot layanan, antrean offline-first, pendataan susulan, pemindaian kartu, skrining awal, pengukuran, riwayat dan koreksi. KMS lengkap, analitik gizi, dan laporan tetap menjadi tanggung jawab Portal SIMPATIK.
 
 Versi 1.10 berkomunikasi hanya dengan REST API Portal SIMPATIK. REST API yang
 memegang koneksi PostgreSQL Supabase; APK tidak menyimpan URL proyek, publishable
@@ -9,7 +17,7 @@ key, secret key, maupun kredensial database.
 ## Ruang lingkup tablet
 
 - Login kader menggunakan autentikasi server.
-- Memeriksa koneksi domain ngrok tetap pada splash screen bila sesi login tersimpan.
+- Memeriksa koneksi API online yang dikonfigurasi pada splash screen bila sesi login tersimpan.
 - Tetap membuka data lokal dengan pemberitahuan yang jelas saat server belum menyala.
 - Mengunduh dan menyimpan daftar sasaran periode aktif untuk pencarian offline.
 - Mencari balita berdasarkan nama atau NIK.

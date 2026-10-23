@@ -66,6 +66,21 @@ test('login role is assigned by the authenticated server account', () => {
   assert.match(html, /autocomplete="current-password"/);
 });
 
+test('password visibility toggles without changing its value and resets on logout', () => {
+  const h = harness();
+  h.app.loginData.password = ' contoh kata sandi ';
+  assert.equal(h.app.showLoginPassword, false);
+  h.app.toggleLoginPassword();
+  assert.equal(h.app.showLoginPassword, true);
+  assert.equal(h.app.loginData.password, ' contoh kata sandi ');
+  h.app.toggleLoginPassword();
+  assert.equal(h.app.showLoginPassword, false);
+  h.app.toggleLoginPassword();
+  h.app.doLogout();
+  assert.equal(h.app.showLoginPassword, false);
+  assert.equal(h.app.loginData.password, '');
+});
+
 test('login preserves password spaces and identifies each app installation', async () => {
   const h = harness();
   let request;
@@ -83,18 +98,63 @@ test('login preserves password spaces and identifies each app installation', asy
   assert.equal(request.options.headers['X-SIMpatik-Device-Id'], deviceId);
 });
 
-test('ngrok profile uses one fixed HTTPS API and verifies database health', async () => {
+test('online tunnel profile uses one fixed HTTPS API and verifies database health', async () => {
   const h = harness();
   assert.equal(h.app.registryConfig.portalApi.url, portalApiBawaan);
-  assert.match(portalApiBawaan, /^https:\/\/[a-zA-Z0-9.-]+\.(?:ngrok-free\.dev|ngrok-free\.app|ngrok\.app)\/api\/v1$/);
+  assert.match(portalApiBawaan, /^https:\/\/[a-zA-Z0-9.-]+\.(?:trycloudflare\.com|cloudflare\.com|ngrok-free\.dev|ngrok-free\.app|ngrok\.app)\/api\/v1$/);
   h.context.fetch = async (url, request) => {
     assert.equal(url, portalApiBawaan + '/kesehatan');
-    assert.equal(request.headers['ngrok-skip-browser-warning'], 'true');
     return { ok: true, json: async () => ({ status: 'siap', database: 'terhubung' }) };
   };
   await h.app.ujiKoneksiPortal();
   assert.equal(h.app.registryConfig.portalApi.status, 'API & database siap');
   assert.match(h.alerts.pop(), /Koneksi Berhasil/);
+});
+
+test('connection label follows the actual API URL despite a stale local profile', () => {
+  const h = harness();
+  h.app.registryConfig.connectionMode = 'lokal';
+  h.app.registryConfig.portalApi.url = portalApiBawaan;
+  assert.equal(h.app.koneksiPortal.label, 'online');
+  for (const host of ['127.0.0.1', '10.0.2.2', '192.168.1.9', '172.31.5.4', '[::1]']) {
+    assert.equal(h.app.informasiKoneksiPortal('http://' + host + ':4321/api/v1').mode, 'lokal');
+  }
+  assert.equal(h.app.informasiKoneksiPortal('https://simpatik.tail123.ts.net/api/v1').label, 'Tailscale');
+  assert.equal(h.app.informasiKoneksiPortal('https://172.32.1.2/api/v1').label, 'online');
+});
+
+test('discovery of an online URL does not announce a local connection', async () => {
+  const h = harness();
+  h.app.ujiKoneksiPortal = async () => true;
+  h.app.kirimHeartbeat = async () => true;
+  h.context.window.AndroidBridge = {
+    temukanServer: () => h.context.window.handleServerDitemukan({ apiUrl: portalApiBawaan }),
+  };
+  assert.equal(await h.app.mulaiPenemuanLokal({ senyap: false }), true);
+  assert.equal(h.app.registryConfig.connectionMode, 'online');
+  assert.match(h.app.notice.message, /server online/);
+  assert.doesNotMatch(h.app.notice.message, /lokal/);
+});
+
+test('device heartbeat is authenticated and does not claim an account or RW from client fields', async () => {
+  const h = harness();
+  h.app.registryConfig.portalApi.status = 'API & database siap';
+  h.context.fetch = async () => { throw Error('No heartbeat before login'); };
+  assert.equal(await h.app.kirimHeartbeat(), false);
+  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'token-uji-perangkat' }));
+  let body;
+  h.context.fetch = async (url, request) => {
+    assert.equal(url, portalApiBawaan + '/heartbeat');
+    assert.equal(request.headers.Authorization, 'Bearer token-uji-perangkat');
+    body = JSON.parse(request.body);
+    return { ok: true };
+  };
+  assert.equal(await h.app.kirimHeartbeat(), true);
+  assert.equal(body.jenisPerangkat, 'android');
+  assert.equal(body.modeKoneksi, 'online');
+  assert.equal(body.versiAplikasi, 'v1.12.4');
+  assert.equal(body.posyanduId, undefined);
+  assert.equal(body.penggunaId, undefined);
 });
 
 test('splash checks the server only for a saved session and keeps offline data available', async () => {
@@ -328,7 +388,7 @@ test('monthly history opens latest record and correction returns to history', ()
   assert.equal(app.previousViewBeforeForm, 'history');
 });
 
-test('recording defaults to queue and holds the slot for KMS review after save', async () => {
+test('recording defaults to queue and releases the service slot while KMS review stays visible', async () => {
   const h = harness();
   h.app.registryConfig.activeProvider = 'json_offline';
   const first = { id: '3273010101220001', nik: '3273010101220001', nama: 'Anak Satu', inisial: 'AS', umurBulan: 20, namaOrtu: 'Ibu Satu', rt: '01', tglLahir: '2025-01-01', riwayat: {} };
@@ -367,10 +427,12 @@ test('recording defaults to queue and holds the slot for KMS review after save',
   await h.app.simpanData();
   assert.equal(h.app.view, 'list');
   assert.equal(h.app.antreanSelesai.length, 0);
-  assert.equal(h.app.antreanAktif.find(item => item.childIdentity === second.nik).status, 'kms_review');
+  assert.equal(h.app.antreanAktif.find(item => item.childIdentity === second.nik), undefined);
+  assert.equal(h.app.antreanReviewKms.find(item => item.childIdentity === second.nik).status, 'kms_review');
+  assert.equal(h.app.slotPanggilan.length, 2);
 });
 
-test('published card payload automatically creates an active queue number', () => {
+test('published card waits for a note decision before creating an active queue number', () => {
   const h = harness();
   h.context.window.AndroidBridge = {
     simpanAntrean: () => JSON.stringify({ ok: true }),
@@ -384,13 +446,18 @@ test('published card payload automatically creates an active queue number', () =
   h.app.daftarAnak = [child];
   h.app.queueEntries = [];
   assert.equal(h.app.prosesHasilScanKartu('SIMPATIK:SASARAN:1:110:3273010101220001'), true);
+  assert.equal(h.app.queueNoteDialog, true);
+  assert.equal(h.app.scannedAnak, child);
+  assert.equal(h.app.antreanAktif.length, 0);
+  h.app.queueNoteDraft = 'Bawa Buku KIA';
+  assert.equal(h.app.masukkanScanKeAntrean(true), true);
   assert.equal(h.app.scannedAnak, null);
   assert.equal(h.app.antreanAktif.length, 1);
   assert.equal(h.app.antreanAktif[0].childIdentity, child.nik);
+  assert.equal(h.app.antreanAktif[0].note, 'Bawa Buku KIA');
   assert.equal(h.app.formatNomorAntrean(h.app.antreanAktif[0].number), 'A01');
   assert.equal(h.app.queueTab, 'list');
   assert.equal(h.app.notice.type, 'success');
-  assert.match(h.app.notice.message, /A01 · Anak Kartu masuk antrean/);
   assert.equal(h.app.prosesHasilScanKartu('SIMPATIK:SASARAN:1:110:3273010101220001'), false);
   assert.match(h.alerts.pop(), /Antrean Sudah Ada/);
 });
@@ -400,8 +467,41 @@ test('printed SPT fallback code finds the same child as the QR payload', () => {
   const child = { id: '3273010101220001', sourceId: 23, kodeKartu: 'SPT-00000023', nik: '3273010101220001', nama: 'Anak Kartu', riwayat: {} };
   h.app.daftarAnak = [child];
   assert.equal(h.app.prosesHasilScanKartu('SPT-00000023'), true);
+  assert.equal(h.app.queueNoteDialog, true);
+  assert.equal(h.app.masukkanScanKeAntrean(false), true);
   assert.equal(h.app.antreanAktif.length, 1);
   assert.equal(h.app.antreanAktif[0].childIdentity, child.nik);
+});
+
+test('skipping a scan note discards the draft and repeated confirmation cannot duplicate the entry', () => {
+  const h = harness();
+  const child = { id: 'scan-skip', sourceId: 923, nama: 'Anak Uji Lewati', riwayat: {} };
+  h.app.daftarAnak = [child];
+  h.app.queueEntries = [];
+  assert.equal(h.app.prosesHasilScanKartu('SIMPATIK:SASARAN:1:923'), true);
+  assert.equal(h.app.antreanAktif.length, 0);
+  h.app.queueNoteDraft = 'Draf tidak boleh tersimpan';
+  assert.equal(h.app.masukkanScanKeAntrean(false), true);
+  assert.equal(h.app.antreanAktif.length, 1);
+  assert.equal(h.app.antreanAktif[0].note, '');
+  assert.equal(h.app.masukkanScanKeAntrean(false), false);
+  assert.equal(h.app.antreanAktif.length, 1);
+});
+
+test('Android back cancels a scanned card note without registering the child', () => {
+  const h = harness();
+  const child = { id: 'scan-cancel', sourceId: 924, nama: 'Anak Uji Batal', riwayat: {} };
+  h.app.daftarAnak = [child];
+  h.app.queueEntries = [];
+  h.app.view = 'queue';
+  h.app.prosesHasilScanKartu('SIMPATIK:SASARAN:1:924');
+  h.app.queueNoteDraft = 'Batal';
+  assert.equal(h.app.handleAndroidBack(), 'handled');
+  assert.equal(h.app.queueNoteDialog, false);
+  assert.equal(h.app.scannedAnak, null);
+  assert.equal(h.app.queueNoteDraft, '');
+  assert.equal(h.app.antreanAktif.length, 0);
+  assert.equal(h.app.view, 'queue');
 });
 
 test('published targets are immediately visible and search narrows the roster', () => {
@@ -458,6 +558,64 @@ test('calling and recalling a child repeats the audible queue announcement', () 
   ]);
 });
 
+test('KMS review stays visible without occupying either of the two service slots', () => {
+  const h = harness();
+  const called = { id: 'q1', date: h.app.tanggalHariIniISO, number: 1, status: 'called', name: 'Anak Pertama' };
+  const measuring = { id: 'q2', date: h.app.tanggalHariIniISO, number: 2, status: 'serving', name: 'Anak Kedua' };
+  const waiting = { id: 'q3', date: h.app.tanggalHariIniISO, number: 3, status: 'waiting', name: 'Anak Ketiga' };
+  h.app.queueEntries = [called, measuring, waiting];
+  assert.equal(h.app.antreanTerpanggil.length, 2);
+  assert.equal(h.app.slotPanggilan.length, 2);
+  assert.equal(h.app.selesaikanAntrean(measuring), true);
+  assert.equal(measuring.status, 'kms_review');
+  assert.equal(h.app.antreanReviewKms.length, 1);
+  assert.equal(h.app.antreanAktif.includes(measuring), false);
+  assert.equal(h.app.antreanTerpanggil.length, 1);
+  assert.equal(h.app.antreanMenunggu[0], waiting);
+});
+
+test('queue sync uses the shared Portal GET, POST, and PATCH contract', async () => {
+  const h = harness();
+  h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'session-token' }));
+  h.app.registryConfig.activeProvider = 'portal_api';
+  h.app.registryConfig.portalApi.url = portalApiBawaan;
+  h.app.periodeSasaran = { periodeId: 7 };
+  const date = h.app.tanggalHariIniISO;
+  const child = { id: 'child-1', idSasaran: 44, nik: '3273010101220001', nama: 'Anak Portal', namaOrtu: 'Orang Tua', rt: '03' };
+  h.app.daftarAnak = [child];
+  h.app.queueEntries = [{
+    id: 'local-1', serverId: null, sasaranId: 44, date, childIdentity: child.nik,
+    name: child.nama, parent: child.namaOrtu, rt: child.rt, number: 1, sortOrder: 1,
+    status: 'called', note: 'Perlu cek ulang', updatedAt: new Date().toISOString(), _queueDirty: true,
+  }];
+  const requests = [];
+  const canonical = status => ({
+    id: `queue-${date}-44`, periodeId: 7, sasaranId: 44, tanggal: date,
+    nomor: 1, urutan: 1, childIdentity: child.nik, nama: child.nama,
+    namaOrtu: child.namaOrtu, rt: child.rt, status, catatan: 'Perlu cek ulang',
+    checkedInAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+  });
+  h.context.fetch = async (url, request = {}) => {
+    requests.push({ url, request });
+    if (!request.method) return { ok: true, json: async () => ({ items: [] }) };
+    if (request.method === 'POST') return { ok: true, json: async () => ({ item: canonical('waiting') }) };
+    if (request.method === 'PATCH') return { ok: true, json: async () => ({ item: canonical('called') }) };
+    throw new Error('Unexpected Portal method: ' + request.method);
+  };
+
+  assert.equal(await h.app.sinkronkanAntreanPortal(), true);
+  assert.deepEqual(requests.map(({ request }) => request.method || 'GET'), ['GET', 'POST', 'PATCH']);
+  assert.match(requests[0].url, /\/antrean\?periodeId=7&tanggal=/);
+  assert.equal(requests[1].url, portalApiBawaan + '/antrean');
+  assert.deepEqual(JSON.parse(requests[1].request.body), { periodeId: 7, sasaranId: 44, tanggal: date, catatan: 'Perlu cek ulang' });
+  assert.equal(requests[2].url, portalApiBawaan + '/antrean/queue-' + date + '-44');
+  assert.deepEqual(JSON.parse(requests[2].request.body), { status: 'called', catatan: 'Perlu cek ulang', urutan: 1 });
+  assert.equal(h.app.queueEntries[0].serverId, 'queue-' + date + '-44');
+  assert.equal(h.app.queueEntries[0].status, 'called');
+  assert.equal(!!h.app.queueEntries[0]._queueDirty, false);
+  assert.equal(h.app.queueSyncError, '');
+});
+
 test('queue measurement date stays inside the active target period', () => {
   const h = harness();
   h.app.periodeSasaran = { periode: '2026-09', label: 'September 2026' };
@@ -501,7 +659,7 @@ test('late follow-up is marked only after the server confirms its database write
   h.context.fetch = async () => ({ ok: true, json: async () => ({ pengukuran: { id: 54, susulan: true } }) });
   const result = await h.app.sinkronkanSatuPengukuran({ id_pengukuran: 'susulan-1', nik: child.nik, tanggal_ukur: '2026-09-30' });
   assert.equal(result.susulan, true);
-  assert.equal(child.statusSasaran, 'selesai');
+  assert.equal(child.statusSasaran, 'tidak_hadir');
   assert.equal(child.pendataanSusulan, true);
   assert.equal(child.riwayat['2026'][8].syncStatus, 'synced');
   assert.equal(child.riwayat['2026'][8].pendataanSusulan, true);
@@ -548,6 +706,7 @@ test('closing a session marks every remaining target absent without deleting chi
     { id: '3', nama: 'Tiga', statusSasaran: 'selesai' },
   ];
   h.app.queueEntries = [{ id: 'q1', date: h.app.tanggalHariIniISO, childIdentity: '1', status: 'waiting' }];
+  h.app.persistAntrean = () => {};
   h.context.fetch = async (url, request) => {
     assert.equal(url, portalApiBawaan + '/sasaran/tutup-sesi');
     assert.equal(request.headers.Authorization, 'Bearer session-token');
@@ -575,7 +734,10 @@ test('tablet UI exposes operational modules without portal analytics modules', (
   assert.match(html, /Dari Antrean/);
   assert.match(html, /Semua Balita/);
   assert.match(html, /Mode cepat aktif/);
-  assert.match(html, /Selesai setelah dikonfirmasi di web/);
+  assert.match(html, /setelah pengukuran, anak menunggu pemeriksaan KMS di luar slot/i);
+  assert.match(html, /home-summary/);
+  assert.match(html, /home-progress-grid/);
+  assert.match(html, /history-header/);
   assert.match(html, /Susulan di Luar Sesi/);
   assert.match(html, /Panggil Lagi/);
   assert.doesNotMatch(html, /Mulai Pengukuran/);
@@ -589,6 +751,23 @@ test('tablet UI exposes operational modules without portal analytics modules', (
   assert.doesNotMatch(html, /view === 'settings'/);
   assert.doesNotMatch(html, /kartuHasil\(\)/);
   assert.doesNotMatch(html, /hasilSimulasiZScore\(\)/);
+});
+
+test('Nearby queue snapshots accept only the same workspace and merge by stable ID', () => {
+  const h = harness();
+  const today = h.app.tanggalHariIniISO;
+  h.app.nearbyWorkspaceId = 'posyandu:18';
+  h.app.queueEntries = [{ id: 'queue-a', date: today, status: 'waiting', updatedAt: '2026-10-19T01:00:00Z' }];
+  h.app.terapkanSnapshotCluster({ workspaceId: 'posyandu:19', queue: [{ id: 'wrong-rw', date: today }] });
+  assert.equal(h.app.queueEntries.length, 1);
+  h.app.terapkanSnapshotCluster({ workspaceId: 'posyandu:18', queue: [
+    { id: 'queue-a', date: today, status: 'done', updatedAt: '2026-10-19T02:00:00Z' },
+    { id: 'queue-b', date: today, status: 'waiting', updatedAt: '2026-10-19T02:01:00Z' },
+    { id: 'old-day', date: '2026-10-18', status: 'waiting' },
+  ] });
+  assert.equal(h.app.queueEntries.length, 2);
+  assert.equal(h.app.queueEntries.find(item => item.id === 'queue-a').status, 'done');
+  assert.equal(h.app.queueEntries.some(item => item.id === 'old-day'), false);
 });
 
 test('application notices replace raw WebView alerts with semantic styled dialogs', () => {

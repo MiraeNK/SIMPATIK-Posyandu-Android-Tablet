@@ -1317,7 +1317,8 @@
 
   // Alamat default REST API server Cloudflare Tunnel / Online.
   // URL ini menghubungkan tablet ke Portal SIMPATIK melalui tunnel online.
-  const PORTAL_API_BAWAAN = 'https://pediatric-lung-hiking-pills.trycloudflare.com/api/v1';
+  const PORTAL_API_BAWAAN = 'https://tile-hopes-dec-wisconsin.trycloudflare.com/api/v1';
+  const PORTAL_DEPLOYMENT = 'vm-2026-10-23';
   const { createApp } = Vue;
 
   window.vm = createApp({
@@ -1377,6 +1378,13 @@
         registryConfig: (() => {
           const cfg = JSON.parse(localStorage.getItem('SIMPATIK_REGISTRY_CONFIG') || 'null');
           if (cfg) {
+            // Migrasikan alamat sekali saat berpindah dari server laptop ke VM.
+            // Sesi, data offline dan antrean tidak dihapus.
+            if (cfg.portalDeployment !== PORTAL_DEPLOYMENT) {
+              cfg.portalApi = { ...(cfg.portalApi || {}), url: PORTAL_API_BAWAAN };
+              cfg.connectionMode = 'online';
+              cfg.portalDeployment = PORTAL_DEPLOYMENT;
+            }
             delete cfg.supabase;
             cfg.activeProvider = 'portal_api';
             cfg.portalApi = {
@@ -1388,6 +1396,7 @@
             return cfg;
           }
           return {
+            portalDeployment: PORTAL_DEPLOYMENT,
             activeProvider: 'portal_api',
             portalApi: { url: PORTAL_API_BAWAAN, status: 'Belum diuji' },
             connectionMode: 'otomatis',
@@ -1663,8 +1672,8 @@
         const savedUser = localStorage.getItem('SIMPATIK_CURRENT_USER');
         const savedSession = localStorage.getItem('SIMPATIK_SESSION');
 
-        // Prioritaskan API lokal saat PC dan tablet berada di jaringan yang sama.
-        // Jika LAN tidak tersedia, URL online (tunnel) tetap menjadi fallback.
+        // Native discovery memeriksa HTTPS publik VM terlebih dahulu.
+        // Data offline tetap tersedia bila server belum dapat dijangkau.
         this.splashStatus = 'Memeriksa koneksi server…';
         const lokalTerhubung = await this.mulaiPenemuanLokal({ senyap: true, batasWaktu: 4200 });
 
@@ -1878,7 +1887,8 @@
               }
             }
             this.persistDaftarAnak();
-            this.pendingSyncCount = this.ambilAntreanPengukuran().length;
+            this.simpanRegistryConfig();
+      this.pendingSyncCount = this.ambilAntreanPengukuran().length;
           }
           if (localStorage.getItem('SIMPATIK_SESSION')) setTimeout(() => this.sinkronkanAntreanPortal(), 0);
           if (localStorage.getItem('SIMPATIK_SESSION') && measurements.length) setTimeout(() => this.sinkronkanDataTertunda(), 0);
@@ -2155,7 +2165,7 @@
               namaPerangkat,
               jenisPerangkat: 'android',
               modeKoneksi: this.informasiKoneksiPortal().mode === 'otomatis' ? 'tidak_diketahui' : this.informasiKoneksiPortal().mode,
-              versiAplikasi: 'v1.12.4',
+              versiAplikasi: 'v1.12.5',
               antreanTertunda: this.totalPendingCount || 0
             })
           });

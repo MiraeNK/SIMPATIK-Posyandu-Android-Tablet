@@ -1,3 +1,9 @@
+# 1.12.5 (29) — 23 Oktober 2026
+
+- REST API menggunakan web yang sudah dipindahkan ke VM Ubuntu melalui Cloudflare HTTPS.
+- Alamat lama tersimpan otomatis dimigrasikan satu kali, tanpa menghapus sesi/cache/pekerjaan offline.
+- Native discovery dan WebView memakai host yang sama, dengan uji regresi migrasi konfigurasi.
+
 # Changelog
 
 ## 1.12.4 — Status Koneksi dan Laporan Perangkat (21 Oktober 2026)

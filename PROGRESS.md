@@ -230,3 +230,12 @@ Dokumen ini harus diperbarui setiap kali satu tahap verifikasi atau integrasi se
 - Menyimpan seluruh pembaruan Android 1.12.4 ke branch codex/fokus-input-tablet sebelum perubahan endpoint VM.
 - 41 tes regresi Android lulus. Endpoint baru dan APK dicatat setelah web/API di VM lolos pengujian.
 - Riwayat lokal, data anak, akun dan kata sandi dipertahankan.
+
+### API VM — 1.12.5
+
+- Web/API VM lulus health Supabase, login dan pembatasan akses publik.
+- Endpoint native dan WebView diarahkan ke tile-hopes-dec-wisconsin.trycloudflare.com.
+- Migrasi konfigurasi satu kali memindahkan alamat laptop ke VM tanpa menghapus sesi atau data offline.
+- Lihat WALKTHROUGH-API-VM-v1.12.5.md untuk pemasangan dan batas URL sementara.
+
+- Build akhir 1.12.5: 43 tes JavaScript lulus; unit test, lint dan assembleDebug lulus. SHA-256 APK: 58294c5d2a1c39ffa4d555beff29fa0a2bc5488f63ea8138f5f1fdb48d66f7ee.

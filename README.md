@@ -1,3 +1,7 @@
+# Rilis API VM 1.12.5 — 23 Oktober 2026
+
+Endpoint aktif: https://tile-hopes-dec-wisconsin.trycloudflare.com/api/v1. Web/API kini berjalan di VM, sehingga laptop tidak perlu menyala. Pasang APK sebagai pembaruan tanpa menghapus data. [Walkthrough API VM](WALKTHROUGH-API-VM-v1.12.5.md).
+
 # SIMPATIK Posyandu — Aplikasi Tablet Android
 
 Versi **1.12.4** membetulkan label koneksi Cloudflare menjadi **Server online** dan mengirim heartbeat bertoken agar perangkat tampil di daftar perangkat web sesuai Posyandu akun. Perangkat lain perlu memasang APK ini agar laporan barunya ikut diterima. Lihat [panduan koneksi dan perangkat 1.12.4](WALKTHROUGH-PERANGKAT-v1.12.4.md).

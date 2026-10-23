@@ -740,7 +740,7 @@ class AndroidAppBridge(
 
                 // 1. Prioritaskan API publik agar tablet dapat tersambung dari jaringan mana pun.
                 // URL Quick Tunnel ini sementara dan berubah saat tunnel dimulai ulang.
-                val cloudflareHost = "pediatric-lung-hiking-pills.trycloudflare.com"
+                val cloudflareHost = "tile-hopes-dec-wisconsin.trycloudflare.com"
                 val cloudflareApiUrl = "https://$cloudflareHost/api/v1"
                 try {
                     val connection = (URL("$cloudflareApiUrl/kesehatan").openConnection() as HttpURLConnection).apply {

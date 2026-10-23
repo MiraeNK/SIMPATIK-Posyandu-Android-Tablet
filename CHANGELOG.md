@@ -1,5 +1,63 @@
 # Changelog
 
+## 1.12.4 — Status Koneksi dan Laporan Perangkat (21 Oktober 2026)
+
+- Menentukan label server dari URL API yang digunakan, sehingga Cloudflare tidak lagi diberi label jaringan lokal oleh hasil penemuan otomatis atau pengaturan tersimpan.
+- Menyamakan pemberitahuan hasil penemuan server dengan jalur yang ditemukan: online, lokal, atau Tailscale.
+- Memperbaiki heartbeat agar menyertakan token akun dan identitas instalasi, nama/model perangkat, versi aplikasi, jenis koneksi, dan jumlah data tertunda.
+- Wilayah perangkat ditentukan server dari akun yang terverifikasi; APK tidak mengirim klaim RW atau akun lain.
+- Memverifikasi langsung pada Samsung SM-S711B Android 16: Cloudflare terdeteksi online, heartbeat diterima, perangkat terlihat melalui API web, dan akses tanpa sesi ditolak.
+- 41 tes regresi JavaScript lulus; build APK versionCode 28 / versionName 1.12.4 berhasil.
+
+## 1.12.3 — UI HP dan Catatan Scan Kartu (21 Oktober 2026)
+
+- Memperbaiki halaman kosong setelah splash pada HP Samsung Android 16: pengukuran langsung menemukan `vh`, `dvh`, dan `svh` bernilai 0 walaupun tinggi WebView sekitar 782 px.
+- Menggunakan batas atas/bawah kontainer tetap untuk tinggi aplikasi, sehingga halaman tidak bergantung pada satuan viewport yang keliru.
+- Menggunakan tinggi relatif terhadap overlay untuk dialog konfirmasi pengukuran, agar dialog tidak ikut menyusut ke tinggi 0.
+- Mempertahankan skala login HP yang ringkas dan pembaruan koneksi online dari Gemini.
+- Menambahkan tombol Lihat/Sembunyikan kata sandi dengan status awal tersembunyi dan mempertahankan posisi kursor saat tombol ditekan.
+- Membuat tombol Daftarkan Balita selebar satu baris pada HP, di bawah Pencatatan Langsung dan Riwayat Bulanan.
+- Menyesuaikan tinggi kontainer dengan visual viewport ketika keyboard terbuka, agar tombol Masuk tetap dapat digulir ke area yang terlihat.
+- Menyeragamkan ikon pilihan fitur, susunan judul/deskripsi, padding header pendaftaran, dan area sentuh navigasi minimal 48 px pada HP.
+- Merapikan popup catatan setelah scan QR untuk HP/tablet: **Lewati catatan** atau **Simpan & masuk antrean**, dengan tombol batal dan penanganan Kembali Android tanpa membuat antrean.
+- Membatasi popup ke tinggi layar yang terlihat ketika keyboard terbuka; isi dapat digulir, sementara kedua tindakan tetap terjangkau.
+- Menambah tes regresi untuk menunda pendaftaran sampai pilihan catatan dikonfirmasi, menyimpan/melewati draf, pembatalan, serta konfirmasi berulang tanpa entri ganda.
+- Versi aplikasi menjadi `versionCode 27` / `versionName 1.12.3`.
+
+## 1.12.2 — Skala Login Khusus HP
+
+- Memadatkan banner ilustrasi HP: gambar 80 menjadi 60 px, judul banner 21 menjadi 18 px, dan padding 24 menjadi 16 px.
+- Menyesuaikan judul utama 30 menjadi 24 px dan identitas aplikasi 22 menjadi 18 px pada lebar sampai 600 px.
+- Merapikan jarak form dan menggunakan kolom setinggi 48 px serta tombol Masuk minimal 50 px; teks input tetap 16 px agar mudah dibaca.
+- Membatasi lebar isi login HP ke 360 px; pengaturan khusus HP tidak mengubah skala tablet lebar.
+- Versi aplikasi menjadi `versionCode 26` / `versionName 1.12.2`.
+
+## 1.12.1 — Login HP Portrait
+
+- Menampilkan ilustrasi login sebagai banner ringkas di atas form pada layar HP; ilustrasi tidak lagi disembunyikan pada lebar di bawah 900 piksel.
+- Menggunakan logo lokal SIMPATIK pada identitas login, sehingga gambar logo tetap tersedia saat offline.
+- Menghapus tinggi form satu layar penuh pada HP agar form, tombol Masuk, dan banner dapat digulir bersama saat layar pendek atau keyboard terbuka.
+- Mempertahankan susunan dua kolom pada tablet lebar dan memperbarui URL API Cloudflare ke tunnel aktif.
+- Versi aplikasi menjadi `versionCode 25` / `versionName 1.12.1`.
+
+## 1.12.0 — Sinkronisasi Nearby per Posyandu
+
+- Menambahkan komunikasi tablet-ke-tablet memakai Google Nearby Connections dengan strategi Cluster.
+- Memverifikasi setiap perangkat memakai identitas Posyandu dan kunci grup dari API Portal; pertukaran lintas Posyandu ditolak.
+- Menyimpan konteks cluster terenkripsi dengan Android Keystore agar antrean hari ini dapat diteruskan saat jaringan server sementara putus.
+- Snapshot antrean dan hasil ukur lokal yang belum terkirim diterapkan idempoten berdasarkan ID/periode serta waktu pembaruan, lalu diteruskan ke API Portal saat internet tersedia.
+- Menambahkan status tablet sekitar pada beranda dan membersihkan koneksi Nearby saat pengguna keluar.
+- Membutuhkan migration server `018_kunci_cluster_posyandu.sql` sebelum fitur dapat mengambil konteks cluster.
+
+## 1.11.0 — Sinkronisasi Portal dan Antarmuka HP
+
+- Menyelaraskan sinkronisasi check-in, status panggil, pengukuran, serta catatan dengan antrean bersama di REST API Portal.
+- Menampilkan alur kerja hanya dalam dua slot. Status **Menunggu KMS di web** tetap terlihat sebagai informasi tetapi tidak menahan slot layanan.
+- Menghitung semua sasaran yang sudah check-in, termasuk anak yang menunggu pemeriksaan KMS.
+- Merapikan beranda, progres sasaran, dan riwayat bulanan untuk layar HP Android dengan target sentuh yang lebih mudah.
+- Mengirim versi aplikasi `1.11.0` pada heartbeat server.
+- Versi aplikasi menjadi `versionCode 23` / `versionName 1.11.0`.
+
 ## 1.10.8 — Login Multi-Tablet dan Tampilan HP
 
 - Memisahkan batas kegagalan login per perangkat, dengan batas jaringan bersama yang lebih longgar untuk mencegah penguncian semua tablet oleh satu perangkat.

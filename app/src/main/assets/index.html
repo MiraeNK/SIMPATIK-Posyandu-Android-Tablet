@@ -8,6 +8,23 @@
   window.onerror = function(msg, url, line) {
     console.error("WINDOW ERROR: " + msg + " at " + url + ":" + line);
   };
+  // Android WebView can report CSS viewport units as 0. Use actual visible pixels,
+  // including the reduced viewport while the phone's keyboard is open.
+  (() => {
+    if (typeof document === 'undefined') return;
+    const updateViewport = () => {
+      const viewport = window.visualViewport;
+      const height = viewport && viewport.height > 0 ? viewport.height : window.innerHeight;
+      if (Number.isFinite(height) && height > 0) {
+        document.documentElement.style.setProperty('--app-visible-height', height + 'px');
+      }
+    };
+    window.addEventListener('resize', updateViewport);
+    window.addEventListener('pageshow', updateViewport);
+    document.addEventListener('DOMContentLoaded', updateViewport);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', updateViewport);
+    updateViewport();
+  })();
 </script>
 <!-- Fonts & Icons -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -46,7 +63,8 @@
     right: 0;
     bottom: 0;
     width: 100%;
-    height: 100%;
+    /* Use the WebView's actual fixed bounds. Android 16 can report vh/dvh as 0. */
+    height: var(--app-visible-height, auto);
     display: flex;
     flex-direction: column;
     background: #EDEFEA;
@@ -173,6 +191,20 @@
     font-weight: 800;
   }
   .notice-action:hover { filter: brightness(0.91); }
+  .queue-note-layer { bottom:auto; height:var(--app-visible-height, 100%); }
+  .queue-note-card { --notice-accent:#0F6E44; --notice-soft:#E9F3EC; display:flex; flex-direction:column; max-height:100%; }
+  .queue-note-card .notice-accent { flex:0 0 6px; }
+  .queue-note-body { min-height:0; overflow-y:auto; padding:22px; }
+  .queue-note-heading { display:grid; grid-template-columns:44px minmax(0,1fr) 48px; align-items:start; gap:12px; }
+  .queue-note-heading .notice-symbol { width:44px; height:44px; border-radius:12px; font-size:24px; }
+  .queue-note-heading .notice-close { width:48px; height:48px; }
+  .queue-note-heading h2 { margin:0 0 6px; font-size:20px; line-height:1.3; }
+  .queue-note-heading p { margin:0; font-size:14px; line-height:1.5; color:#4A5750; overflow-wrap:anywhere; }
+  .queue-note-field { display:block; margin-top:18px; font-size:14px; font-weight:700; color:#16211C; }
+  .queue-note-field textarea { display:block; width:100%; min-height:96px; margin-top:8px; resize:vertical; border:1px solid #AEB7B0; border-radius:12px; padding:12px; font:inherit; font-size:16px; font-weight:400; }
+  .queue-note-footer { display:flex; flex-wrap:wrap; gap:10px; flex-shrink:0; padding:0 22px 22px; }
+  .queue-note-footer button { flex:1 1 200px; min-height:48px; padding:12px 16px; font-size:14px; line-height:1.3; }
+  .queue-note-skip { background:#FFFFFF; color:#34423A; border:1px solid #AEB7B0; }
   .notice-close:focus-visible, .notice-action:focus-visible { outline: 3px solid var(--notice-accent); outline-offset: 3px; }
   @keyframes notice-in {
     from { opacity: 0; transform: translateY(12px) scale(0.98); }
@@ -183,15 +215,34 @@
   }
 
   .home-actions { display:grid; grid-template-columns:1.25fr repeat(3, 1fr); gap:18px; }
-  .login-shell { flex:1; display:flex; background:#FFFFFF; }
-  .login-panel { width:50%; padding:50px 70px; display:flex; flex-direction:column; justify-content:center; overflow-y:auto; }
-  .login-art { width:50%; background:linear-gradient(135deg, #0F6E44 0%, #0B5334 100%); position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px; }
+  .login-shell { flex:1; min-height:0; display:flex; background:#FFFFFF; overflow-y:auto; }
+  .login-panel { width:50%; min-width:0; padding:50px clamp(28px, 5vw, 70px); display:flex; flex-direction:column; overflow-y:auto; }
+  .login-content { width:100%; max-width:480px; margin:auto; }
+  .login-brand-logo { width:64px; height:64px; flex-shrink:0; object-fit:contain; }
+  .login-brand-copy { min-width:0; }
+  .login-password-field { position:relative; }
+  .login-password-field #login-password { padding-right:112px !important; }
+  .login-password-toggle { position:absolute; top:0; right:0; height:100%; min-height:48px; min-width:104px; padding:0 12px; border-radius:12px; background:transparent; color:#0F6E44; font-size:13px; font-weight:800; }
+  .login-password-toggle:focus-visible { outline:2px solid #0F6E44; outline-offset:-4px; }
+  .login-art { width:50%; min-width:0; flex-shrink:0; background:linear-gradient(135deg, #0F6E44 0%, #0B5334 100%); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:60px; }
+  .login-art-content { position:relative; z-index:1; width:100%; max-width:460px; text-align:center; }
+  .login-art-graphic { width:min(100%, 300px); aspect-ratio:1; background:rgba(255,255,255,0.1); border-radius:28%; display:flex; align-items:center; justify-content:center; margin:0 auto 60px; position:relative; border:1px solid rgba(255,255,255,0.2); }
+  .login-art-baby { font-size:clamp(100px, 13vw, 180px); color:#FFFFFF; }
+  .login-art-badge { position:absolute; display:flex; align-items:center; justify-content:center; }
+  .login-art-scales { top:-6%; right:-6%; width:28%; height:28%; background:#EAAA08; border-radius:24%; box-shadow:0 12px 24px rgba(0,0,0,.18); transform:rotate(15deg); }
+  .login-art-scales i { font-size:clamp(24px, 4vw, 50px); color:#16211C; }
+  .login-art-aid { bottom:-8%; left:-8%; width:34%; height:34%; background:#FFFFFF; border-radius:26%; box-shadow:0 12px 24px rgba(0,0,0,.18); transform:rotate(-10deg); }
+  .login-art-aid i { font-size:clamp(28px, 5vw, 60px); color:#0F6E44; }
+  .login-art-heart { top:40%; left:-14%; width:17%; height:17%; background:rgba(255,255,255,0.2); border-radius:24%; transform:rotate(-20deg); }
+  .login-art-heart i { font-size:clamp(16px, 2.5vw, 30px); color:#FFFFFF; }
+  .login-art-title { font-size:36px; font-weight:800; color:#FFFFFF; margin:0 0 16px; letter-spacing:-0.02em; line-height:1.25; }
+  .login-art-description { font-size:20px; color:#D6EAE0; margin:0; line-height:1.6; }
   .queue-layout { display:block; }
   .queue-stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
   .queue-card { background:#FFFFFF; border:1px solid #DCE0DA; border-radius:20px; }
   .queue-row { display:grid; grid-template-columns:72px minmax(0, 1fr) auto; gap:16px; align-items:center; padding:17px 18px; border-top:1px solid #E7EAE5; }
   .queue-row:first-child { border-top:0; }
-  .queue-stack-slots { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+  .queue-stack-slots { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
   .queue-slot { min-height:132px; border:1px solid #DCE0DA; border-radius:17px; background:#FFFFFF; padding:15px; display:flex; flex-direction:column; justify-content:space-between; }
   .queue-number { width:58px; height:58px; border-radius:17px; display:flex; align-items:center; justify-content:center; background:#E9F3EC; color:#0F6E44; font-size:20px; font-weight:800; }
   .queue-status { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:800; }
@@ -208,8 +259,18 @@
 
   @media (max-width: 900px) {
     html, body { font-size:16px; }
-    .login-panel { width:100% !important; padding:34px 28px !important; }
-    .login-art { display:none !important; }
+    .login-shell { flex-direction:column; }
+    .login-panel { width:100%; flex-shrink:0; overflow:visible; padding:28px; }
+    .login-art { order:-1; width:100%; padding:28px 36px; }
+    .login-art-content { max-width:480px; display:flex; align-items:center; gap:30px; text-align:left; }
+    .login-art-graphic { width:108px; flex-shrink:0; margin:0; }
+    .login-art-baby { font-size:58px; }
+    .login-art-scales i { font-size:20px; }
+    .login-art-aid i { font-size:24px; }
+    .login-art-heart i { font-size:12px; }
+    .login-art-title { font-size:24px; margin-bottom:8px; }
+    .login-art-description { font-size:15px; line-height:1.5; }
+    .login-art-description br { display:none; }
     .home-header { padding:16px 18px !important; }
     .home-main { padding:20px 18px 30px !important; }
     .home-user { display:none !important; }
@@ -220,13 +281,31 @@
     .queue-search-results { grid-template-columns:1fr; }
   }
   @media (max-width: 600px) {
-    html, body { min-width:320px; overflow-x:hidden; }
-    .login-shell { min-height:100dvh; overflow-y:auto; }
-    .login-panel { min-height:100dvh; justify-content:center; padding:26px 20px !important; }
-    .login-brand { gap:12px !important; margin-bottom:24px !important; }
-    .login-title { font-size:30px !important; }
-    #login-username, #login-password { min-height:56px; font-size:16px !important; }
-    .login-submit { min-height:58px; }
+    html, body { width:100%; min-width:320px; height:100%; overflow:hidden; font-size:16px; }
+    #app { width:100%; height:var(--app-visible-height, auto); min-height:0; overflow-x:hidden; padding-bottom:env(safe-area-inset-bottom, 0px); }
+    button, [role="button"] { touch-action:manipulation; }
+    input, select, textarea { font-size:16px; }
+    .login-shell { min-height:0; }
+    .login-panel { padding:20px 20px 24px; }
+    .login-content { max-width:360px; }
+    .login-art { padding:16px 20px; }
+    .login-art-content { max-width:360px; gap:18px; }
+    .login-art-graphic { width:60px; }
+    .login-art-baby { font-size:34px; }
+    .login-art-scales i { font-size:12px; }
+    .login-art-aid i { font-size:14px; }
+    .login-art-heart i { font-size:9px; }
+    .login-art-title { font-size:18px; margin-bottom:6px; }
+    .login-art-description { font-size:13px; line-height:1.45; }
+    .login-brand { gap:10px !important; margin-bottom:18px !important; }
+    .login-brand-logo { width:44px; height:44px; }
+    .login-brand-title { font-size:18px !important; }
+    .login-brand-subtitle { font-size:12px !important; line-height:1.4; }
+    .login-title { font-size:24px !important; line-height:1.25; margin-bottom:6px !important; }
+    .login-description { font-size:14px !important; line-height:1.5; margin-bottom:18px !important; }
+    .login-fields { gap:14px !important; margin-bottom:18px !important; }
+    #login-username, #login-password { min-height:48px; height:48px; padding:10px 14px !important; border-radius:12px !important; font-size:16px !important; }
+    .login-submit { min-height:50px; padding:12px 16px !important; border-radius:12px !important; font-size:16px !important; box-shadow:0 4px 12px rgba(15,110,68,.14) !important; }
     .notice-layer { padding: 16px; align-items: flex-end; }
     .notice-card { border-radius: 20px; }
     .notice-content { grid-template-columns: 50px minmax(0, 1fr) 38px; gap: 13px; padding: 22px 18px 18px; }
@@ -234,7 +313,20 @@
     .notice-copy h2 { font-size: 19px; }
     .notice-footer { padding: 0 18px 20px; }
     .notice-action { width: 100%; }
-    .home-actions { grid-template-columns:1fr; }
+    .home-actions { grid-template-columns:minmax(0,1fr); gap:10px; }
+    .home-actions > button { min-height:96px !important; flex-direction:row !important; align-items:center !important; justify-content:flex-start !important; gap:14px; padding:15px 16px !important; border-radius:16px !important; box-shadow:none !important; }
+    .home-actions > button:first-child { min-height:138px !important; flex-direction:column !important; align-items:stretch !important; justify-content:space-between !important; padding:17px 18px !important; border-radius:18px !important; }
+    .home-actions > button:not(:first-child) > div:first-child { width:48px !important; height:48px !important; flex:0 0 48px; }
+    .home-actions > button:not(:first-child) > div:last-child { min-width:0; }
+    .home-actions > button:not(:first-child) > div:last-child > div:first-child { font-size:18px !important; line-height:1.25 !important; }
+    .home-actions > button:not(:first-child) > div:last-child > div:last-child { font-size:13px !important; line-height:1.4 !important; }
+    .home-actions > button:first-child > div:last-child > div:first-child { font-size:22px !important; line-height:1.2 !important; }
+    .home-actions > button:first-child > div:last-child > div:last-child { font-size:14px !important; line-height:1.4 !important; }
+    .home-progress-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px !important; }
+    .home-progress-grid > div { padding:13px !important; }
+    .home-progress-grid > div:last-child { grid-column:1 / -1; }
+    .home-summary { padding:16px !important; border-radius:18px !important; }
+    .home-summary > div:first-child { align-items:flex-start !important; gap:10px !important; }
     .queue-page-header { padding:13px 14px !important; }
     .queue-page-header { flex-wrap:wrap; gap:10px !important; }
     .queue-page-header h2 { font-size:22px !important; }
@@ -245,12 +337,21 @@
     .queue-stats .queue-card:last-child { grid-column:1 / -1; }
     .queue-current { flex-direction:column; align-items:stretch !important; padding:18px !important; }
     .queue-current__button { width:100%; }
-    .queue-stack-slots { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .queue-stack-slots { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .queue-slot { min-height:122px; padding:11px; border-radius:14px; }
+    .queue-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; padding:5px; border-radius:14px; }
+    .queue-tab { min-height:56px; padding:8px 6px; gap:6px; border-radius:11px; font-size:13px; line-height:1.2; }
+    .queue-tab > span { padding:2px 7px !important; }
+    .queue-tabs[aria-label="Pilihan daftar pencatatan"] { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .queue-tabs[aria-label="Pilihan daftar pencatatan"] > button:last-child:nth-child(3) { grid-column:1 / -1; }
+    .queue-current { gap:12px !important; }
+    .queue-current__button { min-height:52px !important; }
     .queue-row { grid-template-columns:54px minmax(0, 1fr); }
     .queue-number { width:48px; height:48px; border-radius:14px; font-size:17px; }
     .queue-actions { grid-column:1 / -1; justify-content:stretch; }
-    .queue-actions button { flex:1; }
-    .queue-tabs { grid-template-columns:1fr; }
+    .queue-actions button { flex:1; min-height:48px; }
+    .queue-row > div:nth-child(2) { min-width:0; overflow-wrap:anywhere; }
+    .queue-card { border-radius:16px !important; }
     .queue-search-card { grid-template-columns:56px minmax(0,1fr); }
     .queue-search-card .queue-search-action { grid-column:1 / -1; width:100%; }
     .record-list-header { flex-wrap:wrap; gap:12px !important; padding:14px 16px !important; }
@@ -265,6 +366,17 @@
     .registration-actions > div { flex:1 0 100% !important; }
     .registration-actions button { flex:1; }
     .history-metrics { grid-template-columns:1fr 1fr !important; gap:10px !important; }
+    .history-header { flex-wrap:wrap; gap:10px !important; padding:12px !important; }
+    .history-header > div:nth-of-type(2) { flex:1 1 calc(100% - 128px) !important; min-width:0; }
+    .history-header h2 { font-size:18px !important; line-height:1.25 !important; }
+    .history-header > div:nth-of-type(2) > div { font-size:12px !important; line-height:1.35 !important; }
+    .history-year-selector { flex:1 0 100%; min-height:48px; justify-content:space-between; }
+    .history-content { padding:16px 12px !important; }
+    .history-record-card { padding:18px 14px !important; border-radius:18px !important; }
+    .history-record-card > div:first-child { flex-direction:column; align-items:stretch !important; }
+    .history-record-card > div:first-child > div:last-child { justify-content:space-between; }
+    .history-metrics > div { padding:14px !important; min-width:0; }
+    .history-metrics > div > div:last-child { font-size:23px !important; overflow-wrap:anywhere; }
     .form-header-person { flex:1 1 calc(100% - 128px) !important; }
     .form-header-person > div { white-space:normal !important; }
     .form-header-person > div:first-child { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
@@ -275,24 +387,274 @@
     .form-header-person > div { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .form-header-previous, .form-history { display:none !important; }
     .form-date { width:100%; justify-content:space-between; }
-    .form-body { flex:none !important; min-height:auto !important; flex-direction:column; padding:12px !important; overflow:visible !important; }
-    .form-fields { padding:18px !important; }
+    .form-body { flex:none !important; min-height:auto !important; flex-direction:column; padding:10px !important; overflow:visible !important; gap:10px !important; }
+    .form-fields { width:100%; min-width:0; padding:15px !important; border-radius:16px !important; }
     .form-fields-heading { align-items:flex-start !important; flex-direction:column; gap:2px; }
     .measure-row { flex-direction:column; align-items:stretch !important; gap:8px !important; }
     .measure-label { width:100% !important; }
     .extra-measures { grid-template-columns:1fr; }
-    .keypad { width:100% !important; min-height:520px; }
-    .keypad-grid { min-height:350px; }
-    .form-footer { flex-direction:column; padding:12px !important; }
-    .form-footer button { width:100% !important; min-height:64px; }
+    .keypad { width:100% !important; min-height:0 !important; padding:12px !important; }
+    .keypad-grid { min-height:0 !important; grid-auto-rows:minmax(54px,1fr) !important; }
+    .keypad-grid button { min-height:54px; }
+    .form-footer { flex-direction:column; padding:10px !important; gap:8px !important; }
+    .form-footer > div { flex:none !important; min-height:48px; padding:8px 10px !important; }
+    .form-footer button { width:100% !important; min-height:56px; }
     .form-dialog { padding:12px !important; position:fixed !important; }
-    .form-dialog-card { width:100% !important; max-height:92vh; overflow-y:auto; padding:20px !important; }
+    .form-dialog-card { width:100% !important; max-height:92%; overflow-y:auto; padding:20px !important; }
+  }
+  @media (max-width: 380px) {
+    .queue-stats { gap:8px; }
+    .queue-tabs[aria-label="Menu antrean"] .queue-tab { font-size:12px; }
+    .queue-stack-slots { grid-template-columns:minmax(0,1fr); }
+    .queue-slot { min-height:112px; }
+    .history-metrics { grid-template-columns:minmax(0,1fr) !important; }
+    .form-header-person > div:first-child { font-size:18px !important; }
+    .form-header-person > div:nth-child(2) { font-size:12px !important; }
+  }
+
+  /* Phone portrait: simplify hierarchy, reduce scrolling, and keep touch targets generous. */
+  @media (max-width: 600px) {
+    :root { --phone-gutter: 14px; --phone-card-radius: 18px; }
+    html, body { font-size:15px; }
+    #app { padding-bottom:env(safe-area-inset-bottom, 0px); }
+    button { -webkit-tap-highlight-color:transparent; }
+
+    /* Home: one clear primary action, then compact two-column shortcuts. */
+    .home-header { min-height:68px; gap:10px; padding:10px var(--phone-gutter) !important; }
+    .home-header > div:first-child { min-width:0; gap:10px !important; }
+    .home-header > div:first-child > div:first-child { width:44px !important; height:44px !important; flex:0 0 44px; border-radius:14px !important; }
+    .home-header > div:first-child i { font-size:26px !important; }
+    .home-header > div:first-child > div:last-child > div { font-size:10px !important; letter-spacing:.07em !important; }
+    .home-header h1 { font-size:18px !important; line-height:1.2; }
+    .home-header > div:last-child { gap:0 !important; }
+    .home-header > div:last-child button { width:44px; height:44px !important; padding:0 !important; justify-content:center; font-size:0 !important; border-radius:13px !important; }
+    .home-header > div:last-child button i { font-size:20px !important; }
+    .home-main { gap:14px !important; padding:16px var(--phone-gutter) calc(24px + env(safe-area-inset-bottom, 0px)) !important; }
+    .home-actions { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .home-actions > button { min-width:0; min-height:132px !important; padding:13px !important; gap:8px; border-radius:var(--phone-card-radius) !important; }
+    .home-actions > button:first-child { grid-column:1 / -1; display:grid !important; grid-template-columns:46px minmax(0,1fr); min-height:132px !important; align-items:start !important; gap:8px 12px; padding:16px !important; }
+    .home-actions > button:first-child > div:first-child { display:contents !important; }
+    .home-actions > button:first-child > div:first-child > div:first-child { grid-column:1; grid-row:1 / span 2; width:46px !important; height:46px !important; border-radius:14px !important; }
+    .home-actions > button:first-child > div:first-child i { font-size:27px !important; }
+    .home-actions > button:first-child > div:first-child > span { grid-column:2; grid-row:2; justify-self:start; padding:5px 9px !important; font-size:11px !important; line-height:1.2; text-align:left; }
+    .home-actions > button:first-child > div:last-child { grid-column:2; grid-row:1; min-width:0; }
+    .home-actions > button:first-child > div:last-child > div:first-child { margin:0 0 3px !important; font-size:18px !important; line-height:1.2 !important; }
+    .home-actions > button:first-child > div:last-child > div:last-child { font-size:12px !important; line-height:1.35 !important; }
+    .home-actions > button:not(:first-child) { align-items:flex-start !important; justify-content:flex-start !important; }
+    .home-actions > button:not(:first-child) > div:first-child { width:36px !important; height:36px !important; flex:0 0 36px; border-radius:12px !important; }
+    .home-actions > button:not(:first-child) > div:first-child i { font-size:22px !important; }
+    .home-actions > button:not(:first-child) > div:last-child { margin-top:auto; }
+    .home-actions > button:not(:first-child) > div:last-child > div:first-child { font-size:15px !important; line-height:1.25 !important; }
+    .home-actions > button:not(:first-child) > div:last-child > div:last-child { font-size:11px !important; line-height:1.35 !important; }
+    .home-actions > button.home-shortcut { min-height:144px !important; flex-direction:column !important; align-items:flex-start !important; gap:8px; padding:14px !important; }
+    .home-actions > button.home-shortcut > div:last-child { margin-top:0; min-width:0; }
+    .home-actions > button.home-shortcut > div:last-child > div:last-child { font-size:12px !important; }
+    .home-actions > button.home-register-action:last-child { grid-column:1 / -1; min-height:88px !important; flex-direction:row !important; align-items:center !important; gap:14px; padding:14px 16px !important; }
+    .home-actions > button.home-register-action:last-child > div:last-child { margin-top:0; }
+    .queue-note-body { padding:18px; }
+    .queue-note-heading { grid-template-columns:36px minmax(0,1fr) 48px; gap:10px; }
+    .queue-note-heading > div:nth-child(2) { display:contents; }
+    .queue-note-heading .notice-symbol { grid-column:1; grid-row:1; width:36px; height:36px; font-size:21px; }
+    .queue-note-heading h2 { grid-column:2; grid-row:1; align-self:center; margin:0; font-size:19px; }
+    .queue-note-heading .notice-close { grid-column:3; grid-row:1; }
+    .queue-note-heading p { grid-column:1 / -1; grid-row:2; }
+    .queue-note-field { margin-top:14px; }
+    .queue-note-footer { padding:0 18px 18px; }
+    .home-sync-panel { align-items:flex-start !important; gap:10px !important; padding:13px !important; border-radius:var(--phone-card-radius) !important; }
+    .home-sync-panel > div:nth-child(2) { flex:1 1 calc(100% - 58px) !important; min-width:0 !important; }
+    .home-sync-panel > div:first-child { width:40px !important; height:40px !important; flex-basis:40px !important; }
+    .home-sync-actions { flex:1 0 100%; display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px !important; }
+    .home-sync-actions button { min-width:0; min-height:46px !important; height:auto !important; padding:8px !important; justify-content:center; font-size:11px !important; line-height:1.2; }
+    .home-sync-actions button:only-of-type { grid-column:1 / -1; }
+    .home-summary { padding:15px !important; border-radius:var(--phone-card-radius) !important; }
+    .home-summary > div:first-child { margin-bottom:12px !important; }
+    .home-summary h2 { font-size:17px !important; line-height:1.25; }
+    .home-summary > div:first-child > div > div { font-size:12px !important; line-height:1.4; }
+    .home-summary > div:first-child > span { max-width:98px; font-size:11px !important; text-align:right; }
+    .home-progress-grid { gap:8px !important; }
+    .home-progress-grid > div { padding:11px !important; border-radius:14px !important; }
+    .home-progress-grid > div > div:first-child { font-size:9px !important; letter-spacing:.02em; }
+    .home-progress-grid > div > div:last-child { font-size:27px !important; margin-top:2px !important; }
+    .home-portal-note { align-items:flex-start !important; gap:10px !important; padding:13px !important; border-radius:16px !important; }
+    .home-portal-note > i { font-size:22px !important; flex:0 0 auto; }
+    .home-portal-note > div > div:first-child { font-size:13px !important; line-height:1.4; }
+    .home-portal-note > div > div:last-child { font-size:11px !important; line-height:1.4; }
+
+    /* Queue and lists: keep counts readable and controls easy to reach with one hand. */
+    .queue-page-header { gap:10px !important; padding:10px var(--phone-gutter) !important; }
+    .queue-page-header > button:first-child, .register-header > button:first-child { width:44px !important; height:44px !important; flex:0 0 44px; border-radius:13px !important; }
+    .queue-page-header > button:first-child i, .register-header > button:first-child i { font-size:22px !important; }
+    .queue-page-header > div:nth-child(2) { min-width:0; }
+    .queue-page-header > div:nth-child(2) > div { font-size:9px !important; }
+    .queue-page-header h2 { font-size:18px !important; line-height:1.2; }
+    .queue-page-header > button:last-child { flex:1 0 100%; min-height:46px !important; }
+    .queue-page-main { gap:13px !important; padding:13px var(--phone-gutter) calc(24px + env(safe-area-inset-bottom, 0px)) !important; }
+    .queue-stats { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+    .queue-stats .queue-card { min-width:0; padding:10px 8px !important; border-radius:14px !important; }
+    .queue-stats .queue-card > div:first-child { min-height:25px; font-size:9px !important; line-height:1.2; }
+    .queue-stats .queue-card > div:nth-child(2) { font-size:24px !important; line-height:1.1; }
+    .queue-stats .queue-card > div:nth-child(3) { display:none; }
+    .queue-tabs { gap:6px !important; padding:5px !important; }
+    .queue-tab { min-width:0; min-height:50px !important; padding:8px 6px !important; font-size:12px !important; }
+    .queue-tab i { font-size:18px !important; }
+    .queue-stack-slots { gap:7px !important; }
+    .queue-slot { min-height:114px !important; padding:9px !important; }
+    .queue-slot .queue-status { padding:4px 7px; font-size:10px; }
+    .queue-slot strong { font-size:12px; }
+    .queue-slot .queue-number { width:39px !important; height:39px !important; font-size:15px !important; }
+    .queue-small-button { min-height:42px !important; padding:0 7px !important; font-size:11px !important; }
+    .queue-row { gap:9px !important; padding:13px 11px !important; }
+    .queue-row strong { font-size:14px !important; }
+    .queue-search-card { grid-template-columns:44px minmax(0,1fr) !important; gap:10px !important; padding:12px !important; border-radius:16px !important; }
+    .queue-search-card > div:first-child { width:42px !important; height:42px !important; border-radius:13px !important; font-size:16px !important; }
+    .queue-search-card > div:nth-child(2) > div:first-child { font-size:15px !important; }
+    .queue-search-card > div:nth-child(2) > div:nth-child(2), .queue-search-card > div:nth-child(2) > div:nth-child(3) { font-size:11px !important; }
+    .queue-search-card textarea { min-height:60px !important; font-size:14px !important; }
+    .queue-search-card .queue-search-action { min-height:46px !important; }
+
+    .register-header { display:grid !important; grid-template-columns:48px minmax(0,1fr); gap:6px 12px !important; align-items:start !important; padding:12px var(--phone-gutter) !important; }
+    .register-header > button:first-child { grid-column:1; grid-row:1 / span 2; }
+    .register-header > div { min-width:0; }
+    .register-header > div, .register-header > span { grid-column:2; }
+    .register-header h2 { font-size:18px !important; line-height:1.25; }
+    .register-header > div > div { font-size:12px !important; line-height:1.4; }
+    .register-header > span { justify-self:start; margin-left:0 !important; padding:4px 8px !important; font-size:11px !important; }
+    .registration-main { padding:14px var(--phone-gutter) calc(24px + env(safe-area-inset-bottom, 0px)) !important; }
+    .registration-form { padding:17px !important; border-radius:var(--phone-card-radius) !important; }
+    .registration-grid { gap:14px !important; }
+    .registration-grid label { font-size:13px !important; margin-bottom:5px !important; }
+    .registration-grid input, .registration-grid select { min-height:50px; padding:11px 12px !important; font-size:16px !important; }
+    .registration-grid button { min-height:48px; height:auto !important; }
+    .registration-actions { gap:9px !important; margin-top:18px !important; padding-top:16px !important; }
+    .registration-actions > div { font-size:12px !important; line-height:1.45; }
+    .registration-actions button { min-height:50px !important; height:auto !important; padding:0 12px !important; font-size:14px !important; }
+
+    /* Measurement list and month history. */
+    .record-list-header { gap:10px !important; padding:10px var(--phone-gutter) !important; }
+    .record-list-header > button:first-child { width:44px !important; height:44px !important; flex:0 0 44px; border-radius:13px !important; }
+    .record-list-header > button:first-child i { font-size:22px !important; }
+    .record-list-header > div:nth-child(2) { min-width:0; }
+    .record-list-header h2 { font-size:18px !important; line-height:1.2; }
+    .record-list-header > div:nth-child(2) > div { font-size:11px !important; line-height:1.35; }
+    .record-list-header .record-list-search { min-height:48px !important; height:48px !important; }
+    .record-list-header .record-list-search input { font-size:16px !important; }
+    .record-list-items { min-height:0; padding:14px var(--phone-gutter) calc(24px + env(safe-area-inset-bottom, 0px)) !important; }
+    .record-list-grid { gap:10px !important; }
+    .record-list-grid > [role="button"] { gap:10px !important; padding:14px !important; border-radius:16px !important; }
+    .record-list-grid > [role="button"] > div:nth-child(2) > div:first-child { font-size:17px !important; line-height:1.25; }
+    .record-list-grid > [role="button"] > div:nth-child(2) > div:nth-child(2) { font-size:12px !important; line-height:1.4; }
+    .history-header { gap:9px !important; padding:10px var(--phone-gutter) !important; }
+    .history-header > button:first-child { width:42px !important; height:42px !important; flex:0 0 42px; border-radius:12px !important; }
+    .history-header > div:nth-of-type(1) { width:40px !important; height:40px !important; flex:0 0 40px; font-size:15px !important; }
+    .history-header h2 { font-size:15px !important; }
+    .history-year-selector { min-height:42px !important; padding:7px 10px !important; font-size:12px !important; }
+    .history-content { min-height:0; padding:14px var(--phone-gutter) calc(24px + env(safe-area-inset-bottom, 0px)) !important; }
+    .history-record-card { padding:15px !important; border-radius:var(--phone-card-radius) !important; }
+    .history-record-card h3 { font-size:19px !important; }
+    .history-record-card > div:first-child > div:last-child { gap:7px !important; }
+    .history-record-card button { min-height:46px; height:auto !important; padding:0 11px !important; font-size:12px !important; }
+    .history-metrics { gap:8px !important; margin-top:15px !important; }
+    .history-metrics > div { padding:12px !important; border-radius:14px !important; }
+    .history-metrics > div > div:first-child { font-size:11px !important; }
+    .history-metrics > div > div:last-child { font-size:21px !important; }
+
+    /* Form: inline value tiles, compact keypad, and a save action pinned to the bottom. */
+    .form-shell { min-height:0; overflow-y:auto !important; overscroll-behavior:contain; }
+    .form-header { min-height:64px; gap:8px !important; padding:9px var(--phone-gutter) !important; }
+    .form-header > button:first-child { width:42px !important; height:42px !important; border-radius:12px !important; }
+    .form-header > button:first-child i { font-size:21px !important; }
+    .form-header > div:nth-child(2) { width:40px !important; height:40px !important; border-radius:12px !important; font-size:15px !important; }
+    .form-header-person { flex:1 1 calc(100% - 104px) !important; min-width:0; }
+    .form-header-person > div:first-child { font-size:15px !important; line-height:1.2; }
+    .form-header-person > div:nth-child(2) { font-size:10px !important; line-height:1.25; }
+    .form-date { flex:1 1 190px; min-height:42px; padding:6px 9px !important; font-size:11px !important; }
+    .form-date input { min-width:0; font-size:13px !important; }
+    .active-queue-note { margin:8px var(--phone-gutter) 0 !important; padding:10px 11px !important; border-radius:13px !important; font-size:12px !important; line-height:1.4; }
+    .form-body { flex:none !important; min-height:0 !important; padding:10px var(--phone-gutter) !important; gap:10px !important; }
+    .form-fields { flex:none !important; gap:11px !important; padding:14px !important; overflow:visible !important; border-radius:var(--phone-card-radius) !important; }
+    .form-fields-heading { gap:3px !important; }
+    .form-fields-heading h2 { font-size:17px !important; }
+    .form-fields-heading span { font-size:11px !important; }
+    .measure-row { flex-direction:row !important; align-items:center !important; gap:8px !important; }
+    .measure-label { width:40% !important; flex:0 0 40%; gap:2px !important; }
+    .measure-label > span:first-child { font-size:14px !important; line-height:1.25; }
+    .measure-label > span:nth-child(2) { font-size:11px !important; line-height:1.25; }
+    .measure-label > span:nth-child(2) > span { padding:3px 5px !important; font-size:10px !important; }
+    .measure-row > span:last-child { height:58px !important; padding:0 12px !important; border-radius:12px !important; }
+    .measure-row > span:last-child > span:first-child { font-size:29px !important; }
+    .measure-row > span:last-child > span:last-child { font-size:15px !important; }
+    .extra-measures { grid-template-columns:1fr !important; gap:8px !important; }
+    .extra-measure { min-height:68px; padding:10px 12px !important; border-radius:12px !important; }
+    .extra-measure > span:first-child > span:first-child { font-size:14px !important; }
+    .extra-measure > span:first-child > span:nth-child(2) { font-size:10px !important; }
+    .extra-measure > span:first-child > span:nth-child(3) { font-size:9px !important; line-height:1.3; }
+    .extra-measure > span:last-child { font-size:22px !important; }
+    .extra-measure > span:last-child small { font-size:13px !important; }
+    .keypad { width:100% !important; padding:11px !important; gap:8px !important; border-radius:var(--phone-card-radius) !important; }
+    .keypad > div:first-child > span:last-child { font-size:15px !important; }
+    .keypad-grid { grid-auto-rows:minmax(48px,1fr) !important; gap:7px !important; }
+    .keypad-grid button { min-height:48px !important; font-size:22px !important; border-radius:11px !important; }
+    .keypad > button:last-child { min-height:48px !important; height:48px !important; font-size:15px !important; }
+    .form-footer { position:sticky; bottom:0; z-index:15; flex-direction:row !important; align-items:center !important; gap:9px !important; padding:9px var(--phone-gutter) calc(9px + env(safe-area-inset-bottom, 0px)) !important; box-shadow:0 -6px 18px rgba(22,33,28,.08); }
+    .form-footer > div { flex:1 1 auto !important; min-width:0; min-height:44px !important; }
+    .form-footer > div > i { font-size:18px !important; }
+    .form-footer > div > div > div:first-child { font-size:11px !important; }
+    .form-footer > div > div > div:last-child { display:none; }
+    .form-footer button { flex:0 0 42%; width:auto !important; min-height:48px !important; height:48px !important; border-radius:12px !important; font-size:15px !important; }
+    .form-dialog { align-items:flex-end !important; padding:10px !important; }
+    .form-dialog-card { max-height:90% !important; gap:14px !important; padding:18px !important; border-radius:20px 20px 14px 14px !important; overflow-y:auto !important; }
+    .home-header > div:last-child button,
+    .register-header > button:first-child,
+    .record-list-header > button:first-child,
+    .history-header > button:first-child,
+    .form-header > button:first-child { width:48px !important; height:48px !important; min-height:48px; flex:0 0 48px !important; border-radius:12px !important; }
+    .register-header > button:first-child i,
+    .record-list-header > button:first-child i,
+    .history-header > button:first-child i,
+    .form-header > button:first-child i { font-size:22px !important; }
+    .history-year-selector, .history-record-card button { min-height:48px !important; }
+    .form-dialog-card h3 { font-size:20px !important; }
+    .form-dialog-card p { font-size:13px !important; line-height:1.45; }
+    .form-dialog-card > div:last-child { gap:8px !important; }
+    .form-dialog-card > div:last-child button { min-height:50px !important; height:auto !important; padding:8px !important; border-radius:12px !important; font-size:13px !important; }
+  }
+  @media (max-width: 380px) {
+    .home-actions { gap:8px; }
+    .home-actions > button:not(:first-child) { min-height:124px !important; padding:11px !important; }
+    .home-actions > button:not(:first-child) > div:last-child > div:first-child { font-size:14px !important; }
+    .queue-stats .queue-card { padding:9px 6px !important; }
+    .queue-stats .queue-card > div:first-child { font-size:8px !important; }
+    .form-header-person > div:first-child { font-size:14px !important; }
+    .form-date { flex-basis:100%; }
+    .form-footer button { flex-basis:44%; }
   }
 </style>
 </head>
 <body>
 
 <div id="app">
+  <div v-if="queueNoteDialog" class="notice-layer queue-note-layer" role="dialog" aria-modal="true" aria-labelledby="queue-note-title" @keydown.esc="batalkanCatatanScan">
+    <section class="notice-card queue-note-card" @click.stop>
+      <div class="notice-accent"></div>
+      <div class="queue-note-body">
+        <div class="queue-note-heading">
+          <div class="notice-symbol" aria-hidden="true"><i class="ph-bold ph-note-pencil"></i></div>
+          <div>
+            <h2 id="queue-note-title">Tambahkan catatan?</h2>
+            <p><strong>{{ scannedAnak ? scannedAnak.nama : 'Anak' }}</strong> siap masuk antrean. Catatan akan dibaca petugas pengukuran.</p>
+          </div>
+          <button class="notice-close" type="button" aria-label="Batalkan pendaftaran antrean" @click="batalkanCatatanScan"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
+        </div>
+        <label class="queue-note-field" for="queue-note-input">Catatan (opsional)
+          <textarea id="queue-note-input" v-model="queueNoteDraft" maxlength="240" placeholder="Contoh: membawa Buku KIA"></textarea>
+        </label>
+      </div>
+      <div class="queue-note-footer">
+        <button class="notice-action queue-note-skip" type="button" @click="masukkanScanKeAntrean(false)">Lewati catatan</button>
+        <button class="notice-action queue-note-save" type="button" @click="masukkanScanKeAntrean(true)">Simpan &amp; masuk antrean</button>
+      </div>
+    </section>
+  </div>
   <div v-if="notice.visible"
        class="notice-layer"
        role="alertdialog"
@@ -329,28 +691,30 @@
   <div v-if="view === 'login'" class="login-shell">
         <!-- Bagian Kiri: Form login; peran ditentukan server dari akun. -->
         <div class="login-panel">
+          <div class="login-content">
 
           <div class="login-brand" style="display:flex; align-items:center; gap:16px; margin-bottom:28px;">
-            <div style="width:48px; height:48px; background:#E9F3EC; border-radius:14px; display:flex; align-items:center; justify-content:center;">
-              <i class="ph-fill ph-shield-check" style="font-size:30px; color:#0F6E44;"></i>
-            </div>
-            <div>
-              <div style="font-size:22px; font-weight:800; color:#16211C; letter-spacing:-0.02em;">SIMPATIK Posyandu</div>
-              <div style="font-size:13px; color:#4A5750; font-weight:600;">Sistem Informasi &amp; Intervensi Klinis Stunting</div>
+            <img class="login-brand-logo" src="simpatik-logo.png" alt="Logo SIMPATIK">
+            <div class="login-brand-copy">
+              <div class="login-brand-title" style="font-size:22px; font-weight:800; color:#16211C; letter-spacing:-0.02em;">SIMPATIK Posyandu</div>
+              <div class="login-brand-subtitle" style="font-size:13px; color:#4A5750; font-weight:600;">Sistem Informasi &amp; Intervensi Klinis Stunting</div>
             </div>
           </div>
 
           <h1 class="login-title" style="font-size:36px; font-weight:800; color:#16211C; margin:0 0 8px; letter-spacing:-0.02em;">Selamat Datang</h1>
-          <p style="font-size:16px; color:#4A5750; margin:0 0 24px;">Masukkan akun Anda. Hak akses diterapkan otomatis sesuai klasifikasi akun di server.</p>
+          <p class="login-description" style="font-size:16px; color:#4A5750; margin:0 0 24px;">Masukkan akun Anda. Hak akses diterapkan otomatis sesuai klasifikasi akun di server.</p>
 
-          <div style="display:flex; flex-direction:column; gap:18px; margin-bottom:24px;">
+          <div class="login-fields" style="display:flex; flex-direction:column; gap:18px; margin-bottom:24px;">
             <div>
               <label for="login-username" style="font-size:14px; font-weight:700; color:#16211C; margin-bottom:6px; display:block;">Nama Pengguna</label>
               <input id="login-username" type="text" v-model="loginData.username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" placeholder="Masukkan nama pengguna" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
             </div>
             <div>
               <label for="login-password" style="font-size:14px; font-weight:700; color:#16211C; margin-bottom:6px; display:block;">Kata Sandi</label>
-              <input id="login-password" type="password" v-model="loginData.password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" placeholder="Masukkan kata sandi" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" @keyup.enter="doLogin" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
+              <div class="login-password-field">
+                <input id="login-password" ref="loginPassword" :type="showLoginPassword ? 'text' : 'password'" v-model="loginData.password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" placeholder="Masukkan kata sandi" style="width:100%; padding:16px 18px; border-radius:14px; border:2px solid #DCE0DA; background:#FFFFFF; font-size:16px; font-family:inherit; outline:none; transition: border-color 0.2s;" @keyup.enter="doLogin" onfocus="this.style.borderColor='#0F6E44'" onblur="this.style.borderColor='#DCE0DA'">
+                <button class="login-password-toggle" type="button" @click="toggleLoginPassword" :aria-pressed="showLoginPassword" :aria-label="showLoginPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'" aria-controls="login-password">{{ showLoginPassword ? 'Sembunyikan' : 'Lihat' }}</button>
+              </div>
             </div>
           </div>
 
@@ -358,6 +722,7 @@
             <i v-if="isLoggingIn" class="ph-bold ph-spinner ph-spin" style="font-size:22px;"></i>
             <span>{{ isLoggingIn ? 'Memverifikasi ke Server...' : 'Masuk' }}</span>
           </button>
+          </div>
         </div>
 
         <!-- Bagian Kanan: Art / Ilustrasi Floating 3D Icons -->
@@ -366,28 +731,30 @@
           <div style="position:absolute; inset:0; opacity:0.05; background:url('https://www.transparenttextures.com/patterns/cubes.png');"></div>
 
           <!-- Composition of Icons -->
-          <div style="position:relative; z-index:1; text-align:center;">
-             <div style="width:360px; height:360px; background:rgba(255,255,255,0.1); border-radius:100px; display:flex; align-items:center; justify-content:center; margin:0 auto 60px; position:relative; backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2);">
-                <i class="ph-fill ph-baby" style="font-size:180px; color:#FFFFFF;"></i>
+          <div class="login-art-content">
+             <div class="login-art-graphic" aria-hidden="true">
+                <i class="ph-fill ph-baby login-art-baby"></i>
 
                 <!-- Floating Element 1 -->
-                <div style="position:absolute; top:-20px; right:-20px; width:100px; height:100px; background:#EAAA08; border-radius:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); transform:rotate(15deg);">
-                   <i class="ph-bold ph-scales" style="font-size:50px; color:#16211C;"></i>
+                <div class="login-art-badge login-art-scales">
+                   <i class="ph-bold ph-scales"></i>
                 </div>
 
                 <!-- Floating Element 2 -->
-                <div style="position:absolute; bottom:-30px; left:-30px; width:120px; height:120px; background:#FFFFFF; border-radius:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); transform:rotate(-10deg);">
-                   <i class="ph-fill ph-first-aid" style="font-size:60px; color:#0F6E44;"></i>
+                <div class="login-art-badge login-art-aid">
+                   <i class="ph-fill ph-first-aid"></i>
                 </div>
 
                 <!-- Floating Element 3 -->
-                <div style="position:absolute; top:40%; left:-50px; width:60px; height:60px; background:rgba(255,255,255,0.2); border-radius:16px; display:flex; align-items:center; justify-content:center; transform:rotate(-20deg);">
-                   <i class="ph-bold ph-heart" style="font-size:30px; color:#FFFFFF;"></i>
+                <div class="login-art-badge login-art-heart">
+                   <i class="ph-bold ph-heart"></i>
                 </div>
              </div>
 
-             <h2 style="font-size:36px; font-weight:800; color:#FFFFFF; margin:0 0 16px; letter-spacing:-0.02em;">Aplikasi Posyandu Digital</h2>
-             <p style="font-size:20px; color:rgba(255,255,255,0.8); margin:0; line-height:1.6;">Pencatatan lapangan yang cepat,<br>aman, dan tetap bekerja saat offline.</p>
+             <div class="login-art-copy">
+               <h2 class="login-art-title">Aplikasi Posyandu Digital</h2>
+               <p class="login-art-description">Pencatatan lapangan yang cepat,<br> aman, dan tetap bekerja saat offline.</p>
+             </div>
           </div>
         </div>
       </div>
@@ -421,35 +788,35 @@
               <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;"><div style="width:62px; height:62px; background:rgba(255,255,255,0.18); border-radius:18px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-users-three" style="font-size:35px;"></i></div><span style="background:#FFFFFF; color:#0F6E44; padding:7px 11px; border-radius:999px; font-size:13px; font-weight:800;">{{ anakBelumBulanIni }} belum dilayani</span></div>
               <div><div style="font-size:29px; font-weight:800; margin-bottom:6px;">Antrean Hari Ini</div><div style="font-size:15px; font-weight:500; opacity:0.9;">Lihat sasaran, daftarkan kehadiran, lalu atur giliran layanan.</div></div>
             </button>
-            <button type="button" @click="goToList('record')" class="btn-outline" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
+            <button type="button" @click="goToList('record')" class="btn-outline home-shortcut" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
               <div style="width:58px; height:58px; background:#E9F3EC; color:#0F6E44; border-radius:17px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-plus-circle" style="font-size:31px;"></i></div>
               <div><div style="font-size:23px; font-weight:800; color:#16211C; margin-bottom:5px;">Pencatatan Langsung</div><div style="font-size:14px; color:#4A5750;">Pilih anak lalu masukkan hasil pengukuran.</div></div>
             </button>
-            <button type="button" @click="goToList('history')" class="btn-outline" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
+            <button type="button" @click="goToList('history')" class="btn-outline home-shortcut" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
               <div style="width:58px; height:58px; background:#E3EAF7; color:#1E4ED8; border-radius:17px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-calendar-dots" style="font-size:31px;"></i></div>
               <div><div style="font-size:24px; font-weight:800; color:#16211C; margin-bottom:5px;">Riwayat Bulanan</div><div style="font-size:15px; color:#4A5750;">Lihat catatan dan lakukan koreksi.</div></div>
             </button>
-            <button type="button" @click="bukaPendaftaran" class="btn-outline" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
+            <button type="button" @click="bukaPendaftaran" class="btn-outline home-register-action" style="min-height:210px; border-radius:26px; padding:28px; text-align:left; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #DCE0DA;">
               <div style="width:58px; height:58px; background:#F3E8FF; color:#7C3AED; border-radius:17px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-user-plus" style="font-size:31px;"></i></div>
               <div><div style="font-size:24px; font-weight:800; color:#16211C; margin-bottom:5px;">Daftarkan Balita</div><div style="font-size:15px; color:#4A5750;">Tambahkan data administrasi baru.</div></div>
             </button>
           </section>
 
-          <section style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:18px; padding:16px 18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+          <section class="home-sync-panel" style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:18px; padding:16px 18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
             <div style="width:44px; height:44px; flex:0 0 44px; border-radius:13px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-device-mobile" style="font-size:24px;"></i></div>
             <div style="flex:1 1 230px; min-width:180px;">
               <div style="font-size:15px; font-weight:800; color:#16211C;">Data disimpan lebih dahulu di Android</div>
               <div style="font-size:13px; color:#4A5750;">{{ totalPendingCount > 0 ? totalPendingCount + ' data menunggu jaringan.' : 'Tidak ada antrean sinkronisasi.' }}</div>
-              <div style="font-size:12px; color:#4A5750; margin-top:5px;">Server {{ registryConfig.connectionMode === 'lokal' ? 'lokal' : (registryConfig.connectionMode === 'ngrok' ? 'ngrok' : 'otomatis') }} · {{ registryConfig.portalApi.status || 'Belum diuji' }}</div>
+              <div class="home-connection-status" style="font-size:12px; color:#4A5750; margin-top:5px;">Server {{ koneksiPortal.label }} · {{ registryConfig.portalApi.status || 'Belum diuji' }}</div>
+              <div v-if="nearbyStatus" style="font-size:12px; color:#0F6E44; margin-top:4px;">Tablet sekitar · {{ nearbyStatus }}</div>
             </div>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-              <button type="button" @click="temukanServerOtomatis" :disabled="isSearchingServer || isTestingPortal" class="btn-outline" style="min-height:44px; padding:0 14px; border-radius:12px; font-size:13px; font-weight:800; display:flex; align-items:center; gap:7px;"><i class="ph-bold ph-wifi-high" style="font-size:18px;"></i>{{ isSearchingServer ? 'Mencari server…' : 'Cari server lokal' }}</button>
-              <button type="button" @click="gunakanServerNgrok" :disabled="isTestingPortal || isSearchingServer" class="btn-outline" style="min-height:44px; padding:0 14px; border-radius:12px; font-size:13px; font-weight:800; display:flex; align-items:center; gap:7px;"><i class="ph-bold ph-globe" style="font-size:18px;"></i>Pakai ngrok</button>
+            <div class="home-sync-actions" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <button type="button" @click="temukanServerOtomatis" :disabled="isSearchingServer || isTestingPortal" class="btn-outline" style="min-height:44px; padding:0 14px; border-radius:12px; font-size:13px; font-weight:800; display:flex; align-items:center; gap:7px;"><i class="ph-bold ph-globe" style="font-size:18px;"></i>{{ isSearchingServer ? 'Mencari server…' : 'Periksa koneksi' }}</button>
               <button type="button" @click="sinkronkanManual" :disabled="isSyncing" class="btn-outline" style="height:44px; padding:0 14px; border-radius:12px; font-size:13px; font-weight:800; display:flex; align-items:center; gap:7px;"><i class="ph-bold ph-arrows-clockwise" style="font-size:18px;"></i>{{ isSyncing ? 'Menyinkronkan…' : 'Sinkronkan' }}</button>
             </div>
           </section>
 
-          <section style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:24px 28px;">
+          <section class="home-summary" style="background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:24px 28px;">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
               <div>
                 <h2 style="font-size:22px; font-weight:800; margin:0 0 4px; color:#16211C;">{{ periodeSasaran ? 'Progres sasaran ' + periodeSasaran.label : 'Belum ada sasaran aktif' }}</h2>
@@ -457,7 +824,7 @@
               </div>
               <span style="font-size:14px; font-weight:700; color:#4A5750;">{{ daftarAnak.length }} sasaran tersedia</span>
             </div>
-            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
+            <div class="home-progress-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
               <div style="background:#F0F9F4; border:1px solid #A3D9B5; border-radius:18px; padding:20px;">
                 <div style="font-size:13px; font-weight:800; color:#14713D;">SUDAH DICATAT</div>
                 <div style="font-size:34px; font-weight:800; color:#14713D; margin-top:5px;">{{ anakDiukurBulanIni }}</div>
@@ -473,7 +840,7 @@
             </div>
           </section>
 
-          <aside style="display:flex; align-items:center; gap:14px; background:#EEF4FF; border:1px solid #B2CCFF; border-radius:18px; padding:17px 20px; color:#1D4ED8;">
+          <aside class="home-portal-note" style="display:flex; align-items:center; gap:14px; background:#EEF4FF; border:1px solid #B2CCFF; border-radius:18px; padding:17px 20px; color:#1D4ED8;">
             <i class="ph-bold ph-browser" style="font-size:28px;"></i>
             <div>
               <div style="font-size:16px; font-weight:800;">KMS, analitik gizi, dan laporan lengkap tersedia di Portal SIMPATIK.</div>
@@ -495,7 +862,7 @@
         <main class="queue-page-main" style="padding:24px 28px 38px; display:flex; flex-direction:column; gap:20px;">
           <section class="queue-stats">
             <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#B54708;">BELUM DILAYANI</div><div style="font-size:31px; font-weight:800; color:#B54708;">{{ anakBelumBulanIni }}</div><div style="font-size:12px; color:#7A4A00; margin-top:2px;">sasaran database</div></div>
-            <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#1D4ED8;">SUDAH CHECK-IN</div><div style="font-size:31px; font-weight:800; color:#1D4ED8;">{{ antreanAktif.length }}</div><div style="font-size:12px; color:#3448A1; margin-top:2px;">antrean aktif tablet</div></div>
+            <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#1D4ED8;">SUDAH CHECK-IN</div><div style="font-size:31px; font-weight:800; color:#1D4ED8;">{{ antreanSudahCheckin.length }}</div><div style="font-size:12px; color:#3448A1; margin-top:2px;">termasuk pemeriksaan KMS</div></div>
             <div class="queue-card" style="padding:16px 18px;"><div style="font-size:12px; font-weight:800; color:#14713D;">SELESAI DILAYANI</div><div style="font-size:31px; font-weight:800; color:#14713D;">{{ anakDiukurBulanIni }}</div><div style="font-size:12px; color:#326B45; margin-top:2px;">tersimpan di database</div></div>
           </section>
 
@@ -506,8 +873,8 @@
 
           <section v-if="queueTab === 'list'" class="queue-card" style="padding:20px; background:linear-gradient(145deg,#F2F8F4,#FFFFFF);">
             <div style="display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:15px; flex-wrap:wrap;">
-              <div><div style="font-size:12px; color:#0F6E44; font-weight:800; letter-spacing:.08em;">ALUR LAYANAN · 4 SLOT</div><h3 style="font-size:21px; margin:3px 0 0; font-weight:800;">Antrean dalam proses</h3><div style="font-size:13px; color:#4A5750; margin-top:3px;">Slot terisi selama dipanggil, diukur, atau menunggu penjelasan KMS. Selesai setelah dikonfirmasi di web.</div></div>
-              <button type="button" @click="panggilBerikutnya" :disabled="isCallingNext || antreanTerpanggil.length >= 4 || antreanMenunggu.length === 0" class="btn-primary" :style="{opacity:(isCallingNext || antreanTerpanggil.length >= 4 || antreanMenunggu.length === 0) ? .55 : 1}" style="min-height:52px; padding:0 18px; border-radius:13px; font-weight:800; display:flex; align-items:center; gap:9px;"><i class="ph-bold ph-megaphone" style="font-size:21px;"></i>{{ isCallingNext ? 'Menyinkronkan…' : (antreanTerpanggil.length >= 4 ? 'Semua slot penuh' : (antreanMenunggu.length ? 'Panggil berikutnya · ' + formatNomorAntrean(antreanMenunggu[0].number) : 'Tidak ada yang menunggu')) }}</button>
+              <div><div style="font-size:12px; color:#0F6E44; font-weight:800; letter-spacing:.08em;">ALUR LAYANAN · 2 SLOT</div><h3 style="font-size:21px; margin:3px 0 0; font-weight:800;">Antrean dalam proses</h3><div style="font-size:13px; color:#4A5750; margin-top:3px;">Slot digunakan saat dipanggil dan diukur. Setelah pengukuran, anak menunggu pemeriksaan KMS di luar slot; statusnya tetap terlihat di bawah.</div></div>
+                  <button type="button" @click="panggilBerikutnya" :disabled="isCallingNext || antreanTerpanggil.length >= 2 || antreanMenunggu.length === 0" class="btn-primary" :style="{opacity:(isCallingNext || antreanTerpanggil.length >= 2 || antreanMenunggu.length === 0) ? .55 : 1}" style="min-height:52px; padding:0 18px; border-radius:13px; font-weight:800; display:flex; align-items:center; gap:9px;"><i class="ph-bold ph-megaphone" style="font-size:21px;"></i>{{ isCallingNext ? 'Menyinkronkan…' : (antreanTerpanggil.length >= 2 ? 'Semua slot penuh' : (antreanMenunggu.length ? 'Panggil berikutnya · ' + formatNomorAntrean(antreanMenunggu[0].number) : 'Tidak ada yang menunggu')) }}</button>
             </div>
             <div class="queue-stack-slots">
               <article v-for="(item, index) in slotPanggilan" :key="item ? item.id : 'slot-' + index" class="queue-slot" :style="item ? {borderColor:'#A3D9B5',boxShadow:'0 5px 14px rgba(15,110,68,.06)'} : {borderStyle:'dashed',background:'#F8FAF8'}">
@@ -517,7 +884,7 @@
                   <button type="button" @click="panggilAntrean(item)" class="queue-small-button" style="background:#E9F3EC;color:#0F6E44;width:100%;justify-content:center;"><i class="ph-bold ph-speaker-high"></i> Panggil lagi</button>
                 </template>
                 <template v-else>
-                  <div style="font-size:11px; color:#77827A; font-weight:800; letter-spacing:.06em;">SLOT {{ index + 1 }}</div><div style="color:#77827A; font-size:14px; font-weight:700; margin:auto 0;">{{ index === antreanTerpanggil.length ? 'Siap diisi' : 'Menunggu giliran' }}</div>
+                  <div style="font-size:11px; color:#5D6961; font-weight:800; letter-spacing:.06em;">SLOT {{ index + 1 }}</div><div style="color:#5D6961; font-size:14px; font-weight:700; margin:auto 0;">{{ index === antreanTerpanggil.length ? 'Siap diisi' : 'Menunggu giliran' }}</div>
                 </template>
           </section>
 
@@ -532,6 +899,13 @@
                   <button v-if="['waiting','called','serving'].includes(item.status)" type="button" @click="panggilAntrean(item)" class="queue-small-button" style="background:#1D4ED8; color:#FFFFFF;"><i class="ph-bold ph-megaphone"></i> {{ item.status === 'waiting' ? 'Panggil' : 'Panggil Lagi' }}</button>
                   <button v-if="item.status !== 'serving'" type="button" @click="lewatiAntrean(item)" class="queue-small-button btn-outline">Lewati</button>
                   <button type="button" @click="batalkanAntrean(item)" class="queue-small-button" style="background:#FFF1F0; color:#B42318;">Batal</button>
+                </div>
+              </div>
+              <div v-if="antreanReviewKms.length" style="padding:15px 20px; border-top:1px solid #E7EAE5; background:#F5F1FF;">
+                <div style="font-size:14px; font-weight:800; color:#5B21B6; margin-bottom:10px;"><i class="ph-bold ph-clipboard-text"></i> Sedang diperiksa KMS · di luar slot antrean</div>
+                <div v-for="item in antreanReviewKms" :key="'kms-' + item.id" style="display:flex; align-items:center; gap:10px; padding:7px 0; color:#34423A;">
+                  <span class="queue-number" style="width:40px;height:40px;font-size:15px;flex-shrink:0;">{{ formatNomorAntrean(item.number) }}</span>
+                  <div><strong>{{ item.name }}</strong><div style="font-size:12px;color:#5B21B6;">Hasil ukur tersimpan · menunggu pemeriksaan KMS</div></div>
                 </div>
               </div>
               <div v-if="antreanSelesai.length" style="padding:15px 20px; border-top:1px solid #E7EAE5; background:#F8FAF8; font-size:13px; color:#4A5750;"><i class="ph-fill ph-check-circle" style="color:#14713D;"></i> {{ antreanSelesai.length }} anak selesai dilayani hari ini.</div>
@@ -571,7 +945,7 @@
           <div style="flex:1;"><h2 style="margin:0; font-size:27px; font-weight:800;">Pendaftaran Balita Baru</h2><div style="font-size:15px; color:#4A5750;">Masukkan data sesuai Kartu Keluarga atau Buku KIA.</div></div>
           <span style="padding:7px 11px; border-radius:9px; background:#F3E8FF; color:#7C3AED; font-size:13px; font-weight:800;"><i class="ph-bold ph-identification-card"></i> Administrasi</span>
         </header>
-        <main style="padding:28px 40px 40px; display:flex; justify-content:center;">
+        <main class="registration-main" style="padding:28px 40px 40px; display:flex; justify-content:center;">
           <form class="registration-form" @submit.prevent="simpanRegistrasi" style="width:100%; max-width:980px; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:30px 34px; box-shadow:0 10px 28px rgba(22,33,28,0.04);">
             <div class="registration-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:22px 24px;">
               <div><label style="font-size:14px; font-weight:800; display:block; margin-bottom:7px;">NIK Balita <span style="color:#B42318;">*</span></label><input v-model="regData.nik" inputmode="numeric" maxlength="16" placeholder="16 digit NIK" style="width:100%; padding:15px 16px; border:2px solid #DCE0DA; border-radius:13px; font:inherit;"></div>
@@ -612,10 +986,10 @@
 
         <div v-if="listMode==='record' && recordListTab==='followup'" role="status" style="margin:16px 30px 0; padding:17px 20px; border:1px solid #FEDF89; border-radius:14px; background:#FFF8E7; color:#7A4A00; font-size:16px; line-height:1.5; flex-shrink:0;">
           <strong style="display:block; font-size:18px; margin-bottom:4px;">Pendataan susulan setelah sesi beres</strong>
-          Pilih anak yang tidak hadir, ukur seperti biasa, lalu tekan Simpan. Data tersimpan di perangkat dahulu dan dikirim saat koneksi tersedia. Setelah server menerima data, status anak berubah menjadi <strong>Pendataan susulan tersimpan</strong> untuk periode ini.
+          Pilih anak berstatus Tidak hadir, ukur seperti biasa, lalu tekan Simpan. Data tersimpan di perangkat dahulu dan dikirim saat koneksi tersedia. Status Tidak hadir tetap dipertahankan sebagai penanda; setelah server menerima data, kartu menampilkan <strong>Pendataan manual tersimpan</strong>.
         </div>
 
-        <div style="flex:1; overflow-y:auto; padding:30px;">
+        <div class="record-list-items" style="flex:1; overflow-y:auto; padding:30px;">
           <div class="record-list-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
             <div v-for="anak in filteredAnak" :key="anak.id" @click="pilihAnak(anak)" role="button" tabindex="0" style="background:#FFFFFF; border-radius:20px; padding:24px; border:1px solid #DCE0DA; cursor:pointer; touch-action:manipulation; user-select:none; display:flex; flex-direction:column; gap:16px; transition:transform 0.15s, box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 10px 30px rgba(22,33,28,0.1)'; this.style.transform='translateY(-3px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'">
               <div style="display:flex; align-items:flex-start; justify-content:space-between; pointer-events:none;">
@@ -624,7 +998,7 @@
                 </div>
                 <!-- Status icon for record mode -->
                 <div v-if="anak._queueItem" :style="gayaStatusAntrean(anak._queueItem.status)" style="padding:7px 12px; border-radius:9px; font-size:14px; font-weight:800; display:flex; align-items:center; gap:6px;"><i :class="anak._queueItem.status === 'called' || anak._queueItem.status === 'serving' ? 'ph-bold ph-spinner-gap' : 'ph-bold ph-clock'"></i>{{ labelStatusAntrean(anak._queueItem.status) }}</div>
-                <div v-else-if="anak.pendataanSusulan || (pengukuranBulanAktif(anak) && pengukuranBulanAktif(anak).pendataanSusulan)" style="background:#E9F3EC; color:#14713D; padding:7px 12px; border-radius:9px; font-size:14px; font-weight:800;">Pendataan susulan tersimpan</div>
+                <div v-else-if="anak.pendataanSusulan || (pengukuranBulanAktif(anak) && pengukuranBulanAktif(anak).pendataanSusulan)" style="background:#E9F3EC; color:#14713D; padding:7px 12px; border-radius:9px; font-size:14px; font-weight:800;">Tidak hadir · pendataan manual tersimpan</div>
                 <div v-else-if="pengukuranBulanAktif(anak) && pengukuranBulanAktif(anak).pendataanSusulanPending" style="background:#FEF0C7; color:#9A4B00; padding:7px 12px; border-radius:9px; font-size:14px; font-weight:800;">Susulan · menunggu sinkron</div>
                 <div v-else-if="anak.statusSasaran==='tidak_hadir'" style="background:#FFF3D6; color:#9A4B00; padding:7px 12px; border-radius:9px; font-size:14px; font-weight:800;">Perlu pendataan susulan</div>
                 <div v-else-if="pengukuranBulanAktif(anak)" :style="{ background: pengukuranBulanAktif(anak).syncStatus === 'synced' ? '#E9F3EC' : '#FEF0C7', color: pengukuranBulanAktif(anak).syncStatus === 'synced' ? '#14713D' : '#B54708' }" style="padding:6px 12px; border-radius:8px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:6px;">
@@ -649,18 +1023,18 @@
 
       <!-- ================== HISTORY VIEW ================== -->
       <div v-if="view === 'history'" style="flex:1; display:flex; flex-direction:column; background:#F6F7F5; overflow:hidden;">
-        <header style="background:#FFFFFF; padding:16px 26px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; gap:16px; flex-shrink:0;">
+        <header class="history-header" style="background:#FFFFFF; padding:16px 26px; border-bottom:1px solid #DCE0DA; display:flex; align-items:center; gap:16px; flex-shrink:0;">
           <button @click="kembaliDariHistory" class="btn-outline" style="width:54px; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-arrow-left" style="font-size:25px;"></i></button>
           <div style="width:52px; height:52px; border-radius:14px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800;">{{ activeAnak.inisial }}</div>
           <div style="flex:1;"><h2 style="margin:0; font-size:25px; font-weight:800;">Riwayat {{ activeAnak.nama }}</h2><div style="font-size:14px; color:#4A5750;">{{ activeAnak.umurBulan }} bulan · {{ activeAnak.namaOrtu }} · RT {{ activeAnak.rt }}</div></div>
-          <label style="display:flex; align-items:center; gap:9px; background:#F6F7F5; border:1px solid #DCE0DA; border-radius:12px; padding:9px 13px; font-size:14px; font-weight:800;">Tahun <select v-model="selectedYear" style="border:0; background:transparent; font:inherit; color:#0F6E44; outline:none;"><option v-for="tahun in availableYears" :key="tahun" :value="tahun">{{ tahun }}</option></select></label>
+          <label class="history-year-selector" style="display:flex; align-items:center; gap:9px; background:#F6F7F5; border:1px solid #DCE0DA; border-radius:12px; padding:9px 13px; font-size:14px; font-weight:800;">Tahun <select v-model="selectedYear" style="border:0; background:transparent; font:inherit; color:#0F6E44; outline:none;"><option v-for="tahun in availableYears" :key="tahun" :value="tahun">{{ tahun }}</option></select></label>
         </header>
 
         <nav style="background:#FFFFFF; border-bottom:1px solid #DCE0DA; display:flex; overflow-x:auto; padding:8px 22px 0; gap:4px; flex-shrink:0;" aria-label="Bulan pengukuran">
           <button v-for="(bulan, index) in months" :key="bulan" @click="selectedMonthIndex=index" :style="{background:selectedMonthIndex===index?'#0F6E44':'transparent',color:selectedMonthIndex===index?'#FFFFFF':'#4A5750'}" style="min-width:76px; padding:13px 16px; border-radius:11px 11px 0 0; font-size:16px; font-weight:800;">{{ bulan }}</button>
         </nav>
-        <main style="flex:1; overflow-y:auto; padding:30px 40px;">
-          <div v-if="recordBulanTerpilih" style="max-width:1080px; margin:0 auto; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:30px 34px; box-shadow:0 10px 28px rgba(22,33,28,0.04);">
+        <main class="history-content" style="flex:1; overflow-y:auto; padding:30px 40px;">
+          <div v-if="recordBulanTerpilih" class="history-record-card" style="max-width:1080px; margin:0 auto; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:30px 34px; box-shadow:0 10px 28px rgba(22,33,28,0.04);">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding-bottom:20px; border-bottom:1px solid #DCE0DA;">
               <div><div style="font-size:13px; font-weight:800; color:#4A5750; letter-spacing:0.06em;">CATATAN PENGUKURAN</div><h3 style="font-size:27px; margin:4px 0 0;">{{ months[selectedMonthIndex] }} {{ selectedYear }}</h3><div style="font-size:14px; color:#4A5750; margin-top:3px;">Tanggal {{ formatTanggal(recordBulanTerpilih.tanggalUkur) }}</div></div>
               <div style="display:flex; align-items:center; gap:12px;"><span :style="{background:recordBulanTerpilih.syncStatus==='synced'?'#E9F3EC':'#FEF0C7',color:recordBulanTerpilih.syncStatus==='synced'?'#14713D':'#B54708'}" style="padding:9px 13px; border-radius:10px; font-size:13px; font-weight:800;">{{ recordBulanTerpilih.syncStatus==='synced'?'Tersinkron':'Aman di Android' }}</span><button @click="koreksiPengukuranAktif" class="btn-outline" style="height:48px; padding:0 18px; border-radius:12px; font-size:15px; font-weight:800; color:#B54708; border-color:#F79009;"><i class="ph-bold ph-pencil-simple"></i> Koreksi Nilai</button></div>
@@ -941,9 +1315,9 @@
     }
   ];
 
-  // Domain ini diganti satu kali dengan static domain dari akun ngrok.
-  // Setelah itu URL tidak berubah saat PC, Wi-Fi, atau alamat IP berganti.
-  const PORTAL_API_BAWAAN = 'https://jaye-earthy-nonmeteorically.ngrok-free.dev/api/v1';
+  // Alamat default REST API server Cloudflare Tunnel / Online.
+  // URL ini menghubungkan tablet ke Portal SIMPATIK melalui tunnel online.
+  const PORTAL_API_BAWAAN = 'https://pediatric-lung-hiking-pills.trycloudflare.com/api/v1';
   const { createApp } = Vue;
 
   window.vm = createApp({
@@ -1032,6 +1406,7 @@
 
         // Data Login
         loginData: { username: '', password: '' },
+        showLoginPassword: false,
         regData: { nik: '', nama: '', tglLahir: '', jk: 'L', namaIbu: '', rt: '' },
         isSavingChild: false,
 
@@ -1052,9 +1427,14 @@
         queueEntries: initialQueue,
         isSyncingAntreanPortal: false,
         queueSyncError: '',
+        nearbyStatus: 'Belum tersambung ke tablet sekitar',
+        nearbyWorkspaceId: '',
+        nearbyContextLoading: false,
         queueSearch: '',
         queueTab: 'add',
         queueNotes: {},
+        queueNoteDialog: false,
+        queueNoteDraft: '',
         isCallingNext: false,
         activeQueueId: null,
         activeRecordingQueueId: null,
@@ -1081,6 +1461,9 @@
       }
     },
     computed: {
+      koneksiPortal() {
+        return this.informasiKoneksiPortal();
+      },
       isConnectedToPortal() {
         const s = this.registryConfig?.portalApi?.status || '';
         return s.includes('siap') || s.includes('Online') || s.includes('Tersinkron');
@@ -1117,20 +1500,26 @@
       },
       antreanAktif() {
         return this.antreanHariIni
-          .filter(item => ['waiting', 'called', 'serving', 'kms_review'].includes(item.status))
+          .filter(item => ['waiting', 'called', 'serving'].includes(item.status))
           .sort((a, b) => (a.sortOrder || a.number) - (b.sortOrder || b.number));
       },
       antreanMenunggu() {
         return this.antreanAktif.filter(item => item.status === 'waiting');
       },
       antreanTerpanggil() {
-        return this.antreanAktif.filter(item => ['called', 'serving', 'kms_review'].includes(item.status)).slice(0, 4);
+        return this.antreanAktif.filter(item => ['called', 'serving'].includes(item.status)).slice(0, 2);
       },
       slotPanggilan() {
-        return Array.from({length: 4}, (_, index) => this.antreanTerpanggil[index] || null);
+        return Array.from({length: 2}, (_, index) => this.antreanTerpanggil[index] || null);
+      },
+      antreanReviewKms() {
+        return this.antreanHariIni.filter(item => item.status === 'kms_review').sort((a, b) => (a.number || 0) - (b.number || 0));
       },
       antreanSelesai() {
         return this.antreanHariIni.filter(item => item.status === 'done').sort((a, b) => (a.completedAt || '').localeCompare(b.completedAt || ''));
+      },
+      antreanSudahCheckin() {
+        return this.antreanHariIni.filter(item => item.status !== 'cancelled');
       },
       anakUntukAntrean() {
         const q = String(this.queueSearch || '').trim().toLowerCase();
@@ -1245,6 +1634,18 @@
       setView(v) {
         this.view = v;
       },
+      toggleLoginPassword() {
+        const input = typeof document !== 'undefined' ? document.getElementById('login-password') : null;
+        const start = input && input.selectionStart;
+        const end = input && input.selectionEnd;
+        this.showLoginPassword = !this.showLoginPassword;
+        if (typeof this.$nextTick === 'function') this.$nextTick(() => {
+          const field = this.$refs && this.$refs.loginPassword;
+          if (!field) return;
+          field.focus({ preventScroll: true });
+          if (typeof start === 'number' && typeof end === 'number') field.setSelectionRange(start, end);
+        });
+      },
       async sinkronkanSetelahTerhubung() {
         const remainingChildren = await this.sinkronkanAnakTertunda();
         const remainingMeasurements = await this.sinkronkanDataTertunda();
@@ -1263,8 +1664,8 @@
         const savedSession = localStorage.getItem('SIMPATIK_SESSION');
 
         // Prioritaskan API lokal saat PC dan tablet berada di jaringan yang sama.
-        // Jika LAN tidak tersedia, URL sebelumnya (mis. ngrok) tetap menjadi fallback.
-        this.splashStatus = 'Mencari server lokal…';
+        // Jika LAN tidak tersedia, URL online (tunnel) tetap menjadi fallback.
+        this.splashStatus = 'Memeriksa koneksi server…';
         const lokalTerhubung = await this.mulaiPenemuanLokal({ senyap: true, batasWaktu: 4200 });
 
         if (!savedUser || !savedSession) {
@@ -1373,7 +1774,9 @@
             localStorage.setItem('SIMPATIK_CURRENT_USER', JSON.stringify(this.currentUser));
 
             this.loginData.password = '';
+            this.showLoginPassword = false;
             this.setView('home');
+            this.mulaiClusterPosyandu().catch(error => console.warn('Cluster Nearby belum siap:', error));
             return;
           } else {
             let errMsg = "Nama pengguna atau kata sandi yang Anda masukkan salah.";
@@ -1390,7 +1793,7 @@
             }
           }
         } catch (netErr) {
-          alert("[Koneksi Terputus]\n\nTidak dapat menghubungi server SIMPATIK: " + netErr.message + "\n\nPastikan website dan tunnel ngrok sedang berjalan.");
+          alert("[Koneksi Terputus]\n\nTidak dapat menghubungi server SIMPATIK: " + netErr.message + "\n\nPastikan website dan server SIMPATIK sedang berjalan.");
         } finally {
           this.isLoggingIn = false;
         }
@@ -1406,11 +1809,89 @@
         if (json) headers['Content-Type'] = 'application/json';
         return headers;
       },
+      async mulaiClusterPosyandu() {
+        if (!localStorage.getItem('SIMPATIK_SESSION') || !window.AndroidBridge || typeof window.AndroidBridge.mulaiClusterNearby !== 'function') return false;
+        if (this.nearbyContextLoading) return false;
+        this.nearbyContextLoading = true;
+        try {
+          const base = this.normalisasiAlamatPortal();
+          const response = await fetch(base + '/cluster-context', { headers: this.apiHeaders(false), cache: 'no-store' });
+          if (!response.ok) throw new Error(response.status === 404 ? 'API cluster belum dipasang di server' : 'Server menolak akses cluster (HTTP ' + response.status + ')');
+          const context = await response.json();
+          if (!context.workspaceId || !context.clusterKey) throw new Error('Server tidak mengirim identitas cluster yang valid');
+          this.nearbyWorkspaceId = context.workspaceId;
+          const result = JSON.parse(window.AndroidBridge.mulaiClusterNearby(JSON.stringify(context)));
+          if (!result.ok) throw new Error(result.error || 'Tablet tidak dapat memulai Nearby');
+          this.nearbyStatus = result.status === 'permission_requested' ? 'Menunggu izin perangkat sekitar' : 'Mencari tablet di Posyandu ' + (context.rw || 'ini') + '…';
+          this.kirimSnapshotCluster();
+          return true;
+        } finally {
+          this.nearbyContextLoading = false;
+        }
+      },
+      kirimSnapshotCluster() {
+        if (!this.nearbyWorkspaceId || !window.AndroidBridge || typeof window.AndroidBridge.kirimSnapshotNearby !== 'function') return 0;
+        const snapshot = {
+          workspaceId: this.nearbyWorkspaceId,
+          capturedAt: new Date().toISOString(),
+          queue: this.queueEntries.filter(item => item.date === this.tanggalHariIniISO),
+          pendingMeasurements: window.AndroidBridge && typeof window.AndroidBridge.ambilSnapshotPengukuranTertunda === 'function'
+            ? JSON.parse(window.AndroidBridge.ambilSnapshotPengukuranTertunda()) : [],
+        };
+        return window.AndroidBridge.kirimSnapshotNearby(JSON.stringify(snapshot));
+      },
+      terapkanSnapshotCluster(raw) {
+        try {
+          const snapshot = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (!snapshot || snapshot.workspaceId !== this.nearbyWorkspaceId || !Array.isArray(snapshot.queue)) return;
+          const byId = new Map(this.queueEntries.map(item => [String(item.id), item]));
+          for (const incoming of snapshot.queue) {
+            if (!incoming || incoming.date !== this.tanggalHariIniISO || !incoming.id) continue;
+            const prior = byId.get(String(incoming.id));
+            const priorTime = Date.parse(prior?.updatedAt || prior?.checkedInAt || 0);
+            const incomingTime = Date.parse(incoming.updatedAt || incoming.checkedInAt || 0);
+            if (!prior || (Number.isFinite(incomingTime) && incomingTime > priorTime)) byId.set(String(incoming.id), incoming);
+          }
+          this.queueEntries = Array.from(byId.values());
+          this.simpanAntreanLokal();
+          const measurements = Array.isArray(snapshot.pendingMeasurements) ? snapshot.pendingMeasurements : [];
+          if (measurements.length && window.AndroidBridge && typeof window.AndroidBridge.imporSnapshotPengukuranNearby === 'function') {
+            window.AndroidBridge.imporSnapshotPengukuranNearby(JSON.stringify(measurements));
+            for (const item of measurements) {
+              const record = item && item.payload;
+              if (!record || !record.tanggal_ukur) continue;
+              const child = this.daftarAnak.find(anak => String(anak.nik || '').trim() === String(record.nik || '').trim());
+              if (!child) continue;
+              const date = new Date(record.tanggal_ukur + 'T00:00:00');
+              const year = String(date.getFullYear());
+              const month = date.getMonth();
+              child.riwayat ||= {};
+              child.riwayat[year] ||= {};
+              const current = child.riwayat[year][month];
+              if (!current || current.idPengukuran === record.id_pengukuran) {
+                child.riwayat[year][month] = {
+                  ...(current || {}), idPengukuran: record.id_pengukuran, tanggalUkur: record.tanggal_ukur,
+                  bb: record.bb_kg, pb: record.panjang_tinggi_cm, lila: record.lila, lika: record.lika,
+                  caraUkur: record.jenis_ukur, statusKehadiran: record.status_kehadiran || 'Hadir',
+                  syncStatus: 'pending', revision: item.revision || 1
+                };
+              }
+            }
+            this.persistDaftarAnak();
+            this.pendingSyncCount = this.ambilAntreanPengukuran().length;
+          }
+          if (localStorage.getItem('SIMPATIK_SESSION')) setTimeout(() => this.sinkronkanAntreanPortal(), 0);
+          if (localStorage.getItem('SIMPATIK_SESSION') && measurements.length) setTimeout(() => this.sinkronkanDataTertunda(), 0);
+        } catch (error) {
+          console.warn('Snapshot Nearby tidak dapat diterapkan:', error);
+        }
+      },
       akhiriSesiPortalTidakBerlaku() {
         localStorage.removeItem('SIMPATIK_SESSION');
         localStorage.removeItem('SIMPATIK_CURRENT_USER');
         this.currentUser = null;
         this.loginData.password = '';
+        this.showLoginPassword = false;
         this.view = 'login';
       },
       async validasiSesiPortal() {
@@ -1428,6 +1909,10 @@
         }
       },
       handleAndroidBack() {
+        if (this.queueNoteDialog) {
+          this.batalkanCatatanScan();
+          return 'handled';
+        }
         if (this.bukaDialog) {
           this.bukaDialog = false;
           return 'handled';
@@ -1463,6 +1948,9 @@
         return 'unhandled';
       },
       doLogout() {
+        this.showLoginPassword = false;
+        if (window.AndroidBridge && typeof window.AndroidBridge.hentikanClusterNearby === 'function') window.AndroidBridge.hentikanClusterNearby();
+        this.nearbyWorkspaceId = '';
         localStorage.removeItem('SIMPATIK_SESSION');
         localStorage.removeItem('SIMPATIK_CURRENT_USER');
         this.currentUser = null;
@@ -1472,6 +1960,26 @@
       },
       simpanRegistryConfig() {
         localStorage.setItem('SIMPATIK_REGISTRY_CONFIG', JSON.stringify(this.registryConfig));
+      },
+      informasiKoneksiPortal(alamat) {
+        try {
+          const host = new URL(alamat || this.registryConfig.portalApi.url).hostname.toLowerCase().replace(/^\[|\]$/g, '');
+          const ip = host.split('.').map(Number);
+          const ipv4 = ip.length === 4 && ip.every(n => Number.isInteger(n) && n >= 0 && n <= 255);
+          if (host.endsWith('.ts.net') || (ipv4 && ip[0] === 100 && ip[1] >= 64 && ip[1] <= 127)) {
+            return { mode: 'tailscale', label: 'Tailscale' };
+          }
+          if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') ||
+              host === '::1' || /^(?:fc|fd)[0-9a-f]{2}:|^fe[89ab][0-9a-f]:/.test(host) ||
+              (ipv4 && (ip[0] === 127 || ip[0] === 10 || ip[0] === 0 ||
+                (ip[0] === 192 && ip[1] === 168) || (ip[0] === 172 && ip[1] >= 16 && ip[1] <= 31) ||
+                (ip[0] === 169 && ip[1] === 254))) || (!host.includes('.') && !host.includes(':'))) {
+            return { mode: 'lokal', label: 'lokal' };
+          }
+          return { mode: 'online', label: 'online' };
+        } catch {
+          return { mode: 'otomatis', label: 'belum diatur' };
+        }
       },
       async mulaiPenemuanLokal({ senyap = false, batasWaktu = 5200 } = {}) {
         if (!window.AndroidBridge || typeof window.AndroidBridge.temukanServer !== 'function') {
@@ -1510,15 +2018,16 @@
             if (!server || !server.apiUrl) { selesaikan(false); return; }
 
             this.registryConfig.portalApi.url = server.apiUrl;
-            this.registryConfig.connectionMode = 'lokal';
-            this.registryConfig.portalApi.status = 'Memverifikasi server lokal…';
+            const koneksi = this.informasiKoneksiPortal(server.apiUrl);
+            this.registryConfig.connectionMode = koneksi.mode;
+            this.registryConfig.portalApi.status = 'Memverifikasi server ' + koneksi.label + '…';
             this.simpanRegistryConfig();
             this.ujiKoneksiPortal(true).then(berhasil => {
               if (berhasil) {
-                this.registryConfig.connectionMode = 'lokal';
+                this.registryConfig.connectionMode = this.informasiKoneksiPortal().mode;
                 this.simpanRegistryConfig();
                 this.kirimHeartbeat();
-                if (!senyap) this.tampilkanNotifikasi('[Server Lokal Terhubung]\n\nAplikasi menggunakan server PC melalui jaringan lokal.', 'success');
+                if (!senyap) this.tampilkanNotifikasi('[Server Terhubung]\n\nAplikasi menggunakan server ' + this.informasiKoneksiPortal().label + '.', 'success');
               }
               selesaikan(berhasil);
             });
@@ -1529,21 +2038,24 @@
           catch { selesaikan(false); }
         });
       },
-      async gunakanServerNgrok() {
+      async gunakanServerOnline() {
         if (this.isTestingPortal) return;
         this.registryConfig.portalApi.url = PORTAL_API_BAWAAN;
-        this.registryConfig.connectionMode = 'ngrok';
+        this.registryConfig.connectionMode = 'online';
         this.registryConfig.portalApi.status = 'Menguji koneksi…';
         this.simpanRegistryConfig();
         const berhasil = await this.ujiKoneksiPortal(true);
         if (berhasil) {
-          this.registryConfig.connectionMode = 'ngrok';
+          this.registryConfig.connectionMode = 'online';
           this.simpanRegistryConfig();
-          await this.sinkronkanSetelahTerhubung().catch(error => console.warn('Sinkronisasi ngrok tertunda:', error));
-          this.tampilkanNotifikasi('[Koneksi Dialihkan]\n\nAplikasi kembali memakai server melalui ngrok.', 'success');
+          await this.sinkronkanSetelahTerhubung().catch(error => console.warn('Sinkronisasi online tertunda:', error));
+          this.tampilkanNotifikasi('[Koneksi Dialihkan]\n\nAplikasi kembali memakai server melalui tunnel online.', 'success');
         } else {
-          this.tampilkanNotifikasi('[Ngrok Tidak Terhubung]\n\nAlamat server ngrok bawaan belum dapat dijangkau.', 'warning');
+          this.tampilkanNotifikasi('[Server Tidak Terhubung]\n\nAlamat server online bawaan belum dapat dijangkau.', 'warning');
         }
+      },
+      gunakanServerNgrok() {
+        return this.gunakanServerOnline();
       },
       normalisasiAlamatPortal() {
         const mentah = String(this.registryConfig.portalApi.url || '').trim().replace(/\/+$/, '');
@@ -1557,6 +2069,7 @@
       simpanAlamatPortal() {
         try {
           this.registryConfig.portalApi.url = this.normalisasiAlamatPortal();
+          this.registryConfig.connectionMode = this.informasiKoneksiPortal().mode;
           this.registryConfig.portalApi.status = 'Belum diuji';
           this.simpanRegistryConfig();
         } catch (error) {
@@ -1569,6 +2082,7 @@
         try {
           const url = this.normalisasiAlamatPortal();
           this.registryConfig.portalApi.url = url;
+          this.registryConfig.connectionMode = this.informasiKoneksiPortal().mode;
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 3500);
           const response = await fetch(url + '/kesehatan', {
@@ -1589,7 +2103,7 @@
           this.registryConfig.portalApi.status = 'Tidak terhubung';
           this.simpanRegistryConfig();
           if (!tanpaAlert) {
-            alert('[Koneksi Gagal]\n\n' + error.message + '\n\nPastikan website SIMPATIK dan tunnel ngrok sedang berjalan.');
+            alert('[Koneksi Gagal]\n\n' + error.message + '\n\nPastikan website SIMPATIK dan server sedang berjalan.');
           }
           return false;
         } finally {
@@ -1602,6 +2116,7 @@
       terapkanServerOtomatis(apiUrl, ip, metode) {
         this.isSearchingServer = false;
         this.registryConfig.portalApi.url = apiUrl;
+        this.registryConfig.connectionMode = this.informasiKoneksiPortal().mode;
         this.registryConfig.portalApi.status = 'Ditemukan, memverifikasi...';
         this.simpanRegistryConfig();
         this.ujiKoneksiPortal(true).then((berhasil) => {
@@ -1616,7 +2131,7 @@
       },
       async kirimHeartbeat() {
         const url = this.registryConfig.portalApi && this.registryConfig.portalApi.url;
-        if (!url || !this.isConnectedToPortal) return;
+        if (!url || !this.isConnectedToPortal || !localStorage.getItem('SIMPATIK_SESSION')) return false;
         try {
           // Identitas harus unik per instalasi. ID konstan membuat beberapa
           // tablet tertimpa di peta heartbeat server dan terlihat sebagai satu.
@@ -1628,23 +2143,28 @@
             deviceId = 'tablet-' + acak;
             localStorage.setItem('SIMPATIK_DEVICE_ID', deviceId);
           }
-          await fetch(url + '/heartbeat', {
+          let namaPerangkat = 'Android ' + deviceId.slice(-4).toUpperCase();
+          if (window.AndroidBridge && typeof window.AndroidBridge.dapatkanInfoPerangkat === 'function') {
+            try { namaPerangkat = JSON.parse(window.AndroidBridge.dapatkanInfoPerangkat()).namaPerangkat || namaPerangkat; } catch {}
+          }
+          const response = await fetch(url + '/heartbeat', {
             method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              'ngrok-skip-browser-warning': 'true'
-            },
+            headers: this.apiHeaders(true),
             body: JSON.stringify({
               deviceId,
-              namaPerangkat: 'Tablet Posyandu ' + deviceId.slice(-4).toUpperCase(),
-              versiAplikasi: 'v1.10.6',
+              namaPerangkat,
+              jenisPerangkat: 'android',
+              modeKoneksi: this.informasiKoneksiPortal().mode === 'otomatis' ? 'tidak_diketahui' : this.informasiKoneksiPortal().mode,
+              versiAplikasi: 'v1.12.4',
               antreanTertunda: this.totalPendingCount || 0
             })
           });
-        } catch {}
+          return response.ok;
+        } catch { return false; }
       },
       persistAntrean() {
         this.simpanAntreanLokal();
+        this.kirimSnapshotCluster();
         if (localStorage.getItem('SIMPATIK_SESSION')) {
           setTimeout(() => this.sinkronkanAntreanPortal(), 0);
         }
@@ -1844,13 +2364,35 @@
           return false;
         }
         const matchedChild = matches[0];
+        if (this.sudahDalamAntreanHariIni(matchedChild)) {
+          this.scannedAnak = null;
+          alert('[Antrean Sudah Ada]\n\n' + matchedChild.nama + ' sudah terdaftar dalam antrean hari ini.');
+          return false;
+        }
         this.scannedAnak = matchedChild;
         this.queueSearch = '';
-        const added = this.tambahAntrean(matchedChild);
+        this.queueNoteDraft = String(this.queueNotes[this.identitasAnak(matchedChild)] || '');
+        this.queueNoteDialog = true;
+        return true;
+      },
+      batalkanCatatanScan() {
+        this.queueNoteDialog = false;
+        this.queueNoteDraft = '';
+        this.scannedAnak = null;
+      },
+      masukkanScanKeAntrean(simpanCatatan) {
+        const anak = this.scannedAnak;
+        if (!anak) { this.queueNoteDialog = false; return false; }
+        const identity = this.identitasAnak(anak);
+        if (simpanCatatan && String(this.queueNoteDraft || '').trim()) this.queueNotes[identity] = String(this.queueNoteDraft).trim().slice(0, 240);
+        else delete this.queueNotes[identity];
+        this.queueNoteDialog = false;
+        const added = this.tambahAntrean(anak);
         if (!added) return false;
-        const queueItem = this.antreanHariIni.find(item => item.childIdentity === this.identitasAnak(matchedChild) && item.status !== 'cancelled');
-        const confirmation = (queueItem ? this.formatNomorAntrean(queueItem.number) + ' · ' : '') + matchedChild.nama + ' masuk antrean';
+        const queueItem = this.antreanHariIni.find(item => item.childIdentity === identity && item.status !== 'cancelled');
+        const confirmation = (queueItem ? this.formatNomorAntrean(queueItem.number) + ' · ' : '') + anak.nama + ' masuk antrean';
         this.tampilkanNotifikasi('[Masuk Antrean]\n\n' + confirmation + '. Anak siap dipanggil dari tab Antrean Aktif.', 'success');
+        this.queueNoteDraft = '';
         return true;
       },
       kekuranganSkrining(anak) {
@@ -1939,7 +2481,7 @@
       },
       panggilAntrean(item) {
         if (!item || !['waiting', 'called', 'serving'].includes(item.status)) return;
-        if (item.status === 'waiting' && this.antreanTerpanggil.length >= 4) {
+        if (item.status === 'waiting' && this.antreanTerpanggil.length >= 2) {
           this.tampilkanNotifikasi('[Slot Penuh]\n\nSelesaikan atau lewati salah satu anak yang sedang dipanggil untuk membuka slot berikutnya.', 'warning');
           return;
         }
@@ -1962,12 +2504,12 @@
         }
       },
       async panggilBerikutnya() {
-        if (this.isCallingNext || this.antreanTerpanggil.length >= 4) return;
+        if (this.isCallingNext || this.antreanTerpanggil.length >= 2) return;
         this.isCallingNext = true;
         try {
           // Ambil snapshot terbaru agar tablet tidak memilih nomor dari antrean basi.
           await this.sinkronkanAntreanPortal();
-          if (this.antreanTerpanggil.length >= 4) return;
+          if (this.antreanTerpanggil.length >= 2) return;
           const berikutnya = this.antreanMenunggu[0];
           if (!berikutnya) {
             this.tampilkanNotifikasi('[Antrean Kosong]\n\nSemua sasaran yang hadir sudah dipanggil atau sedang dilayani.', 'info');
@@ -1998,8 +2540,8 @@
       },
       selesaikanAntrean(item) {
         if (!item || !['called', 'serving'].includes(item.status)) return false;
-        // Menyimpan hasil ukur belum menyelesaikan layanan. Slot tetap tertahan
-        // sampai petugas KMS mengonfirmasi penjelasan melalui web.
+        // Setelah pengukuran, slot dibebaskan agar anak berikutnya dapat dilayani.
+        // Status pemeriksaan KMS tetap ditampilkan pada daftar informasi terpisah.
         item.status = 'kms_review';
         item._queueDirty = !!item.serverId;
         item.completedAt = null;
@@ -2604,7 +3146,6 @@
             if (hasil.susulan) record.pendataanSusulan = true;
           }
           if (hasil.susulan) {
-            child.statusSasaran = 'selesai';
             child.pendataanSusulan = true;
           }
           this.persistDaftarAnak();
@@ -2720,7 +3261,6 @@
               this.activeAnak.riwayat[year][month].pendataanSusulanPending = false;
               if (result.susulan) {
                 this.activeAnak.riwayat[year][month].pendataanSusulan = true;
-                this.activeAnak.statusSasaran = 'selesai';
                 this.activeAnak.pendataanSusulan = true;
               }
               this.persistDaftarAnak();
@@ -2742,6 +3282,8 @@
 
       // Pasang handler tombol back hardware/gesture Android
       window.handleAndroidBack = () => this.handleAndroidBack();
+      window.handleNearbyStatus = status => { this.nearbyStatus = String(status || ''); };
+      window.handleNearbySnapshot = snapshot => this.terapkanSnapshotCluster(snapshot);
       window.handleScanKartuSasaran = value => this.prosesHasilScanKartu(value);
       window.handleScanKartuDibatalkan = () => {};
       window.handleScanKartuGagal = message => alert('[Pemindaian Gagal]\n\n' + message + '\n\nGunakan pencarian manual jika kamera belum siap.');
@@ -2770,6 +3312,17 @@
 
       this.pendingSyncCount = this.ambilAntreanPengukuran().length;
       this.inisialisasiKoneksiAwal();
+      if (localStorage.getItem('SIMPATIK_SESSION') && window.AndroidBridge && typeof window.AndroidBridge.mulaiClusterNearby === 'function') {
+        if (typeof window.AndroidBridge.mulaiClusterNearbyDariCache === 'function') {
+          try {
+            const cachedNearby = JSON.parse(window.AndroidBridge.mulaiClusterNearbyDariCache());
+            if (cachedNearby.ok) this.nearbyStatus = 'Menyambungkan ke cluster Posyandu tersimpan…';
+          } catch (error) { console.warn('Cluster offline belum dapat dipulihkan:', error); }
+        }
+        setTimeout(() => this.mulaiClusterPosyandu().catch(error => {
+          this.nearbyStatus = error.message || 'Sinkronisasi tablet sekitar belum tersedia';
+        }), 3500);
+      }
 
       // Saat website dinyalakan kembali, aplikasi memulihkan koneksi dan
       // mengirim antrean lokal tanpa meminta kader membuka pengaturan.

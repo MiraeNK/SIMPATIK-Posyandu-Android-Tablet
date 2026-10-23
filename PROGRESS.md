@@ -1,6 +1,40 @@
 # Progress Pengembangan
 
-Terakhir diperbarui: 10 Oktober 2026
+Terakhir diperbarui: 21 Oktober 2026
+
+### 1.12.4 — Koneksi online dan status perangkat per Posyandu
+
+- [x] Menghapus penandaan lokal secara paksa pada hasil discovery URL Cloudflare.
+- [x] Memperbaiki laporan perangkat yang sebelumnya tidak menyertakan token login.
+- [x] Menambahkan model perangkat dari native Android dan jalur koneksi pada heartbeat.
+- [x] Memasang pembaruan 1.12.4 di HP tanpa membersihkan data/sesi.
+- [x] Menguji label **Server online · API & database siap**, discovery native, heartbeat HTTP 200, dan daftar perangkat tanpa sesi HTTP 401.
+- [x] Menjalankan 41 tes regresi dan `assembleDebug`; lulus.
+- [x] Memasang migrasi web 022 untuk status perangkat yang bertahan saat offline dan restart server.
+- [x] Menguji pemisahan RW, penolakan klaim wilayah palsu, cakupan super admin, dan persistensi melalui 8 tes API/database pada skema uji terpisah.
+
+APK: `app/build/outputs/apk/debug/SIMPATIK-1.12.4-debug.apk`.
+
+SHA-256: `75a8ed3d908c4d363678d7734d2602b7ddcc4a6538b1eb04ec87a880377ca9d0`.
+
+Panduan: `WALKTHROUGH-PERANGKAT-v1.12.4.md`.
+
+### 1.12.3 — UI HP dan popup catatan scan
+
+- [x] Menemukan penyebab layar kosong langsung pada Samsung SM-S711B Android 16: tinggi CSS viewport bernilai nol; kontainer kini mengikuti tinggi visual viewport yang terukur.
+- [x] Memasang APK sebagai pembaruan di HP; data lokal dan sesi login dipertahankan.
+- [x] Merapikan ikon, tombol navigasi, padding, header pendaftaran, serta dua pintasan sejajar dengan Daftarkan Balita selebar satu baris.
+- [x] Menguji Lihat/Sembunyikan password dan form login saat keyboard terbuka.
+- [x] Menguji popup hasil scan: simpan, lewati, batal, dan Kembali Android tanpa membuat antrean uji di database sungguhan.
+- [x] Menguji beranda, pendaftaran, daftar pencatatan, daftar riwayat, pemulihan sesi setelah restart, dan rotasi HP.
+- [x] Build `assembleDebug` berhasil dan 38 tes regresi JavaScript lulus.
+- [ ] Uji kamera dengan kartu cetak di perangkat: hasil decode disimulasikan pada uji UI ini.
+- [ ] Verifikasi visual final tablet belum tuntas karena ANR System UI dan launch emulator macet; perlu diuji ulang pada tablet fisik atau emulator yang stabil.
+- [ ] Akun Mirae belum memperoleh konteks Nearby: API `/cluster-context` mengembalikan 409 karena akun belum terikat satu Posyandu. Akses super admin tidak diubah.
+
+APK: `app/build/outputs/apk/debug/SIMPATIK-1.12.3-debug.apk`.
+
+Walkthrough dan batas pengujian: `WALKTHROUGH-UI-HP-v1.12.3.md`.
 
 ### 1.10.8 — Login multi-tablet dan layout HP
 
@@ -190,3 +224,9 @@ Ukuran: 12.838.983 byte. Aset `index.html` di dalam APK sama dengan sumber saat 
 - [ ] Tetapkan aturan penutupan periode: tablet mengoreksi periode aktif, Portal mengoreksi periode yang sudah ditutup.
 
 Dokumen ini harus diperbarui setiap kali satu tahap verifikasi atau integrasi selesai.
+
+## 23 Oktober 2026 — Persiapan pemindahan API ke VM
+
+- Menyimpan seluruh pembaruan Android 1.12.4 ke branch codex/fokus-input-tablet sebelum perubahan endpoint VM.
+- 41 tes regresi Android lulus. Endpoint baru dan APK dicatat setelah web/API di VM lolos pengujian.
+- Riwayat lokal, data anak, akun dan kata sandi dipertahankan.

@@ -258,3 +258,9 @@ Dokumen ini harus diperbarui setiap kali satu tahap verifikasi atau integrasi se
 - Master tetap tersedia pada riwayat/semua balita. Pendaftaran baru tidak otomatis masuk sasaran; admin menerbitkannya dari web.
 - API kompatibel perangkat lama: anak hanya sasaran, masterAnak terpisah. Tidak mengubah daftar sasaran, pengukuran, atau antrean di database.
 - Pengujian: 52 regresi JS termasuk kasus 92 sasaran (86 menunggu, 5 selesai, 1 tidak hadir) dengan master tambahan; 14 tes HTTP/database terisolasi.
+
+## 2026-10-23 — v1.12.8: empat slot antrean
+- Kapasitas panggilan/pengukuran dikembalikan menjadi 4, termasuk tombol panggil berikutnya dan pemanggilan langsung. KMS tetap di luar slot.
+- Sasaran bulanan dan total anak tetap memakai pemisahan v1.12.7.
+- Regresi kapasitas menguji anak kelima menunggu dan dapat dipanggil setelah satu anak masuk pemeriksaan KMS.
+- Validasi selesai: 53 tes JavaScript lulus; testDebugUnitTest, lintDebug, assembleDebug berhasil. APK: SIMPATIK-1.12.8-debug.apk. Belum diuji langsung di perangkat fisik.

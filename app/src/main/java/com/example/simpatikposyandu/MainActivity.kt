@@ -17,6 +17,7 @@ import android.util.Log
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -28,6 +29,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.Keep
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -166,9 +169,17 @@ class MainActivity : ComponentActivity() {
         return permissions.toTypedArray()
     }
 
-    @Deprecated("Nearby permissions are requested for the active Posyandu workspace")
+    @Deprecated("Nearby and camera permissions are requested for the active Posyandu workspace")
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CAMERA_PERMISSIONS) {
+            val granted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            webViewInstance?.evaluateJavascript(
+                "window.handleIzinKameraDiberikan && window.handleIzinKameraDiberikan($granted)",
+                null
+            )
+            return
+        }
         if (requestCode != REQUEST_NEARBY_PERMISSIONS) return
         val context = pendingNearbyContext ?: return
         pendingNearbyContext = null
@@ -184,6 +195,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val REQUEST_NEARBY_PERMISSIONS = 7104
+        const val REQUEST_CAMERA_PERMISSIONS = 7105
         private const val CLUSTER_KEY_ALIAS = "simpatik-nearby-context-v1"
     }
 
@@ -685,6 +697,22 @@ class AndroidAppBridge(
     }
 
     @JavascriptInterface
+    fun cekIzinKamera(): Boolean {
+        return ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    }
+
+    @JavascriptInterface
+    fun mintaIzinKamera(): Boolean {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            return true
+        }
+        activity.runOnUiThread {
+            ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.CAMERA), MainActivity.REQUEST_CAMERA_PERMISSIONS)
+        }
+        return false
+    }
+
+    @JavascriptInterface
     fun tampilkanPesan(message: String) {
         activity.runOnUiThread {
             Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
@@ -967,6 +995,12 @@ fun PosyanduWebView(
                 
                 // Menangkap message console.log / error dari Vue / JavaScript
                 webChromeClient = object : WebChromeClient() {
+                    override fun onPermissionRequest(request: PermissionRequest?) {
+                        activity.runOnUiThread {
+                            request?.grant(request.resources)
+                        }
+                    }
+
                     override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                         Log.d(
                             "PosyanduJSConsole",

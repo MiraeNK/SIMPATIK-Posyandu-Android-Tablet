@@ -35,6 +35,7 @@
 
 <!-- Vue 3 & Real Database -->
 <script src="vue.js"></script>
+<script src="jsqr.min.js"></script>
 
 <style>
   *, *::before, *::after { box-sizing: border-box; }
@@ -628,6 +629,69 @@
     .form-date { flex-basis:100%; }
     .form-footer button { flex-basis:44%; }
   }
+
+  /* Gaya Pemindai Kamera & Reticle */
+  .camera-scanner-layer {
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .camera-scanner-card {
+    width: 100%;
+    max-width: 500px;
+    background: #111827;
+    color: #FFFFFF;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  }
+  .camera-scanner-viewfinder {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    max-height: 360px;
+    background: #000000;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .camera-scanner-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .camera-scanner-reticle {
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border: 3px solid #10B981;
+    border-radius: 18px;
+    box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+  }
+  .camera-scanner-laser {
+    position: absolute;
+    top: 5%;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #34D399;
+    box-shadow: 0 0 8px #34D399;
+    animation: scanLaser 2s infinite ease-in-out alternate;
+  }
+  @keyframes scanLaser {
+    0% { top: 6%; }
+    100% { top: 92%; }
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
 </style>
 </head>
 <body>
@@ -655,6 +719,62 @@
       </div>
     </section>
   </div>
+
+  <!-- Modal Pemindai Kamera (Mendukung Kamera Depan & Belakang) -->
+  <div v-if="cameraScannerActive" class="notice-layer camera-scanner-layer" role="dialog" aria-modal="true" @keydown.esc="tutupCameraScanner">
+    <section class="camera-scanner-card" @click.stop>
+      <div style="padding:14px 18px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:10px; background:#0F6E44; display:flex; align-items:center; justify-content:center; color:#FFFFFF;">
+            <i :class="cameraFacing === 'user' ? 'ph-bold ph-user-focus' : 'ph-bold ph-camera'" style="font-size:20px;"></i>
+          </div>
+          <div>
+            <div style="font-size:16px; font-weight:800; color:#FFFFFF;">Pindai Kartu Sasaran</div>
+            <div style="font-size:12px; color:#A7F3D0;">
+              Mode: {{ cameraFacing === 'user' ? 'Kamera Depan (Selfie)' : 'Kamera Belakang' }}
+            </div>
+          </div>
+        </div>
+        <button type="button" @click="tutupCameraScanner" aria-label="Tutup kamera" style="width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.1); border:0; color:#FFFFFF; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+          <i class="ph-bold ph-x" style="font-size:18px;"></i>
+        </button>
+      </div>
+
+      <div class="camera-scanner-viewfinder">
+        <video ref="scannerVideo" class="camera-scanner-video" playsinline autoplay muted></video>
+        <div class="camera-scanner-reticle">
+          <div class="camera-scanner-laser"></div>
+        </div>
+        <div v-if="cameraScannerLoading" style="position:absolute; inset:0; background:rgba(0,0,0,0.7); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; z-index:5;">
+          <i class="ph-bold ph-spinner" style="font-size:32px; animation:spin 1s linear infinite; color:#34D399;"></i>
+          <span style="font-size:14px; font-weight:700;">Menyiapkan kamera...</span>
+        </div>
+        <div v-if="cameraScannerError" style="position:absolute; inset:0; background:rgba(0,0,0,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:20px; text-align:center; z-index:6;">
+          <i class="ph-bold ph-warning-circle" style="font-size:36px; color:#F87171;"></i>
+          <div style="font-size:14px; font-weight:700; color:#FFFFFF;">{{ cameraScannerError }}</div>
+          <button type="button" @click="bukaCameraScanner()" style="padding:8px 16px; border-radius:10px; background:#0F6E44; color:#FFFFFF; font-weight:700; border:0; cursor:pointer;">Coba Lagi</button>
+        </div>
+      </div>
+
+      <div style="padding:16px 18px; background:#1F2937;">
+        <div style="font-size:13px; color:#9CA3AF; margin-bottom:12px; text-align:center;">
+          Arahkan barcode / QR kartu sasaran ke dalam bingkai kotak.
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+          <!-- Tombol Switch Kamera Depan / Belakang -->
+          <button type="button" @click="toggleCameraFacing" style="flex:1; min-width:160px; min-height:48px; border-radius:12px; background:#374151; color:#FFFFFF; border:1px solid #4B5563; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
+            <i class="ph-bold ph-camera-rotate" style="font-size:20px; color:#34D399;"></i>
+            {{ cameraFacing === 'user' ? 'Ganti ke Belakang' : 'Ganti ke Depan' }}
+          </button>
+          <button v-if="adaGoogleScanner" type="button" @click="bukaGoogleScanner" style="min-height:48px; padding:0 14px; border-radius:12px; background:#374151; color:#FFFFFF; border:1px solid #4B5563; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;" title="Gunakan Google Code Scanner">
+            <i class="ph-bold ph-google-logo" style="font-size:18px; color:#60A5FA;"></i>
+            Google Scanner
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <div v-if="notice.visible"
        class="notice-layer"
        role="alertdialog"
@@ -873,8 +993,8 @@
 
           <section v-if="queueTab === 'list'" class="queue-card" style="padding:20px; background:linear-gradient(145deg,#F2F8F4,#FFFFFF);">
             <div style="display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:15px; flex-wrap:wrap;">
-              <div><div style="font-size:12px; color:#0F6E44; font-weight:800; letter-spacing:.08em;">ALUR LAYANAN · 2 SLOT</div><h3 style="font-size:21px; margin:3px 0 0; font-weight:800;">Antrean dalam proses</h3><div style="font-size:13px; color:#4A5750; margin-top:3px;">Slot digunakan saat dipanggil dan diukur. Setelah pengukuran, anak menunggu pemeriksaan KMS di luar slot; statusnya tetap terlihat di bawah.</div></div>
-                  <button type="button" @click="panggilBerikutnya" :disabled="isCallingNext || antreanTerpanggil.length >= 2 || antreanMenunggu.length === 0" class="btn-primary" :style="{opacity:(isCallingNext || antreanTerpanggil.length >= 2 || antreanMenunggu.length === 0) ? .55 : 1}" style="min-height:52px; padding:0 18px; border-radius:13px; font-weight:800; display:flex; align-items:center; gap:9px;"><i class="ph-bold ph-megaphone" style="font-size:21px;"></i>{{ isCallingNext ? 'Menyinkronkan…' : (antreanTerpanggil.length >= 2 ? 'Semua slot penuh' : (antreanMenunggu.length ? 'Panggil berikutnya · ' + formatNomorAntrean(antreanMenunggu[0].number) : 'Tidak ada yang menunggu')) }}</button>
+              <div><div style="font-size:12px; color:#0F6E44; font-weight:800; letter-spacing:.08em;">ALUR LAYANAN · 4 SLOT</div><h3 style="font-size:21px; margin:3px 0 0; font-weight:800;">Antrean dalam proses</h3><div style="font-size:13px; color:#4A5750; margin-top:3px;">Slot digunakan saat dipanggil dan diukur. Setelah pengukuran, anak menunggu pemeriksaan KMS di luar slot; statusnya tetap terlihat di bawah.</div></div>
+                  <button type="button" @click="panggilBerikutnya" :disabled="isCallingNext || antreanTerpanggil.length >= 4 || antreanMenunggu.length === 0" class="btn-primary" :style="{opacity:(isCallingNext || antreanTerpanggil.length >= 4 || antreanMenunggu.length === 0) ? .55 : 1}" style="min-height:52px; padding:0 18px; border-radius:13px; font-weight:800; display:flex; align-items:center; gap:9px;"><i class="ph-bold ph-megaphone" style="font-size:21px;"></i>{{ isCallingNext ? 'Menyinkronkan…' : (antreanTerpanggil.length >= 4 ? 'Semua slot penuh' : (antreanMenunggu.length ? 'Panggil berikutnya · ' + formatNomorAntrean(antreanMenunggu[0].number) : 'Tidak ada yang menunggu')) }}</button>
             </div>
             <div class="queue-stack-slots">
               <article v-for="(item, index) in slotPanggilan" :key="item ? item.id : 'slot-' + index" class="queue-slot" :style="item ? {borderColor:'#A3D9B5',boxShadow:'0 5px 14px rgba(15,110,68,.06)'} : {borderStyle:'dashed',background:'#F8FAF8'}">
@@ -916,7 +1036,16 @@
           <section v-else class="queue-card" style="padding:26px 28px;">
             <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap;">
               <div><div style="font-size:13px; color:#0F6E44; font-weight:800; letter-spacing:.06em;">SASARAN DARI DATABASE PORTAL</div><h3 style="font-size:26px; margin:3px 0 5px;">Belum Dilayani</h3><div style="font-size:16px; color:#4A5750;">{{ anakBelumBulanIni }} anak belum selesai. Hasil pindai kartu langsung masuk antrean dan memperoleh nomor aktif.</div></div>
-              <button type="button" @click="mulaiScanKartu" class="btn-primary" style="min-height:64px; padding:0 28px; border-radius:15px; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:11px;"><i class="ph-bold ph-camera" style="font-size:25px;"></i> Pindai Kartu dengan Kamera</button>
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <button type="button" @click="mulaiScanKartu" class="btn-primary" style="min-height:64px; padding:0 24px; border-radius:15px; font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:10px;">
+                  <i :class="cameraFacing === 'user' ? 'ph-bold ph-user-focus' : 'ph-bold ph-camera'" style="font-size:25px;"></i>
+                  Pindai Kartu dengan Kamera ({{ cameraFacing === 'user' ? 'Depan' : 'Belakang' }})
+                </button>
+                <button type="button" @click="gantiKameraLangsung" class="btn-outline" style="min-height:64px; padding:0 18px; border-radius:15px; font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;" :title="'Saat ini: ' + (cameraFacing === 'user' ? 'Kamera Depan' : 'Kamera Belakang') + '. Tekan untuk ganti.'">
+                  <i class="ph-bold ph-camera-rotate" style="font-size:22px;"></i>
+                  {{ cameraFacing === 'user' ? 'Ganti ke Belakang' : 'Ganti ke Depan' }}
+                </button>
+              </div>
             </div>
 
             <div style="margin-top:20px; padding:13px 16px; border:1px solid #A3D9B5; border-radius:13px; background:#F0F9F4; color:#14713D; font-size:14px; font-weight:700;"><i class="ph-fill ph-check-circle" style="margin-right:6px;"></i>Mode cepat aktif: QR yang cocok dengan sasaran langsung diberi nomor antrean. Pemilihan manual tetap tersedia di bawah.</div>
@@ -1448,6 +1577,12 @@
         activeQueueId: null,
         activeRecordingQueueId: null,
         scannedAnak: null,
+        cameraScannerActive: false,
+        cameraScannerLoading: false,
+        cameraScannerError: '',
+        cameraFacing: (typeof localStorage !== 'undefined' && localStorage.getItem('SIMPATIK_CAMERA_FACING')) || 'user',
+        cameraStream: null,
+        scannerInterval: null,
 
         // State Form Pengukuran
         formVals: { bb: '', pb: '', lila: '', lika: '' },
@@ -1470,6 +1605,9 @@
       }
     },
     computed: {
+      adaGoogleScanner() {
+        return !!(typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.scanKartuSasaran === 'function');
+      },
       koneksiPortal() {
         return this.informasiKoneksiPortal();
       },
@@ -1519,10 +1657,10 @@
         return this.antreanAktif.filter(item => item.status === 'waiting');
       },
       antreanTerpanggil() {
-        return this.antreanAktif.filter(item => ['called', 'serving'].includes(item.status)).slice(0, 2);
+        return this.antreanAktif.filter(item => ['called', 'serving'].includes(item.status));
       },
       slotPanggilan() {
-        return Array.from({length: 2}, (_, index) => this.antreanTerpanggil[index] || null);
+        return Array.from({length: 4}, (_, index) => this.antreanTerpanggil[index] || null);
       },
       antreanReviewKms() {
         return this.antreanHariIni.filter(item => item.status === 'kms_review').sort((a, b) => (a.number || 0) - (b.number || 0));
@@ -1818,7 +1956,12 @@ const connected = await this.ujiKoneksiPortal(true);
           return await Promise.race([
             (async () => {
               const response = await fetch(url, { ...options, signal: controller.signal });
-              const body = typeof response.json === 'function' ? await response.json() : {};
+              let body = {};
+              try {
+                body = typeof response.json === 'function' ? await response.json() : {};
+              } catch (_) {
+                body = {};
+              }
               return { ok: response.ok, status: response.status, json: async () => body };
             })(),
             new Promise((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error('Koneksi terlalu lambat; data tetap tersimpan dan akan dicoba lagi.')); }, 12000); })
@@ -1952,6 +2095,10 @@ const connected = await this.ujiKoneksiPortal(true);
         }
       },
       handleAndroidBack() {
+        if (this.cameraScannerActive) {
+          this.tutupCameraScanner();
+          return 'handled';
+        }
         if (this.queueNoteDialog) {
           this.batalkanCatatanScan();
           return 'handled';
@@ -2198,7 +2345,7 @@ const connected = await this.ujiKoneksiPortal(true);
               namaPerangkat,
               jenisPerangkat: 'android',
               modeKoneksi: this.informasiKoneksiPortal().mode === 'otomatis' ? 'tidak_diketahui' : this.informasiKoneksiPortal().mode,
-              versiAplikasi: 'v1.12.7',
+              versiAplikasi: 'v1.12.8',
               antreanTertunda: this.totalPendingCount || 0
             })
           });
@@ -2372,13 +2519,269 @@ const connected = await this.ujiKoneksiPortal(true);
         setTimeout(() => document.getElementById('queue-search')?.focus(), 100);
       },
       mulaiScanKartu() {
-        if (!window.AndroidBridge || typeof window.AndroidBridge.scanKartuSasaran !== 'function') {
-          alert('[Kamera Tidak Tersedia]\n\nGunakan pencarian nama atau NIK secara manual.');
+        // Jika di lingkungan pengujian tanpa kamera atau browser tanpa WebRTC, fallback ke Google Scanner
+        if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.scanKartuSasaran === 'function') {
+            const result = JSON.parse(window.AndroidBridge.scanKartuSasaran());
+            if (!result.ok && typeof alert === 'function') {
+              alert('[Pemindaian Gagal]\n\n' + (result.error || 'Kamera tidak dapat dibuka.'));
+            }
+            return !!result.ok;
+          }
+          if (typeof alert === 'function') {
+            alert('[Kamera Tidak Tersedia]\n\nGunakan pencarian nama atau NIK secara manual.');
+          }
           return false;
         }
-        const result = JSON.parse(window.AndroidBridge.scanKartuSasaran());
-        if (!result.ok) alert('[Pemindaian Gagal]\n\n' + (result.error || 'Kamera tidak dapat dibuka.'));
-        return !!result.ok;
+        this.bukaCameraScanner();
+        return true;
+      },
+      async konfirmasiSelesaiKms(item) {
+        if (!item) return;
+        item.status = 'done';
+        item.completedAt = new Date().toISOString();
+        item.updatedAt = item.completedAt;
+        item._queueDirty = !!item.serverId;
+        this.persistAntrean();
+
+        const sesi = typeof localStorage !== 'undefined' && localStorage.getItem('SIMPATIK_SESSION');
+        const url = this.normalisasiAlamatPortal();
+        if (sesi && url && item.serverId) {
+          try {
+            let res = await this.fetchDenganBatas(url + '/antrean/' + encodeURIComponent(item.serverId) + '/konfirmasi-kms', {
+              method: 'POST',
+              headers: this.apiHeaders(true)
+            });
+            if (!res.ok) {
+              res = await this.fetchDenganBatas(url + '/antrean/' + encodeURIComponent(item.serverId), {
+                method: 'PATCH',
+                headers: this.apiHeaders(true),
+                body: JSON.stringify({ status: 'done', catatan: item.note || null })
+              });
+            }
+            if (res.ok) {
+              item._queueDirty = false;
+              this.persistAntrean();
+            }
+          } catch (e) {
+            console.warn('Gagal sinkron status selesai KMS ke server, data tersimpan lokal:', e);
+          }
+        }
+      },
+      async batalkanAntreanKms(item) {
+        if (!item) return;
+        const confirmCancel = typeof confirm === 'function' ? confirm('Batalkan antrean untuk ' + item.name + '?') : true;
+        if (!confirmCancel) return;
+        item.status = 'cancelled';
+        item.cancelledAt = new Date().toISOString();
+        item.updatedAt = item.cancelledAt;
+        item._queueDirty = !!item.serverId;
+        this.persistAntrean();
+
+        const sesi = typeof localStorage !== 'undefined' && localStorage.getItem('SIMPATIK_SESSION');
+        const url = this.normalisasiAlamatPortal();
+        if (sesi && url && item.serverId) {
+          try {
+            const res = await this.fetchDenganBatas(url + '/antrean/' + encodeURIComponent(item.serverId), {
+              method: 'PATCH',
+              headers: this.apiHeaders(true),
+              body: JSON.stringify({ status: 'cancelled', catatan: item.note || null })
+            });
+            if (res.ok) {
+              item._queueDirty = false;
+              this.persistAntrean();
+            }
+          } catch (e) {
+            console.warn('Gagal sinkron status batal KMS ke server, data tersimpan lokal:', e);
+          }
+        }
+      },
+      async konfirmasiSelesaiSemuaKms() {
+        if (!this.antreanReviewKms.length) return;
+        const jumlah = this.antreanReviewKms.length;
+        const confirmAll = typeof confirm === 'function' ? confirm('Selesaikan semua ' + jumlah + ' antrean yang sedang menunggu pemeriksaan KMS?') : true;
+        if (!confirmAll) return;
+
+        const periodeId = Number(this.periodeSasaran?.periode?.id || this.periodeSasaran?.periodeId || this.periodeSasaran?.id);
+        const tanggal = this.tanggalHariIniISO;
+        const url = this.normalisasiAlamatPortal();
+        const sesi = typeof localStorage !== 'undefined' && localStorage.getItem('SIMPATIK_SESSION');
+
+        for (const item of this.antreanReviewKms) {
+          item.status = 'done';
+          item.completedAt = new Date().toISOString();
+          item.updatedAt = item.completedAt;
+          item._queueDirty = !!item.serverId;
+        }
+        this.persistAntrean();
+
+        if (sesi && url && Number.isSafeInteger(periodeId) && periodeId > 0) {
+          try {
+            const res = await this.fetchDenganBatas(url + '/antrean/konfirmasi-semua-kms', {
+              method: 'POST',
+              headers: this.apiHeaders(true),
+              body: JSON.stringify({ periodeId, tanggal })
+            });
+            if (res.ok) {
+              await this.sinkronkanAntreanPortal();
+              if (typeof alert === 'function') alert('[KMS Selesai]\n\nSebanyak ' + jumlah + ' anak telah diselesaikan pemeriksaannya.');
+              return;
+            }
+          } catch (e) {
+            console.warn('Gagal kirim batch konfirmasi KMS:', e);
+          }
+        }
+        await this.sinkronkanAntreanPortal();
+      },
+      async bukaCameraScanner(facing) {
+        if (facing) this.cameraFacing = facing;
+        this.cameraScannerActive = true;
+        this.cameraScannerLoading = true;
+        this.cameraScannerError = '';
+
+        if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.mintaIzinKamera === 'function') {
+          const granted = window.AndroidBridge.mintaIzinKamera();
+          if (!granted && typeof window.AndroidBridge.cekIzinKamera === 'function') {
+            await new Promise(r => setTimeout(r, 600));
+          }
+        }
+
+        try {
+          if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(t => t.stop());
+            this.cameraStream = null;
+          }
+          if (this.scannerInterval) {
+            clearInterval(this.scannerInterval);
+            this.scannerInterval = null;
+          }
+
+          if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            if (this.adaGoogleScanner) {
+              this.tutupCameraScanner();
+              this.bukaGoogleScanner();
+              return;
+            }
+            throw new Error('Fitur kamera tidak didukung pada peramban ini');
+          }
+
+          const constraints = {
+            video: {
+              facingMode: { ideal: this.cameraFacing },
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            },
+            audio: false
+          };
+
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          this.cameraStream = stream;
+          this.cameraScannerLoading = false;
+
+          if (typeof this.$nextTick === 'function') await this.$nextTick();
+          const video = this.$refs && this.$refs.scannerVideo;
+          if (video) {
+            video.srcObject = stream;
+            await video.play().catch(() => {});
+            this.mulaiDeteksiBarcode(video);
+          }
+        } catch (error) {
+          console.error('Gagal mengakses kamera:', error);
+          this.cameraScannerLoading = false;
+          this.cameraScannerError = 'Kamera tidak dapat diakses: ' + (error?.message || 'Periksa izin kamera pada pengaturan perangkat.');
+        }
+      },
+      mulaiDeteksiBarcode(video) {
+        if (this.scannerInterval) clearInterval(this.scannerInterval);
+
+        let barcodeDetector = null;
+        if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+          try {
+            barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13', 'data_matrix'] });
+          } catch (_) {
+            barcodeDetector = null;
+          }
+        }
+
+        let canvas = null;
+        let ctx = null;
+        if (typeof document !== 'undefined') {
+          canvas = document.createElement('canvas');
+          ctx = canvas.getContext('2d', { willReadFrequently: true });
+        }
+
+        this.scannerInterval = setInterval(async () => {
+          if (!this.cameraScannerActive || !video || video.readyState < 2) return;
+
+          if (barcodeDetector) {
+            try {
+              const barcodes = await barcodeDetector.detect(video);
+              if (barcodes && barcodes.length > 0) {
+                const rawValue = barcodes[0].rawValue;
+                if (rawValue && rawValue.trim()) {
+                  this.tanganiHasilScanKamera(rawValue.trim());
+                  return;
+                }
+              }
+            } catch (_) {}
+          }
+
+          if (typeof window !== 'undefined' && typeof window.jsQR === 'function' && ctx && canvas) {
+            try {
+              if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+              }
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const code = window.jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: 'dontInvert'
+              });
+              if (code && code.data && code.data.trim()) {
+                this.tanganiHasilScanKamera(code.data.trim());
+                return;
+              }
+            } catch (_) {}
+          }
+        }, 180);
+      },
+      tanganiHasilScanKamera(rawValue) {
+        try {
+          if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(80);
+        } catch (_) {}
+        this.tutupCameraScanner();
+        this.prosesHasilScanKartu(rawValue);
+      },
+      toggleCameraFacing() {
+        this.cameraFacing = this.cameraFacing === 'user' ? 'environment' : 'user';
+        if (typeof localStorage !== 'undefined') localStorage.setItem('SIMPATIK_CAMERA_FACING', this.cameraFacing);
+        this.bukaCameraScanner();
+      },
+      gantiKameraLangsung() {
+        this.cameraFacing = this.cameraFacing === 'user' ? 'environment' : 'user';
+        if (typeof localStorage !== 'undefined') localStorage.setItem('SIMPATIK_CAMERA_FACING', this.cameraFacing);
+        this.bukaCameraScanner();
+      },
+      bukaGoogleScanner() {
+        this.tutupCameraScanner();
+        if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.scanKartuSasaran === 'function') {
+          window.AndroidBridge.scanKartuSasaran();
+        } else {
+          if (typeof alert === 'function') alert('Google Code Scanner hanya tersedia di perangkat Android.');
+        }
+      },
+      tutupCameraScanner() {
+        if (this.scannerInterval) {
+          clearInterval(this.scannerInterval);
+          this.scannerInterval = null;
+        }
+        if (this.cameraStream) {
+          this.cameraStream.getTracks().forEach(t => t.stop());
+          this.cameraStream = null;
+        }
+        this.cameraScannerActive = false;
+        this.cameraScannerLoading = false;
+        this.cameraScannerError = '';
       },
       prosesHasilScanKartu(rawValue) {
         const value = String(rawValue || '').trim();
@@ -2532,7 +2935,7 @@ const connected = await this.ujiKoneksiPortal(true);
       },
       panggilAntrean(item) {
         if (!item || !['waiting', 'called', 'serving'].includes(item.status)) return;
-        if (item.status === 'waiting' && this.antreanTerpanggil.length >= 2) {
+        if (item.status === 'waiting' && this.antreanTerpanggil.length >= 4) {
           this.tampilkanNotifikasi('[Slot Penuh]\n\nSelesaikan atau lewati salah satu anak yang sedang dipanggil untuk membuka slot berikutnya.', 'warning');
           return;
         }
@@ -2555,12 +2958,12 @@ const connected = await this.ujiKoneksiPortal(true);
         }
       },
       async panggilBerikutnya() {
-        if (this.isCallingNext || this.antreanTerpanggil.length >= 2) return;
+        if (this.isCallingNext || this.antreanTerpanggil.length >= 4) return;
         this.isCallingNext = true;
         try {
           // Ambil snapshot terbaru agar tablet tidak memilih nomor dari antrean basi.
           await this.sinkronkanAntreanPortal();
-          if (this.antreanTerpanggil.length >= 2) return;
+          if (this.antreanTerpanggil.length >= 4) return;
           const berikutnya = this.antreanMenunggu[0];
           if (!berikutnya) {
             this.tampilkanNotifikasi('[Antrean Kosong]\n\nSemua sasaran yang hadir sudah dipanggil atau sedang dilayani.', 'info');
@@ -3205,7 +3608,14 @@ const connected = await this.ujiKoneksiPortal(true);
           headers: this.apiHeaders(true),
           body: JSON.stringify(payload)
         });
-        if (!response.ok) throw new Error('Server menolak sinkronisasi (HTTP ' + response.status + ')');
+        if (!response.ok) {
+          if (response.status === 409) {
+            console.warn('Pengukuran sudah ada di server (409 Conflict); menandai tersinkron.');
+            this.tandaiTersinkron(payload);
+            return { ok: true, susulan: false };
+          }
+          throw new Error('Server menolak sinkronisasi (HTTP ' + response.status + ')');
+        }
         const body = typeof response.json === 'function' ? await response.json().catch(() => ({})) : {};
         const hasil = body.pengukuran || {};
         const stillPending = this.ambilAntreanPengukuran().find(p => p.id_pengukuran === payload.id_pengukuran);
@@ -3356,6 +3766,9 @@ const connected = await this.ujiKoneksiPortal(true);
       window.handleNearbySnapshot = snapshot => this.terapkanSnapshotCluster(snapshot);
       window.handleScanKartuSasaran = value => this.prosesHasilScanKartu(value);
       window.handleScanKartuDibatalkan = () => {};
+      window.handleIzinKameraDiberikan = granted => {
+        if (granted && this.cameraScannerActive && this.cameraScannerError) this.bukaCameraScanner();
+      };
       window.handleScanKartuGagal = message => alert('[Pemindaian Gagal]\n\n' + message + '\n\nGunakan pencarian manual jika kamera belum siap.');
       window.alert = message => this.tampilkanNotifikasi(message);
       window.addEventListener('keydown', event => {

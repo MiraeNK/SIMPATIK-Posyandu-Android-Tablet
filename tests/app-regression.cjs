@@ -152,7 +152,7 @@ test('device heartbeat is authenticated and does not claim an account or RW from
   assert.equal(await h.app.kirimHeartbeat(), true);
   assert.equal(body.jenisPerangkat, 'android');
   assert.equal(body.modeKoneksi, 'online');
-  assert.equal(body.versiAplikasi, 'v1.12.7');
+  assert.equal(body.versiAplikasi, 'v1.12.8');
   assert.equal(body.posyanduId, undefined);
   assert.equal(body.penggunaId, undefined);
 });
@@ -429,7 +429,7 @@ test('recording defaults to queue and releases the service slot while KMS review
   assert.equal(h.app.antreanSelesai.length, 0);
   assert.equal(h.app.antreanAktif.find(item => item.childIdentity === second.nik), undefined);
   assert.equal(h.app.antreanReviewKms.find(item => item.childIdentity === second.nik).status, 'kms_review');
-  assert.equal(h.app.slotPanggilan.length, 2);
+  assert.equal(h.app.slotPanggilan.length, 4);
 });
 
 test('published card waits for a note decision before creating an active queue number', () => {
@@ -558,14 +558,14 @@ test('calling and recalling a child repeats the audible queue announcement', () 
   ]);
 });
 
-test('KMS review stays visible without occupying either of the two service slots', () => {
+test('KMS review stays visible without occupying any of the four service slots', () => {
   const h = harness();
   const called = { id: 'q1', date: h.app.tanggalHariIniISO, number: 1, status: 'called', name: 'Anak Pertama' };
   const measuring = { id: 'q2', date: h.app.tanggalHariIniISO, number: 2, status: 'serving', name: 'Anak Kedua' };
   const waiting = { id: 'q3', date: h.app.tanggalHariIniISO, number: 3, status: 'waiting', name: 'Anak Ketiga' };
   h.app.queueEntries = [called, measuring, waiting];
   assert.equal(h.app.antreanTerpanggil.length, 2);
-  assert.equal(h.app.slotPanggilan.length, 2);
+  assert.equal(h.app.slotPanggilan.length, 4);
   assert.equal(h.app.selesaikanAntrean(measuring), true);
   assert.equal(measuring.status, 'kms_review');
   assert.equal(h.app.antreanReviewKms.length, 1);
@@ -881,3 +881,72 @@ test('native discovery and WebView use the same VM hostname', () => {
  h.context.fetch=async()=>({ok:true,json:async()=>({anak:[target],masterAnak:[target,master],pengukuran:[],sasaran:{periodeId:7,label:'Oktober 2026',ringkasan:{total:1,menunggu:1}}})});
  assert.equal(await h.app.muatDataDariSupabase(),true);assert.equal(h.app.daftarAnak.length,2);assert.equal(h.app.totalSasaran,1);assert.equal(h.app.daftarAnak[1].statusSasaran,null);
  });
+
+ test('four children can occupy slots and the fifth waits until measurement releases one', () => {
+  const h = harness();
+  h.app.persistAntrean = () => {};
+  h.app.queueEntries = Array.from({length: 5}, (_, i) => ({id: 'capacity-' + i, date: h.app.tanggalHariIniISO, number: i + 1, name: 'Anak ' + i, status: 'waiting'}));
+  for (const item of h.app.queueEntries) h.app.panggilAntrean(item);
+  assert.equal(h.app.antreanTerpanggil.length, 4);
+  assert.equal(h.app.slotPanggilan.filter(Boolean).length, 4);
+  assert.equal(h.app.queueEntries[4].status, 'waiting');
+  h.app.selesaikanAntrean(h.app.queueEntries[0]);
+  h.app.panggilAntrean(h.app.queueEntries[4]);
+  assert.equal(h.app.queueEntries[4].status, 'called');
+  assert.equal(h.app.antreanTerpanggil.length, 4);
+  assert.equal(h.app.antreanReviewKms.length, 1);
+});
+
+
+test('KMS review items can be resolved, cancelled, or batch confirmed from the tablet', async () => {
+  const h = harness();
+  h.app.queueEntries = [
+    { id: 'k1', date: h.app.tanggalHariIniISO, number: 1, name: 'Amelia', status: 'kms_review', serverId: 'antrean_1' },
+    { id: 'k2', date: h.app.tanggalHariIniISO, number: 2, name: 'Rakha', status: 'kms_review', serverId: 'antrean_2' },
+    { id: 'k3', date: h.app.tanggalHariIniISO, number: 3, name: 'Khalisa', status: 'kms_review', serverId: 'antrean_3' },
+  ];
+  assert.equal(h.app.antreanReviewKms.length, 3);
+
+  // Selesaikan 1 anak
+  await h.app.konfirmasiSelesaiKms(h.app.queueEntries[0]);
+  assert.equal(h.app.queueEntries[0].status, 'done');
+  assert.equal(h.app.antreanReviewKms.length, 2);
+  assert.equal(h.app.antreanSelesai.length, 1);
+
+  // Batalkan 1 anak
+  await h.app.batalkanAntreanKms(h.app.queueEntries[1]);
+  assert.equal(h.app.queueEntries[1].status, 'cancelled');
+  assert.equal(h.app.antreanReviewKms.length, 1);
+
+  // Selesaikan semua sisanya
+  await h.app.konfirmasiSelesaiSemuaKms();
+  assert.equal(h.app.antreanReviewKms.length, 0);
+  assert.equal(h.app.antreanSelesai.length, 2);
+});
+
+test('front camera can be toggled and remembered, and closes on Android back', () => {
+  const h = harness();
+  assert.equal(h.app.cameraFacing, 'user');
+  h.app.toggleCameraFacing();
+  assert.equal(h.app.cameraFacing, 'environment');
+  assert.equal(h.storage.get('SIMPATIK_CAMERA_FACING'), 'environment');
+
+  h.app.cameraScannerActive = true;
+  assert.equal(h.app.handleAndroidBack(), 'handled');
+  assert.equal(h.app.cameraScannerActive, false);
+});
+
+test('measurement sync gracefully handles 409 conflict as already recorded without getting stuck', async () => {
+  const h = harness({
+    'SIMPATIK_SESSION': '{"token":"valid"}'
+  });
+  h.app.registryConfig = { activeProvider: 'portal_api', portalApi: { url: 'https://example.com/api' } };
+  const payload = { id_pengukuran: 'p-409', nik: '3273010101220001', tanggal_ukur: '2026-10-23', bb_kg: 10, panjang_tinggi_cm: 80 };
+  h.app.simpanPengukuranKeAndroid(payload);
+  assert.equal(h.app.ambilAntreanPengukuran().length, 1);
+
+  h.context.fetch = async () => ({ ok: false, status: 409, json: async () => ({ galat: 'Sudah ada' }) });
+  const res = await h.app.sinkronkanSatuPengukuran(payload);
+  assert.equal(res.ok, true);
+  assert.equal(h.app.ambilAntreanPengukuran().length, 0);
+});

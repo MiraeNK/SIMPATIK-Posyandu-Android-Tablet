@@ -10,6 +10,16 @@ val propertiKunciRilis = Properties().apply {
     if (berkas.exists()) berkas.inputStream().use { load(it) }
 }
 
+// Alamat server dibaca dari server.properties di akar proyek (tidak masuk repo).
+// Contoh isi: lihat server.properties.example.
+val propertiServer = Properties().apply {
+    val berkas = rootProject.file("server.properties")
+    if (berkas.exists()) berkas.inputStream().use { load(it) }
+}
+fun nilaiServer(kunci: String): String =
+    (System.getenv("SIMPATIK_" + kunci.uppercase()) ?: propertiServer.getProperty(kunci) ?: "")
+        .trim().replace("\\", "\\\\").replace("\"", "\\\"")
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -30,6 +40,8 @@ android {
         versionName = "1.15.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "PORTAL_API_URL", "\"${nilaiServer("portalApiUrl")}\"")
+        buildConfigField("String", "TAILSCALE_API_URL", "\"${nilaiServer("tailscaleApiUrl")}\"")
     }
 
     signingConfigs {
@@ -57,6 +69,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

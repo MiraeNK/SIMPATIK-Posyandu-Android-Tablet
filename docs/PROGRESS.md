@@ -15,8 +15,6 @@ Terakhir diperbarui: 21 Oktober 2026
 
 APK: `app/build/outputs/apk/debug/SIMPATIK-1.12.4-debug.apk`.
 
-SHA-256: `[dihapus]`.
-
 Panduan: `WALKTHROUGH-PERANGKAT-v1.12.4.md`.
 
 ### 1.12.3 — UI HP dan popup catatan scan
@@ -60,8 +58,6 @@ Walkthrough dan batas pengujian: `WALKTHROUGH-UI-HP-v1.12.3.md`.
 
 APK debug: `app/build/outputs/apk/debug/app-debug.apk`
 
-SHA-256: `[dihapus]`
-
 Ukuran: 13.882.017 byte.
 
 ### Migrasi Supabase versi 1.8.0
@@ -78,8 +74,6 @@ Ukuran: 13.882.017 byte.
 
 APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.8.0_supabase-kkn.apk`
 
-SHA-256: `[dihapus]`
-
 Ukuran: 13.822.495 byte.
 
 ### Verifikasi versi 1.7.1
@@ -93,8 +87,6 @@ Ukuran: 13.822.495 byte.
 - [x] Uji Pixel Tablet: seluruh kolom pengukuran, keypad, catatan, dan tombol Simpan tampil utuh tanpa tumpang tindih.
 
 APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.7.1_form-pengukuran-rapi.apk`
-
-SHA-256: `[dihapus]`
 
 Ukuran: 13.822.563 byte.
 
@@ -112,8 +104,6 @@ Ukuran: 13.822.563 byte.
 
 APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.7.0_pencatatan-antrean.apk`
 
-SHA-256: `[dihapus]`
-
 Ukuran: 13.857.202 byte.
 
 ### Verifikasi versi 1.6.2
@@ -128,8 +118,6 @@ Ukuran: 13.857.202 byte.
 
 APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.6.2_pemisahan-antrean-pencatatan.apk`
 
-SHA-256: `[dihapus]`
-
 Ukuran: 13.820.947 byte.
 
 ### Verifikasi versi 1.6.1
@@ -143,8 +131,6 @@ Ukuran: 13.820.947 byte.
 - [x] Uji Pixel Tablet: perpindahan dua tab, pencarian nama, hasil pencarian, dan penambahan anak ke antrean berjalan baik.
 
 APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.6.1_pencarian-mudah.apk`
-
-SHA-256: `[dihapus]`
 
 Ukuran: 13.821.259 byte.
 
@@ -204,13 +190,9 @@ APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.6_scan-skrining.apk`
 
 APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.5_antrean.apk`
 
-SHA-256: `[dihapus]`
-
 Ukuran: 12.849.198 byte. Aset `index.html` di dalam APK sama dengan sumber saat build.
 
 APK: `build_apk/SIMPATIK_Posyandu_Tablet_v1.4_operasional.apk`
-
-SHA-256: `[dihapus]`
 
 Ukuran: 12.838.983 byte. Aset `index.html` di dalam APK sama dengan sumber saat build.
 
@@ -234,11 +216,11 @@ Dokumen ini harus diperbarui setiap kali satu tahap verifikasi atau integrasi se
 ### API VM — 1.12.5
 
 - Web/API VM lulus health Supabase, login dan pembatasan akses publik.
-- Endpoint native dan WebView diarahkan ke simpatik.example.
+- Endpoint native dan WebView diarahkan ke alamat server online.
 - Migrasi konfigurasi satu kali memindahkan alamat laptop ke VM tanpa menghapus sesi atau data offline.
 - Lihat WALKTHROUGH-API-VM-v1.12.5.md untuk pemasangan dan batas URL sementara.
 
-- Build akhir 1.12.5: 43 tes JavaScript lulus; unit test, lint dan assembleDebug lulus. SHA-256 APK: [dihapus].
+- Build akhir 1.12.5: 43 tes JavaScript lulus; unit test, lint dan assembleDebug lulus.
 
 ### 1.12.6 — Pemulihan unggahan KMS dan daftar anak (23 Oktober 2026)
 
@@ -279,7 +261,7 @@ Dokumen ini harus diperbarui setiap kali satu tahap verifikasi atau integrasi se
 - Penanda mode latihan/demo membaca `GET /pelatihan/status` (endpoint lama). Tidak ada tombol latihan di APK.
 - Pendaftaran antrean menanyakan menyusui (0–23 bln) dan ASI eksklusif (0–6 bln); form ukur menambah catatan/pengamatan khusus. Field opsional pada `POST /antrean` dan `POST /pengukuran`; web perlu migrasi 031.
 - Validasi: 65 regresi JavaScript, testDebugUnitTest, assembleDebug lulus. Tampilan diperiksa di browser 360×780, 375×812, 800×360, 768×1024, 1280×800. Belum diuji di perangkat fisik.
-- APK: app/build/outputs/apk/debug/SIMPATIK-1.13.0-debug.apk (versionCode 34), SHA-256 [dihapus].
+- APK: app/build/outputs/apk/debug/SIMPATIK-1.13.0-debug.apk (versionCode 34)
 
 
 ## 2026-11-09 — v1.13.1: keyboard HP dan nomor antrean
@@ -287,7 +269,7 @@ Dokumen ini harus diperbarui setiap kali satu tahap verifikasi atau integrasi se
 - Nomor antrean batal dikembalikan ke pendaftar berikutnya; server (migrasi 032) dan tablet memakai aturan nomor kosong terkecil.
 - Saat keyboard terbuka, banner dan bilah Simpan disembunyikan sementara dan kolom aktif digulir ke tengah.
 - Validasi: 66 regresi JavaScript dan assembleDebug lulus. Diuji langsung di HP uji via adb: form ukur, keyboard pada kolom catatan, dan dialog pendaftaran (tanpa menyimpan data).
-- APK: app/build/outputs/apk/debug/SIMPATIK-1.13.1-debug.apk (versionCode 35), SHA-256 [dihapus].
+- APK: app/build/outputs/apk/debug/SIMPATIK-1.13.1-debug.apk (versionCode 35)
 
 
 ## 2026-11-09 — v1.14.0/1.14.1: pembaruan dari server

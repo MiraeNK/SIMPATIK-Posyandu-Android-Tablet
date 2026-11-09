@@ -10,7 +10,7 @@ Tanggal pengujian: 21 Oktober 2026. APK debug versi 1.12.3, versionCode 27.
 4. Pada beranda portrait, **Antrean Hari Ini** memenuhi satu baris. **Pencatatan Langsung** dan **Riwayat Bulanan** sejajar; **Daftarkan Balita** memenuhi baris berikutnya.
 5. Gunakan tombol panah untuk kembali. Tombol navigasi utama memakai area sentuh minimal 48 px.
 
-![Beranda HP](docs/ui-1.12.3/beranda-hp.png)
+![Beranda HP](../ui-1.12.3/beranda-hp.png)
 
 ## Scan kartu dan catatan petugas
 
@@ -21,7 +21,7 @@ Tanggal pengujian: 21 Oktober 2026. APK debug versi 1.12.3, versionCode 27.
 5. Tombol **×** atau Kembali Android membatalkan langkah ini tanpa mendaftarkan anak. Saat keyboard terbuka, Kembali pertama dapat menutup keyboard terlebih dahulu.
 6. Kartu anak yang sudah terdaftar hari itu ditolak agar tidak membuat antrean ganda. Konfirmasi berulang juga tidak membuat entri tambahan.
 
-![Popup hasil scan pada HP](docs/ui-1.12.3/catatan-scan-hp.png)
+![Popup hasil scan pada HP](../ui-1.12.3/catatan-scan-hp.png)
 
 ## Hasil pengujian
 
@@ -56,5 +56,3 @@ Ini membatasi pembentukan cluster Nearby. Pada pengujian, pemeriksaan koneksi AP
 File: `app/build/outputs/apk/debug/SIMPATIK-1.12.3-debug.apk`.
 
 Ukuran: 14.047.186 byte.
-
-SHA-256: `[dihapus]`.

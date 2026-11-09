@@ -22,3 +22,5 @@ vcs-1/
 *.jks
 *.keystore
 keystore.properties
+# Alamat server untuk build
+server.properties

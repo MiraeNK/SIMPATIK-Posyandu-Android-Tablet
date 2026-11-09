@@ -4,7 +4,7 @@ Pembaruan 21 Oktober 2026. APK versionCode 28, versionName 1.12.4.
 
 ## Perbaikan koneksi
 
-HP menggunakan API `https://simpatik.example/api/v1`.
+HP menggunakan alamat API online yang diatur saat build.
 Versi lama menulis mode `lokal` pada setiap hasil penemuan server, termasuk ketika native Android menemukan Cloudflare. Versi ini menentukan label dari URL efektif dan memakai label yang sama pada pemberitahuan.
 
 Pada HP yang diuji, beranda kini menampilkan **Server online · API & database siap**. Ini terpisah dari status Nearby; akun super admin lintas wilayah masih memerlukan konteks satu Posyandu untuk membentuk cluster Nearby.
@@ -39,5 +39,3 @@ Endpoint heartbeat memerlukan sesi yang sah. Versi lama yang mengirim laporan ta
 - Panel web mobile memakai dialog native agar berada di atas laci menu, dengan pencarian dan filter yang tetap dapat dioperasikan.
 
 APK: 13.991.044 byte.
-
-SHA-256: `[dihapus]`.

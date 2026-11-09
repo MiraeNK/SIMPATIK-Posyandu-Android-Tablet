@@ -54,7 +54,7 @@ Pada Kartu Kontrol, badge menunjukkan kondisi catatan:
 
 ## Perlindungan data ganda dan tumpang tindih
 
-ID baru dibentuk secara tetap dari identitas balita dan periode, misalnya `ukur_3273..._202609`. Database Android juga menerapkan `UNIQUE(nik, id_periode)`. Di Supabase, permintaan dikirim sebagai upsert berdasarkan `id_pengukuran`. Tiga lapisan ini membuat pengiriman ulang memperbarui data yang sama.
+ID baru dibentuk secara tetap dari identitas balita dan periode, misalnya `ukur_3273.._202609`. Database Android juga menerapkan `UNIQUE(nik, id_periode)`. Di Supabase, permintaan dikirim sebagai upsert berdasarkan `id_pengukuran`. Tiga lapisan ini membuat pengiriman ulang memperbarui data yang sama.
 
 Riwayat lama yang berasal dari Supabase mempertahankan ID aslinya. Saat catatan itu dikoreksi, aplikasi memakai kembali ID tersebut. Jika tanggal koreksi berpindah bulan, slot bulan lama di cache UI dihapus setelah transaksi Android berhasil.
 

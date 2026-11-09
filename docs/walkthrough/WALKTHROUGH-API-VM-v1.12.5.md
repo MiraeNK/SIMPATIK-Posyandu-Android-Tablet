@@ -2,9 +2,8 @@
 
 Tanggal: 23 Oktober 2026.
 
-- Website: https://simpatik.example/
-- REST API: https://simpatik.example/api/v1
-- Host aplikasi: VM-Ubuntu, SSH pengguna@server-vm.
+- Website dan REST API: alamat server online (diatur saat build, tidak dicantumkan di repo).
+- Host aplikasi: VM Ubuntu.
 - Database tetap Supabase yang sudah dipakai, akun/kata sandi tidak diubah.
 
 ## Memasang pembaruan
@@ -27,4 +26,4 @@ Cloudflare Quick Tunnel bersifat sementara. Restart API saja mempertahankan tunn
 - Tes migrasi alamat mempertahankan sesi/data offline; tes lain memastikan hostname native dan WebView sama.
 - HP fisik belum terdeteksi ADB ketika pemeriksaan deployment. Pengujian UI fisik versi ini belum dilakukan.
 
-Hasil build akhir: 43 tes regresi JavaScript lulus; Gradle testDebugUnitTest, lintDebug dan assembleDebug lulus. APK SIMPATIK-1.12.5-debug.apk, SHA-256 [dihapus].
+Hasil build akhir: 43 tes regresi JavaScript lulus; Gradle testDebugUnitTest, lintDebug dan assembleDebug lulus. APK SIMPATIK-1.12.5-debug.apk

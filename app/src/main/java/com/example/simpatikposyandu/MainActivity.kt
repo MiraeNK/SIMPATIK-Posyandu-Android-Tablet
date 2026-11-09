@@ -698,6 +698,10 @@ class AndroidAppBridge(
     @JavascriptInterface
     fun versiAplikasi(): String = activity.appUpdater.infoVersi()
 
+    /** Alamat REST API bawaan dari konfigurasi build; kosong bila tidak diatur. */
+    @JavascriptInterface
+    fun alamatServerBawaan(): String = BuildConfig.PORTAL_API_URL
+
     @JavascriptInterface
     fun unduhPembaruan(url: String, sha256: String, versionCode: Double): String =
         activity.appUpdater.mulai(url, sha256, versionCode.toLong())
@@ -828,10 +832,11 @@ class AndroidAppBridge(
                 var serverFoundJson: String? = null
 
                 // 1. Prioritaskan API publik agar tablet dapat tersambung dari jaringan mana pun.
-                // URL Quick Tunnel ini sementara dan berubah saat tunnel dimulai ulang.
-                val cloudflareHost = "simpatik.example"
-                val cloudflareApiUrl = "https://$cloudflareHost/api/v1"
+                // Alamat disuntikkan saat build dari server.properties (tidak disimpan di repo).
+                val cloudflareApiUrl = BuildConfig.PORTAL_API_URL.trimEnd('/')
+                val cloudflareHost = runCatching { URL(cloudflareApiUrl).host }.getOrDefault("")
                 try {
+                    check(cloudflareHost.isNotEmpty()) { "Alamat API online belum dikonfigurasi saat build" }
                     val connection = (URL("$cloudflareApiUrl/kesehatan").openConnection() as HttpURLConnection).apply {
                         connectTimeout = 7000
                         readTimeout = 7000
@@ -951,9 +956,9 @@ class AndroidAppBridge(
 
                 // 4. Fallback jaringan privat: gunakan Serve HTTPS Tailscale
                 // bila Cloudflare publik dan discovery lokal tidak tersedia.
-                if (serverFoundJson == null) {
-                    val tailscaleHost = "simpatik.tailnet.example"
-                    val apiUrl = "https://$tailscaleHost:8443/api/v1"
+                if (serverFoundJson == null && BuildConfig.TAILSCALE_API_URL.isNotBlank()) {
+                    val apiUrl = BuildConfig.TAILSCALE_API_URL.trimEnd('/')
+                    val tailscaleHost = runCatching { URL(apiUrl).host }.getOrDefault("")
                     try {
                         val connection = (URL("$apiUrl/kesehatan").openConnection() as HttpURLConnection).apply {
                             connectTimeout = 5000

@@ -5,7 +5,8 @@ const { test } = require('node:test');
 const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '../app/src/main/assets/index.html'), 'utf8');
-const portalApiBawaan = html.match(/const PORTAL_API_BAWAAN = '([^']+)'/)[1];
+// Di luar APK, alamat bawaan memakai contoh; alamat sungguhan disuntikkan saat build.
+const portalApiBawaan = html.match(/const PORTAL_API_CONTOH = '([^']+)'/)[1];
 function harness(initialStorage = {}) {
   const storage = new Map(Object.entries(initialStorage));
   const alerts = [];
@@ -101,7 +102,8 @@ test('login preserves password spaces and identifies each app installation', asy
 test('online tunnel profile uses one fixed HTTPS API and verifies database health', async () => {
   const h = harness();
   assert.equal(h.app.registryConfig.portalApi.url, portalApiBawaan);
-  assert.match(portalApiBawaan, /^https:\/\/[a-zA-Z0-9.-]+\.(?:trycloudflare\.com|cloudflare\.com|ngrok-free\.dev|ngrok-free\.app|ngrok\.app)\/api\/v1$/);
+  assert.match(portalApiBawaan, /^https:\/\/[a-zA-Z0-9.-]+\/api\/v1$/);
+  assert.doesNotMatch(html, /trycloudflare\.com|\.ts\.net\//, 'alamat server tidak boleh tertulis di repo');
   h.context.fetch = async (url, request) => {
     assert.equal(url, portalApiBawaan + '/kesehatan');
     return { ok: true, json: async () => ({ status: 'siap', database: 'terhubung' }) };
@@ -806,10 +808,12 @@ test('VM deployment migrates the saved laptop API without deleting session or of
   assert.equal(ulang.app.registryConfig.portalApi.url, 'https://operator.example/api/v1');
 });
 
-test('native discovery and WebView use the same VM hostname', () => {
+test('native discovery and WebView read the same build-time server address', () => {
   const native = fs.readFileSync(path.join(__dirname,'../app/src/main/java/com/example/simpatikposyandu/MainActivity.kt'),'utf8');
-  const host = native.match(/val cloudflareHost = "([^"]+)"/)[1];
-  assert.equal(host, new URL(portalApiBawaan).hostname);
+  assert.match(native, /val cloudflareApiUrl = BuildConfig\.PORTAL_API_URL/);
+  assert.match(native, /fun alamatServerBawaan\(\): String = BuildConfig\.PORTAL_API_URL/);
+  assert.doesNotMatch(native, /trycloudflare\.com"|\.ts\.net"/, 'host server tidak boleh tertulis di kode');
+  assert.match(html, /AndroidBridge\.alamatServerBawaan\(\)/);
 });
 
  test('healthy connection still retries pending uploads and refreshes the roster', async () => {

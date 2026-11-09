@@ -1638,9 +1638,18 @@
     }
   ];
 
-  // Alamat default REST API server Cloudflare Tunnel / Online.
-  // URL ini menghubungkan tablet ke Portal SIMPATIK melalui tunnel online.
-  const PORTAL_API_BAWAAN = 'https://simpatik.example/api/v1';
+  // Alamat REST API bawaan disuntikkan saat build (server.properties, tidak ada di repo)
+  // dan dibaca dari jembatan Android. Di luar APK dipakai alamat contoh.
+  const PORTAL_API_CONTOH = 'https://simpatik.example/api/v1';
+  const PORTAL_API_BAWAAN = (() => {
+    try {
+      const dariBuild = typeof window !== 'undefined' && typeof window.AndroidBridge?.alamatServerBawaan === 'function'
+        ? String(window.AndroidBridge.alamatServerBawaan() || '').trim().replace(/\/+$/, '')
+        : '';
+      if (/^https?:\/\/[^/]+\/api\/v1$/.test(dariBuild)) return dariBuild;
+    } catch (_) {}
+    return PORTAL_API_CONTOH;
+  })();
   const PORTAL_DEPLOYMENT = 'vm-2026-10-23';
   const { createApp } = Vue;
 
@@ -1692,7 +1701,7 @@
         // Manajemen Akun & Hak Akses (RBAC)
         currentUser: savedUser || {
           username: 'kader',
-          name: 'Ibu Contoh',
+          name: 'Kader Posyandu',
           role: 'kader'
         },
 

@@ -1,16 +1,24 @@
 package com.example.simpatikposyandu
 
 import android.annotation.SuppressLint
+import android.Manifest
 import android.content.ContentValues
+import android.content.Intent
 import android.content.Context
+import android.content.pm.PackageManager
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.os.Bundle
+import android.os.Build
+import android.provider.Settings
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -22,6 +30,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.Keep
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -40,6 +50,12 @@ import java.net.DatagramSocket
 import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.URL
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
+import android.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -48,9 +64,174 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     private var webViewInstance: WebView? = null
+    private var nativeScannerOpen = false
+    private val cardScanner = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        nativeScannerOpen = false
+        val value = result.data?.getStringExtra("qr").orEmpty()
+        val script = if (result.resultCode == RESULT_OK && value.isNotBlank())
+            "window.handleScanKartuSasaran && window.handleScanKartuSasaran(" + JSONObject.quote(value) + ")"
+        else "window.handleScanKartuDibatalkan && window.handleScanKartuDibatalkan()"
+        val lastCamera = getSharedPreferences("scanner_camera", MODE_PRIVATE).getInt("lens", 0)
+        val facing = if (lastCamera == androidx.camera.core.CameraSelector.LENS_FACING_BACK) "environment" else "user"
+        val cameraScript = "window.handleKameraTerakhir && window.handleKameraTerakhir(" + JSONObject.quote(facing) + ");"
+        webViewInstance?.evaluateJavascript(cameraScript + script, null)
+    }
+
+    fun openCardScanner(facing: String) {
+        runOnUiThread {
+            if (!nativeScannerOpen) {
+                nativeScannerOpen = true
+                cardScanner.launch(Intent(this, CardScannerActivity::class.java).putExtra("facing", facing))
+            }
+        }
+    }
+
+    val appUpdater: AppUpdater by lazy {
+        AppUpdater(this) { script -> runOnUiThread { webViewInstance?.evaluateJavascript(script, null) } }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        appUpdater.lanjutkanSetelahIzin()
+    }
+
     private var lastBackPressTime: Long = 0L
     private var queueSpeaker: TextToSpeech? = null
     @Volatile private var queueSpeakerReady: Boolean = false
+    private var nearbyClusterManager: NearbyClusterManager? = null
+    private var pendingNearbyContext: JSONObject? = null
+
+    private fun ensureNearbyManager(): NearbyClusterManager {
+        return nearbyClusterManager ?: NearbyClusterManager(
+            applicationContext,
+            Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "tablet",
+            onStatus = { status ->
+                runOnUiThread {
+                    webViewInstance?.evaluateJavascript(
+                        "window.handleNearbyStatus && window.handleNearbyStatus(${JSONObject.quote(status)})",
+                        null
+                    )
+                }
+            },
+            onSnapshot = { snapshot ->
+                runOnUiThread {
+                    webViewInstance?.evaluateJavascript(
+                        "window.handleNearbySnapshot && window.handleNearbySnapshot(${JSONObject.quote(snapshot)})",
+                        null
+                    )
+                }
+            }
+        ).also { nearbyClusterManager = it }
+    }
+
+    fun startNearbyCluster(contextJson: String): String {
+        return try {
+            val context = JSONObject(contextJson)
+            simpanKonteksClusterAman(contextJson)
+            val permissions = nearbyPermissions()
+            val missing = permissions.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+            if (missing.isNotEmpty()) {
+                pendingNearbyContext = context
+                requestPermissions(missing.toTypedArray(), REQUEST_NEARBY_PERMISSIONS)
+                return JSONObject().put("ok", true).put("status", "permission_requested").put("workspaceId", context.getString("workspaceId")).toString()
+            }
+            val ok = ensureNearbyManager().start(
+                context.getString("workspaceId"),
+                context.getString("clusterKey"),
+                "SIMPATIK-${(Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: "tablet").takeLast(4)}"
+            )
+            JSONObject().put("ok", ok).put("status", if (ok) "starting" else "invalid_context").put("workspaceId", context.getString("workspaceId")).toString()
+        } catch (error: Exception) {
+            JSONObject().put("ok", false).put("error", error.message ?: "Gagal memulai koneksi Nearby").toString()
+        }
+    }
+
+    fun startNearbyClusterFromCache(): String {
+        return try {
+        val prefs = getSharedPreferences("cluster_nearby_secure", MODE_PRIVATE)
+        val encoded = prefs.getString("context", null) ?: return JSONObject().put("ok", false).put("error", "Konteks cluster belum tersimpan").toString()
+        val packed = Base64.decode(encoded, Base64.NO_WRAP)
+        val iv = packed.copyOfRange(0, 12)
+        val ciphertext = packed.copyOfRange(12, packed.size)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, kunciCluster(), GCMParameterSpec(128, iv))
+        val context = JSONObject(String(cipher.doFinal(ciphertext), Charsets.UTF_8))
+        startNearbyCluster(context.toString())
+    } catch (error: Exception) {
+        JSONObject().put("ok", false).put("error", error.message ?: "Gagal membuka konteks cluster tersimpan").toString()
+    }
+    }
+
+    private fun simpanKonteksClusterAman(raw: String) {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, kunciCluster())
+        val encrypted = cipher.iv + cipher.doFinal(raw.toByteArray(Charsets.UTF_8))
+        getSharedPreferences("cluster_nearby_secure", MODE_PRIVATE).edit()
+            .putString("context", Base64.encodeToString(encrypted, Base64.NO_WRAP)).apply()
+    }
+
+    private fun kunciCluster(): SecretKey {
+        val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        (keyStore.getKey(CLUSTER_KEY_ALIAS, null) as? SecretKey)?.let { return it }
+        val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+        generator.init(KeyGenParameterSpec.Builder(
+            CLUSTER_KEY_ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        ).setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
+        return generator.generateKey()
+    }
+
+    fun broadcastNearbySnapshot(json: String): Int = nearbyClusterManager?.broadcastSnapshot(json) ?: 0
+
+    fun stopNearbyCluster() {
+        nearbyClusterManager?.stop()
+        nearbyClusterManager = null
+        pendingNearbyContext = null
+    }
+
+    private fun nearbyPermissions(): Array<String> {
+        val permissions = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissions += Manifest.permission.BLUETOOTH_SCAN
+            permissions += Manifest.permission.BLUETOOTH_ADVERTISE
+            permissions += Manifest.permission.BLUETOOTH_CONNECT
+        }
+        if (Build.VERSION.SDK_INT >= 33) permissions += Manifest.permission.NEARBY_WIFI_DEVICES
+        if (Build.VERSION.SDK_INT <= 30) permissions += Manifest.permission.ACCESS_FINE_LOCATION
+        if (Build.VERSION.SDK_INT >= 37) permissions += "android.permission.ACCESS_LOCAL_NETWORK"
+        return permissions.toTypedArray()
+    }
+
+    @Deprecated("Nearby and camera permissions are requested for the active Posyandu workspace")
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_CAMERA_PERMISSIONS) {
+            val granted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            webViewInstance?.evaluateJavascript(
+                "window.handleIzinKameraDiberikan && window.handleIzinKameraDiberikan($granted)",
+                null
+            )
+            return
+        }
+        if (requestCode != REQUEST_NEARBY_PERMISSIONS) return
+        val context = pendingNearbyContext ?: return
+        pendingNearbyContext = null
+        if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+            startNearbyCluster(context.toString())
+        } else {
+            webViewInstance?.evaluateJavascript(
+                "window.handleNearbyStatus && window.handleNearbyStatus('Izin perangkat sekitar ditolak')",
+                null
+            )
+        }
+    }
+
+    companion object {
+        private const val REQUEST_NEARBY_PERMISSIONS = 7104
+        const val REQUEST_CAMERA_PERMISSIONS = 7105
+        private const val CLUSTER_KEY_ALIAS = "simpatik-nearby-context-v1"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -135,6 +316,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        stopNearbyCluster()
         queueSpeaker?.stop()
         queueSpeaker?.shutdown()
         queueSpeaker = null
@@ -195,7 +377,9 @@ private class PosyanduDatabase(context: Context) :
     fun upsertMeasurement(payloadText: String): JSONObject {
         val payload = JSONObject(payloadText)
         val id = payload.optString("id_pengukuran").trim()
-        val nik = payload.optString("nik").trim()
+        val nikRaw = payload.optString("nik").trim()
+                val nik = if (nikRaw.matches(Regex("[0-9]{16}"))) nikRaw
+                    else payload.optLong("id_anak", 0L).takeIf { it > 0 }?.let { "ANAK-$it" }.orEmpty()
         val period = payload.optString("id_periode").trim()
         val date = payload.optString("tanggal_ukur").trim()
         require(id.isNotEmpty() && nik.isNotEmpty() && period.isNotEmpty() && date.isNotEmpty()) {
@@ -272,6 +456,77 @@ private class PosyanduDatabase(context: Context) :
             while (cursor.moveToNext()) rows.put(JSONObject(cursor.getString(0)))
         }
         return rows
+    }
+
+    fun pendingMeasurementSnapshots(): JSONArray {
+        val rows = JSONArray()
+        readableDatabase.query(
+            "measurements", arrayOf("payload_json", "revision", "created_at", "updated_at"),
+            "sync_status = ?", arrayOf("pending"), null, null, "updated_at ASC", "100"
+        ).use { cursor ->
+            while (cursor.moveToNext()) rows.put(JSONObject()
+                .put("payload", JSONObject(cursor.getString(0)))
+                .put("revision", cursor.getInt(1))
+                .put("createdAt", cursor.getLong(2))
+                .put("updatedAt", cursor.getLong(3)))
+        }
+        return rows
+    }
+
+    fun importNearbyMeasurements(raw: String): Int {
+        val incoming = JSONArray(raw)
+        val db = writableDatabase
+        var imported = 0
+        db.beginTransaction()
+        try {
+            for (index in 0 until minOf(incoming.length(), 100)) {
+                val wrapper = incoming.optJSONObject(index) ?: continue
+                val payload = wrapper.optJSONObject("payload") ?: continue
+                val id = payload.optString("id_pengukuran").trim()
+                val nikRaw = payload.optString("nik").trim()
+                val nik = if (nikRaw.matches(Regex("[0-9]{16}"))) nikRaw
+                    else payload.optLong("id_anak", 0L).takeIf { it > 0 }?.let { "ANAK-$it" }.orEmpty()
+                val period = payload.optString("id_periode").trim()
+                val date = payload.optString("tanggal_ukur").trim()
+                val updatedAt = wrapper.optLong("updatedAt", 0L)
+                val createdAt = wrapper.optLong("createdAt", updatedAt)
+                if (id.isEmpty() || nik.isEmpty() || period.isEmpty() || updatedAt <= 0L) continue
+                val parts = date.split("-")
+                if (parts.size != 3 || period != "periode_${parts[0]}_${parts[1].toIntOrNull() ?: continue}") continue
+                val parsedDate = runCatching { SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }.parse(date) }.getOrNull() ?: continue
+                if (parsedDate.after(Date())) continue
+                fun validNumber(field: String, min: Double, max: Double, required: Boolean): Boolean {
+                    val rawValue = payload.optString(field).trim()
+                    if (!required && (rawValue.isEmpty() || rawValue == "N/A")) return true
+                    val value = rawValue.replace(',', '.').toDoubleOrNull() ?: return false
+                    return value in min..max
+                }
+                if (!validNumber("bb_kg", 1.0, 40.0, true) ||
+                    !validNumber("panjang_tinggi_cm", 30.0, 130.0, true) ||
+                    !validNumber("lila", 8.0, 25.0, false) ||
+                    !validNumber("lika", 30.0, 60.0, false)) continue
+
+                var localUpdatedAt = 0L
+                db.query("measurements", arrayOf("updated_at"), "id_pengukuran = ? OR (nik = ? AND id_periode = ?)",
+                    arrayOf(id, nik, period), null, null, null, "1").use { cursor ->
+                    if (cursor.moveToFirst()) localUpdatedAt = cursor.getLong(0)
+                }
+                if (updatedAt <= localUpdatedAt) continue
+                val values = ContentValues().apply {
+                    put("id_pengukuran", id); put("nik", nik); put("id_periode", period)
+                    put("tanggal_ukur", date); put("payload_json", payload.toString())
+                    put("sync_status", "pending"); put("revision", maxOf(1, wrapper.optInt("revision", 1)))
+                    put("created_at", createdAt); put("updated_at", updatedAt)
+                }
+                db.delete("measurements", "nik = ? AND id_periode = ? AND id_pengukuran <> ?", arrayOf(nik, period, id))
+                db.insertWithOnConflict("measurements", null, values, SQLiteDatabase.CONFLICT_REPLACE)
+                imported++
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+        return imported
     }
 
     fun markSynced(id: String): Boolean {
@@ -376,6 +631,22 @@ class AndroidAppBridge(
     }
 
     @JavascriptInterface
+    fun ambilSnapshotPengukuranTertunda(): String = try {
+        database.pendingMeasurementSnapshots().toString()
+    } catch (error: Exception) {
+        Log.e("PosyanduDatabase", "Gagal menyiapkan snapshot pengukuran", error)
+        "[]"
+    }
+
+    @JavascriptInterface
+    fun imporSnapshotPengukuranNearby(jsonData: String): Int = try {
+        database.importNearbyMeasurements(jsonData)
+    } catch (error: Exception) {
+        Log.e("PosyanduDatabase", "Gagal menerapkan snapshot pengukuran Nearby", error)
+        0
+    }
+
+    @JavascriptInterface
     fun tandaiPengukuranTersinkron(idPengukuran: String): Boolean = database.markSynced(idPengukuran)
 
     @JavascriptInterface
@@ -410,6 +681,41 @@ class AndroidAppBridge(
     } catch (error: Exception) {
         Log.e("PosyanduDatabase", "Gagal membaca antrean layanan", error)
         "[]"
+    }
+
+    @JavascriptInterface
+    fun mulaiClusterNearby(clusterContext: String): String = activity.startNearbyCluster(clusterContext)
+
+    @JavascriptInterface
+    fun mulaiClusterNearbyDariCache(): String = activity.startNearbyClusterFromCache()
+
+    @JavascriptInterface
+    fun kirimSnapshotNearby(snapshot: String): Int = activity.broadcastNearbySnapshot(snapshot)
+
+    @JavascriptInterface
+    fun hentikanClusterNearby() = activity.stopNearbyCluster()
+
+    @JavascriptInterface
+    fun versiAplikasi(): String = activity.appUpdater.infoVersi()
+
+    @JavascriptInterface
+    fun unduhPembaruan(url: String, sha256: String, versionCode: Double): String =
+        activity.appUpdater.mulai(url, sha256, versionCode.toLong())
+
+    @JavascriptInterface
+    fun batalkanPembaruan() = activity.appUpdater.batal()
+
+    @JavascriptInterface
+    fun kameraTerakhir(): String {
+        val prefs = activity.getSharedPreferences("scanner_camera", Context.MODE_PRIVATE)
+        if (!prefs.contains("lens")) return ""
+        return if (prefs.getInt("lens", 0) == androidx.camera.core.CameraSelector.LENS_FACING_BACK) "environment" else "user"
+    }
+
+    @JavascriptInterface
+    fun scanKartuDenganKamera(facing: String): String {
+        activity.openCardScanner(facing)
+        return JSONObject().put("ok", true).toString()
     }
 
     @JavascriptInterface
@@ -448,6 +754,22 @@ class AndroidAppBridge(
     }
 
     @JavascriptInterface
+    fun cekIzinKamera(): Boolean {
+        return ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    }
+
+    @JavascriptInterface
+    fun mintaIzinKamera(): Boolean {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            return true
+        }
+        activity.runOnUiThread {
+            ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.CAMERA), MainActivity.REQUEST_CAMERA_PERMISSIONS)
+        }
+        return false
+    }
+
+    @JavascriptInterface
     fun tampilkanPesan(message: String) {
         activity.runOnUiThread {
             Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
@@ -457,6 +779,12 @@ class AndroidAppBridge(
     @JavascriptInterface
     fun ucapkanPanggilan(queueNumber: String, childName: String): Boolean =
         activity.announceQueue(queueNumber, childName)
+
+    @JavascriptInterface
+    fun dapatkanInfoPerangkat(): String = JSONObject().apply {
+        put("namaPerangkat", "${Build.MANUFACTURER} ${Build.MODEL}".trim())
+        put("jenisPerangkat", "android")
+    }.toString()
 
     @JavascriptInterface
     fun dapatkanInfoJaringan(): String {
@@ -496,52 +824,81 @@ class AndroidAppBridge(
         Thread {
             try {
                 val wifiManager = activity.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
-                val multicastLock = wifiManager?.createMulticastLock("SimpatikDiscovery")?.apply {
-                    setReferenceCounted(true)
-                    acquire()
-                }
 
                 var serverFoundJson: String? = null
 
-                // 1. Coba UDP Broadcast ke port 43210 (Auto-Discovery)
+                // 1. Prioritaskan API publik agar tablet dapat tersambung dari jaringan mana pun.
+                // URL Quick Tunnel ini sementara dan berubah saat tunnel dimulai ulang.
+                val cloudflareHost = "simpatik.example"
+                val cloudflareApiUrl = "https://$cloudflareHost/api/v1"
                 try {
-                    val socket = DatagramSocket().apply {
-                        broadcast = true
-                        soTimeout = 1200
+                    val connection = (URL("$cloudflareApiUrl/kesehatan").openConnection() as HttpURLConnection).apply {
+                        connectTimeout = 7000
+                        readTimeout = 7000
+                        requestMethod = "GET"
                     }
-                    val probeData = "SIMPATIK_DISCOVER_SERVER".toByteArray(Charsets.UTF_8)
-                    val broadcastAddr = InetAddress.getByName("255.255.255.255")
-                    val packet = DatagramPacket(probeData, probeData.size, broadcastAddr, 43210)
-                    socket.send(packet)
-
-                    val buffer = ByteArray(2048)
-                    val receivePacket = DatagramPacket(buffer, buffer.size)
-                    socket.receive(receivePacket)
-
-                    val responseText = String(receivePacket.data, 0, receivePacket.length, Charsets.UTF_8)
-                    val senderIp = receivePacket.address.hostAddress ?: ""
-                    socket.close()
-
-                    if (responseText.contains("simpatik-posyandu") && senderIp.isNotEmpty()) {
-                        val obj = JSONObject(responseText)
-                        val port = obj.optInt("portaApi", 4321)
-                        val path = obj.optString("jalurApi", "/api/v1")
-                        val apiUrl = "http://$senderIp:$port$path"
-                        serverFoundJson = JSONObject().apply {
-                            put("ok", true)
-                            put("ip", senderIp)
-                            put("port", port)
-                            put("apiUrl", apiUrl)
-                            put("metode", "udp_broadcast")
-                        }.toString()
+                    if (connection.responseCode == 200) {
+                        val body = connection.inputStream.bufferedReader().use { it.readText() }
+                        if (body.contains("\"status\":\"siap\"")) {
+                            serverFoundJson = JSONObject().apply {
+                                put("ok", true)
+                                put("ip", cloudflareHost)
+                                put("port", 443)
+                                put("apiUrl", cloudflareApiUrl)
+                                put("metode", "cloudflare_quick_tunnel")
+                            }.toString()
+                        }
                     }
-                } catch (e: Exception) {
-                    Log.d("Discovery", "UDP broadcast note: ${e.message}")
-                } finally {
-                    try { multicastLock?.release() } catch (_: Exception) {}
+                    connection.disconnect()
+                } catch (error: Exception) {
+                    Log.d("Discovery", "Cloudflare Quick Tunnel unavailable: ${error.message}")
                 }
 
-                // 2. Jika UDP broadcast belum membuahkan hasil (misal AP isolation/multicast diblokir), coba probe Gateway & IP hotspot umum
+                // 2. Jika server publik tidak tersedia, coba UDP di jaringan lokal yang sama.
+                if (serverFoundJson == null) {
+                    val multicastLock = wifiManager?.createMulticastLock("SimpatikDiscovery")?.apply {
+                        setReferenceCounted(true)
+                        acquire()
+                    }
+                    try {
+                        val socket = DatagramSocket().apply {
+                            broadcast = true
+                            soTimeout = 1200
+                        }
+                        val probeData = "SIMPATIK_DISCOVER_SERVER".toByteArray(Charsets.UTF_8)
+                        val broadcastAddr = InetAddress.getByName("255.255.255.255")
+                        val packet = DatagramPacket(probeData, probeData.size, broadcastAddr, 43210)
+                        socket.send(packet)
+
+                        val buffer = ByteArray(2048)
+                        val receivePacket = DatagramPacket(buffer, buffer.size)
+                        socket.receive(receivePacket)
+
+                        val responseText = String(receivePacket.data, 0, receivePacket.length, Charsets.UTF_8)
+                        val senderIp = receivePacket.address.hostAddress ?: ""
+                        socket.close()
+
+                        if (responseText.contains("simpatik-posyandu") && senderIp.isNotEmpty()) {
+                            val obj = JSONObject(responseText)
+                            val port = obj.optInt("portaApi", 4321)
+                            val path = obj.optString("jalurApi", "/api/v1")
+                            val apiUrl = "http://$senderIp:$port$path"
+                            serverFoundJson = JSONObject().apply {
+                                put("ok", true)
+                                put("ip", senderIp)
+                                put("port", port)
+                                put("apiUrl", apiUrl)
+                                put("metode", "udp_broadcast")
+                            }.toString()
+                        }
+                    } catch (e: Exception) {
+                        Log.d("Discovery", "UDP broadcast note: ${e.message}")
+                    } finally {
+                        try { multicastLock?.release() } catch (_: Exception) {}
+                    }
+                }
+
+                // 3. Jika UDP belum membuahkan hasil (misal AP isolation/multicast diblokir), probe gateway lokal.
                 if (serverFoundJson == null) {
                     val candidates = mutableListOf<String>()
 
@@ -589,6 +946,35 @@ class AndroidAppBridge(
                                 }
                             }
                         } catch (_: Exception) {}
+                    }
+                }
+
+                // 4. Fallback jaringan privat: gunakan Serve HTTPS Tailscale
+                // bila Cloudflare publik dan discovery lokal tidak tersedia.
+                if (serverFoundJson == null) {
+                    val tailscaleHost = "simpatik.tailnet.example"
+                    val apiUrl = "https://$tailscaleHost:8443/api/v1"
+                    try {
+                        val connection = (URL("$apiUrl/kesehatan").openConnection() as HttpURLConnection).apply {
+                            connectTimeout = 5000
+                            readTimeout = 5000
+                            requestMethod = "GET"
+                        }
+                        if (connection.responseCode == 200) {
+                            val body = connection.inputStream.bufferedReader().use { it.readText() }
+                            if (body.contains("\"status\":\"siap\"")) {
+                                serverFoundJson = JSONObject().apply {
+                                    put("ok", true)
+                                    put("ip", tailscaleHost)
+                                    put("port", 8443)
+                                    put("apiUrl", apiUrl)
+                                    put("metode", "tailscale_https")
+                                }.toString()
+                            }
+                        }
+                        connection.disconnect()
+                    } catch (error: Exception) {
+                        Log.d("Discovery", "Tailscale HTTPS unavailable: ${error.message}")
                     }
                 }
 
@@ -666,6 +1052,12 @@ fun PosyanduWebView(
                 
                 // Menangkap message console.log / error dari Vue / JavaScript
                 webChromeClient = object : WebChromeClient() {
+                    override fun onPermissionRequest(request: PermissionRequest?) {
+                        activity.runOnUiThread {
+                            request?.grant(request.resources)
+                        }
+                    }
+
                     override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                         Log.d(
                             "PosyanduJSConsole",

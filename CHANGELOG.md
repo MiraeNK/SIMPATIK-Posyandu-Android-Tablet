@@ -1,4 +1,98 @@
+# 1.14.1 (37) — 9 November 2026
+
+- Rilis uji pertama yang dipasang melalui pembaruan dari server (tanpa adb/Play Store).
+
+# 1.14.0 (36) — 9 November 2026
+
+- Pembaruan aplikasi dari server SIMPATIK: aplikasi memeriksa `GET /aplikasi/versi` saat dibuka dan tiap 15 menit, menampilkan popup (opsional bisa ditunda 6 jam; di bawah `minVersionCode` wajib), mengunduh APK dengan progres, memverifikasi SHA-256, nama paket, dan versi, lalu membuka layar pemasang Android.
+- Izin "instal dari sumber ini" diminta sekali; pemasangan lanjut otomatis setelah kembali ke aplikasi.
+- Versi pada heartbeat perangkat dibaca dari APK terpasang.
+- Rilis diterbitkan di VM dengan `npm run rilis:apk -- --apk <berkas> --versi-kode <n> --versi-nama <x.y.z> [--min <n>]`.
+- 1.14.0 perlu dipasang manual sekali per perangkat; pembaruan berikutnya lewat server.
+
+# 1.13.1 (35) — 9 November 2026
+
+- Memperbaiki tampilan form ukur dan pendaftaran di HP saat keyboard terbuka: aturan landscape kini hanya aktif bila lebar layar di atas 600 px, sehingga keypad tidak lagi menyempit ke 290 px.
+- Tanggal ukur di HP tampil satu baris penuh, tidak lagi terdorong ke kanan.
+- Saat keyboard terbuka, banner latihan dan bilah Simpan disembunyikan sementara, dan kolom yang sedang diketik digulir ke tengah layar agar tidak tertutup.
+- Nomor antrean yang dibatalkan dikembalikan dan dipakai pendaftar berikutnya (nomor kosong terkecil). Nomor anak lain yang sudah terdaftar tidak berubah; urutan panggil tetap sesuai waktu datang. Server dan tablet memakai aturan yang sama sehingga nomor tidak lagi berubah setelah sinkron.
+- Perlu migrasi server `032_nomor_antrean_dapat_dipakai_ulang.sql`.
+
+# 1.13.0 (34) — 9 November 2026
+
+- Tata letak HP dirapikan: statistik antrean tiga kolom sejajar, slot panggilan dua kolom, tombol pindai selebar layar, dan metrik riwayat dua kolom.
+- HP landscape dan HP besar/lipat portrait: halaman pengukuran kini bisa digulir sehingga kolom, keypad, dan tombol Simpan tidak terpotong; dialog konfirmasi ikut menggulir.
+- Penanda kecil di atas layar saat web sedang menjalankan sesi latihan/demo. Status dibaca dari `GET /pelatihan/status` yang sudah ada; tidak ada endpoint baru. APK tidak memiliki tombol latihan.
+- Pendaftaran antrean (pindai kartu atau pilih manual) menanyakan YA/TIDAK: ibu masih menyusui (0–23 bulan) dan ASI eksklusif (0–6 bulan). Jawaban ikut `POST /antrean` dan tampil di daftar antrean, form ukur, serta layar KMS web.
+- Form pengukuran memiliki kolom Catatan/pengamatan khusus yang dikirim sebagai `catatan_khusus` pada `POST /pengukuran`. Riwayat menampilkan catatan pencatatan dan catatan KMS dari web.
+- Perlu server dengan migrasi `031_menyusui_dan_catatan_khusus.sql`. Server lama mengabaikan field baru tanpa error.
+- Tag penutup slot antrean yang hilang diperbaiki.
+
+# 1.12.5 (29) — 23 Oktober 2026
+
+- REST API menggunakan web yang sudah dipindahkan ke VM Ubuntu melalui Cloudflare HTTPS.
+- Alamat lama tersimpan otomatis dimigrasikan satu kali, tanpa menghapus sesi/cache/pekerjaan offline.
+- Native discovery dan WebView memakai host yang sama, dengan uji regresi migrasi konfigurasi.
+
 # Changelog
+
+## 1.12.4 — Status Koneksi dan Laporan Perangkat (21 Oktober 2026)
+
+- Menentukan label server dari URL API yang digunakan, sehingga Cloudflare tidak lagi diberi label jaringan lokal oleh hasil penemuan otomatis atau pengaturan tersimpan.
+- Menyamakan pemberitahuan hasil penemuan server dengan jalur yang ditemukan: online, lokal, atau Tailscale.
+- Memperbaiki heartbeat agar menyertakan token akun dan identitas instalasi, nama/model perangkat, versi aplikasi, jenis koneksi, dan jumlah data tertunda.
+- Wilayah perangkat ditentukan server dari akun yang terverifikasi; APK tidak mengirim klaim RW atau akun lain.
+- Memverifikasi langsung pada HP uji Android 16: Cloudflare terdeteksi online, heartbeat diterima, perangkat terlihat melalui API web, dan akses tanpa sesi ditolak.
+- 41 tes regresi JavaScript lulus; build APK versionCode 28 / versionName 1.12.4 berhasil.
+
+## 1.12.3 — UI HP dan Catatan Scan Kartu (21 Oktober 2026)
+
+- Memperbaiki halaman kosong setelah splash pada HP Samsung Android 16: pengukuran langsung menemukan `vh`, `dvh`, dan `svh` bernilai 0 walaupun tinggi WebView sekitar 782 px.
+- Menggunakan batas atas/bawah kontainer tetap untuk tinggi aplikasi, sehingga halaman tidak bergantung pada satuan viewport yang keliru.
+- Menggunakan tinggi relatif terhadap overlay untuk dialog konfirmasi pengukuran, agar dialog tidak ikut menyusut ke tinggi 0.
+- Mempertahankan skala login HP yang ringkas dan pembaruan koneksi online dari Gemini.
+- Menambahkan tombol Lihat/Sembunyikan kata sandi dengan status awal tersembunyi dan mempertahankan posisi kursor saat tombol ditekan.
+- Membuat tombol Daftarkan Balita selebar satu baris pada HP, di bawah Pencatatan Langsung dan Riwayat Bulanan.
+- Menyesuaikan tinggi kontainer dengan visual viewport ketika keyboard terbuka, agar tombol Masuk tetap dapat digulir ke area yang terlihat.
+- Menyeragamkan ikon pilihan fitur, susunan judul/deskripsi, padding header pendaftaran, dan area sentuh navigasi minimal 48 px pada HP.
+- Merapikan popup catatan setelah scan QR untuk HP/tablet: **Lewati catatan** atau **Simpan & masuk antrean**, dengan tombol batal dan penanganan Kembali Android tanpa membuat antrean.
+- Membatasi popup ke tinggi layar yang terlihat ketika keyboard terbuka; isi dapat digulir, sementara kedua tindakan tetap terjangkau.
+- Menambah tes regresi untuk menunda pendaftaran sampai pilihan catatan dikonfirmasi, menyimpan/melewati draf, pembatalan, serta konfirmasi berulang tanpa entri ganda.
+- Versi aplikasi menjadi `versionCode 27` / `versionName 1.12.3`.
+
+## 1.12.2 — Skala Login Khusus HP
+
+- Memadatkan banner ilustrasi HP: gambar 80 menjadi 60 px, judul banner 21 menjadi 18 px, dan padding 24 menjadi 16 px.
+- Menyesuaikan judul utama 30 menjadi 24 px dan identitas aplikasi 22 menjadi 18 px pada lebar sampai 600 px.
+- Merapikan jarak form dan menggunakan kolom setinggi 48 px serta tombol Masuk minimal 50 px; teks input tetap 16 px agar mudah dibaca.
+- Membatasi lebar isi login HP ke 360 px; pengaturan khusus HP tidak mengubah skala tablet lebar.
+- Versi aplikasi menjadi `versionCode 26` / `versionName 1.12.2`.
+
+## 1.12.1 — Login HP Portrait
+
+- Menampilkan ilustrasi login sebagai banner ringkas di atas form pada layar HP; ilustrasi tidak lagi disembunyikan pada lebar di bawah 900 piksel.
+- Menggunakan logo lokal SIMPATIK pada identitas login, sehingga gambar logo tetap tersedia saat offline.
+- Menghapus tinggi form satu layar penuh pada HP agar form, tombol Masuk, dan banner dapat digulir bersama saat layar pendek atau keyboard terbuka.
+- Mempertahankan susunan dua kolom pada tablet lebar dan memperbarui URL API Cloudflare ke tunnel aktif.
+- Versi aplikasi menjadi `versionCode 25` / `versionName 1.12.1`.
+
+## 1.12.0 — Sinkronisasi Nearby per Posyandu
+
+- Menambahkan komunikasi tablet-ke-tablet memakai Google Nearby Connections dengan strategi Cluster.
+- Memverifikasi setiap perangkat memakai identitas Posyandu dan kunci grup dari API Portal; pertukaran lintas Posyandu ditolak.
+- Menyimpan konteks cluster terenkripsi dengan Android Keystore agar antrean hari ini dapat diteruskan saat jaringan server sementara putus.
+- Snapshot antrean dan hasil ukur lokal yang belum terkirim diterapkan idempoten berdasarkan ID/periode serta waktu pembaruan, lalu diteruskan ke API Portal saat internet tersedia.
+- Menambahkan status tablet sekitar pada beranda dan membersihkan koneksi Nearby saat pengguna keluar.
+- Membutuhkan migration server `018_kunci_cluster_posyandu.sql` sebelum fitur dapat mengambil konteks cluster.
+
+## 1.11.0 — Sinkronisasi Portal dan Antarmuka HP
+
+- Menyelaraskan sinkronisasi check-in, status panggil, pengukuran, serta catatan dengan antrean bersama di REST API Portal.
+- Menampilkan alur kerja hanya dalam dua slot. Status **Menunggu KMS di web** tetap terlihat sebagai informasi tetapi tidak menahan slot layanan.
+- Menghitung semua sasaran yang sudah check-in, termasuk anak yang menunggu pemeriksaan KMS.
+- Merapikan beranda, progres sasaran, dan riwayat bulanan untuk layar HP Android dengan target sentuh yang lebih mudah.
+- Mengirim versi aplikasi `1.11.0` pada heartbeat server.
+- Versi aplikasi menjadi `versionCode 23` / `versionName 1.11.0`.
 
 ## 1.10.8 — Login Multi-Tablet dan Tampilan HP
 
@@ -198,3 +292,20 @@ Fitur tersebut tetap tersedia untuk dikembangkan di Portal SIMPATIK. Branch `mai
 - Menambahkan antrean sinkronisasi dan retry otomatis.
 - Menambahkan stable measurement ID dan upsert untuk mencegah double entry.
 - Menambahkan validasi serta alur koreksi data.
+
+### 1.12.6 — Pemulihan unggahan KMS dan daftar anak (23 Oktober 2026)
+
+- Unggah ulang berjalan setiap siklus koneksi sehat, bukan hanya transisi offline ke online. Timeout 12 detik mencakup pembacaan respons; permintaan gagal tetap dalam SQLite.
+- Satu pengiriman batch pada satu waktu. Respons kiriman lama tidak menghapus koreksi yang lebih baru.
+- Snapshot Nearby dikirim berkala dan saat peer tersambung; penerima bisa mengunggah antrean lalu membagikan konfirmasi dengan payload yang cocok. Workspace/RW tetap diverifikasi.
+- Daftar anak ditarik berkala dan setelah login. Pendaftaran serta riwayat pending dipertahankan saat penggabungan cache. Paket server mencakup anak baru di Posyandu walau belum menjadi sasaran bulan aktif; status sasaran tidak dibuat otomatis.
+- Label KMS membedakan tersimpan lokal/menunggu unggahan.
+- Pengujian: 49 regresi JS lulus, termasuk relay dua device simulasi, retry pada koneksi sehat, refresh cache, dan koreksi saat request berlangsung. Uji HTTP/database terisolasi 14 lulus. HP/tablet belum terdeteksi melalui ADB saat pengecekan.
+
+### 1.12.7 — Batas sasaran bulanan (23 Oktober 2026)
+
+- Memperbaiki regresi 1.12.6 yang menghitung seluruh master anak sebagai sasaran.
+- Total sasaran, belum dilayani, susulan, pencarian antrean dan scan kartu wajib memakai idSasaran yang sah. Status sasaran kosong tidak lagi otomatis menjadi menunggu.
+- Master tetap tersedia pada riwayat/semua balita. Pendaftaran baru tidak otomatis masuk sasaran; admin menerbitkannya dari web.
+- API kompatibel perangkat lama: anak hanya sasaran, masterAnak terpisah. Tidak mengubah daftar sasaran, pengukuran, atau antrean di database.
+- Pengujian: 52 regresi JS termasuk kasus 92 sasaran (86 menunggu, 5 selesai, 1 tidak hadir) dengan master tambahan; 14 tes HTTP/database terisolasi.

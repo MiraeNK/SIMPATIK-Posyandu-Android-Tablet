@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hanya folder cache pembaruan yang dibagikan ke pemasang paket Android. -->
+<paths>
+    <cache-path name="pembaruan" path="pembaruan/" />
+</paths>

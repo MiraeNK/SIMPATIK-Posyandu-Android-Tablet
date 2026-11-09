@@ -1,3 +1,15 @@
+import java.util.Properties
+
+// Kunci release disimpan di luar repo. Bawaan: ~/.simpatik-signing/keystore.properties
+// (storeFile, storePassword, keyAlias, keyPassword). Bisa diganti lewat env SIMPATIK_KEYSTORE_PROPERTIES.
+val propertiKunciRilis = Properties().apply {
+    val berkas = file(
+        System.getenv("SIMPATIK_KEYSTORE_PROPERTIES")
+            ?: "${System.getProperty("user.home")}/.simpatik-signing/keystore.properties"
+    )
+    if (berkas.exists()) berkas.inputStream().use { load(it) }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -10,13 +22,25 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.simpatikposyandu"
+        // Nama paket rilis; namespace kode tetap com.example.simpatikposyandu.
+        applicationId = "id.simpatik.posyandu"
         minSdk = 24
         targetSdk = 37
-        versionCode = 37
-        versionName = "1.14.1"
+        versionCode = 38
+        versionName = "1.15.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            if (propertiKunciRilis.getProperty("storeFile") != null) {
+                storeFile = file(propertiKunciRilis.getProperty("storeFile"))
+                storePassword = propertiKunciRilis.getProperty("storePassword")
+                keyAlias = propertiKunciRilis.getProperty("keyAlias")
+                keyPassword = propertiKunciRilis.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
@@ -24,6 +48,7 @@ android {
             optimization {
                 enable = false
             }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {

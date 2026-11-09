@@ -18,3 +18,7 @@ buildOutputCleanup/
 configuration-cache/
 file-system.probe
 vcs-1/
+# Kunci tanda tangan rilis tidak boleh masuk repo
+*.jks
+*.keystore
+keystore.properties

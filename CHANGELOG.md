@@ -1,3 +1,9 @@
+# 1.15.0 (38) — 9 November 2026
+
+- APK rilis ditandatangani kunci rilis SIMPATIK; nama paket berubah menjadi `id.simpatik.posyandu`.
+- Perlu dipasang ulang satu kali: sinkronkan data aplikasi lama, pasang 1.15.0, masuk kembali, lalu hapus aplikasi lama.
+- Pembaruan berikutnya melalui server SIMPATIK (fitur 1.14).
+
 # 1.14.1 (37) — 9 November 2026
 
 - Rilis uji pertama yang dipasang melalui pembaruan dari server (tanpa adb/Play Store).

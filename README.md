@@ -1,8 +1,45 @@
-# Rilis API VM 1.12.5 — 23 Oktober 2026
+# SIMPATIK Posyandu — Aplikasi Android
 
-Endpoint aktif: https://simpatik.example/api/v1. Web/API kini berjalan di VM, sehingga laptop tidak perlu menyala. Pasang APK sebagai pembaruan tanpa menghapus data. [Walkthrough API VM](WALKTHROUGH-API-VM-v1.12.5.md).
+Aplikasi lapangan Posyandu Tulip RW 18, Kelurahan Citeureup (KKN POLMAN Bandung 2026) untuk antrean, pendaftaran, dan pencatatan pengukuran balita. Data disimpan dahulu di perangkat (SQLite) lalu disinkronkan ke REST API Portal SIMPATIK; KMS, status gizi, dan laporan dikelola di web.
 
-# SIMPATIK Posyandu — Aplikasi Tablet Android
+Kontak proyek: [kontak dihapus]
+
+## Rilis terbaru: 1.15.0 (38)
+
+- Nama paket rilis `id.simpatik.posyandu`, ditandatangani kunci rilis SIMPATIK (bukan kunci debug).
+- Unduh APK dari halaman [Releases](../../releases) atau biarkan aplikasi memperbarui diri dari server.
+- **Perpindahan satu kali dari versi lama** (`com.example.simpatikposyandu`, 1.14.1 ke bawah): sinkronkan semua data di aplikasi lama, pasang 1.15.0, masuk kembali, lalu hapus aplikasi lama. Data lokal aplikasi lama tidak ikut berpindah.
+- Sejak 1.15.0, pembaruan berikutnya dikirim dari server SIMPATIK: aplikasi menampilkan popup, mengunduh APK, memeriksa SHA-256, lalu membuka layar pemasang Android. Android tetap meminta satu konfirmasi pemasangan dan, pertama kali, izin "Izinkan dari sumber ini".
+
+## Fitur utama
+
+- Antrean harian lintas perangkat dengan nomor yang dipakai ulang bila dibatalkan.
+- Pindai kartu QR (kamera depan/belakang), pendaftaran dengan pertanyaan menyusui (0–23 bulan) dan ASI eksklusif (0–6 bulan).
+- Form pengukuran BB, PB/TB, LILA, LIKA dengan catatan/pengamatan khusus; riwayat dan koreksi per bulan.
+- Penanda mode latihan/demo dari web, tata letak HP dan tablet.
+- Bekerja offline dan menyinkronkan data saat jaringan tersedia.
+
+## Menerbitkan pembaruan
+
+1. Naikkan `versionCode` dan `versionName` di `app/build.gradle.kts`.
+2. Bangun APK rilis: `./gradlew assembleRelease` (butuh `~/.simpatik-signing/keystore.properties`, lihat di bawah).
+3. Salin APK ke VM, lalu dari `~/simpatik/server`: `npm run rilis:apk -- --apk <berkas> --versi-kode <n> --versi-nama <x.y.z> [--min <n>] [--catatan "..."]`.
+4. Lampirkan APK yang sama ke GitHub Release.
+
+### Kunci rilis
+
+Keystore **tidak** disimpan di repo. Gradle membaca `~/.simpatik-signing/keystore.properties` (atau path di env `SIMPATIK_KEYSTORE_PROPERTIES`) berisi `storeFile`, `storePassword`, `keyAlias`, `keyPassword`. Simpan cadangan keystore dan kata sandinya di tempat aman: tanpa kunci yang sama, pembaruan tidak dapat dipasang di atas aplikasi yang ada.
+
+SHA-256 sertifikat rilis: `[dihapus]`
+
+## Cabang
+
+- `main`: rilis stabil.
+- `development`: pengembangan berikutnya; digabung ke `main` saat rilis.
+
+---
+
+## Catatan versi sebelumnya
 
 Versi **1.12.4** membetulkan label koneksi Cloudflare menjadi **Server online** dan mengirim heartbeat bertoken agar perangkat tampil di daftar perangkat web sesuai Posyandu akun. Perangkat lain perlu memasang APK ini agar laporan barunya ikut diterima. Lihat [panduan koneksi dan perangkat 1.12.4](WALKTHROUGH-PERANGKAT-v1.12.4.md).
 
@@ -110,7 +147,3 @@ koneksi teknis.
 - `WALKTHROUGH-KARTU-ANTREAN-v1.6.md` — alur kartu, skrining, antrean, dan ulang ukur.
 - `CROSSCHECK-ANDROID-WEB-v1.6.md` — pembagian fitur dan status koneksi Android–web.
 - `TESTING-2026-09-10.md` — laporan pengujian versi 1.2.
-
-## Cabang pengembangan
-
-Versi fokus input dikembangkan pada branch `codex/fokus-input-tablet`. Branch `main` tetap menyimpan versi 1.2 dengan fitur lengkap sebagai arsip yang dapat digunakan kembali.

@@ -3,6 +3,7 @@ package com.example.simpatikposyandu
 import android.annotation.SuppressLint
 import android.Manifest
 import android.content.ContentValues
+import android.content.Intent
 import android.content.Context
 import android.content.pm.PackageManager
 import android.database.sqlite.SQLiteDatabase
@@ -63,6 +64,39 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     private var webViewInstance: WebView? = null
+    private var nativeScannerOpen = false
+    private val cardScanner = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        nativeScannerOpen = false
+        val value = result.data?.getStringExtra("qr").orEmpty()
+        val script = if (result.resultCode == RESULT_OK && value.isNotBlank())
+            "window.handleScanKartuSasaran && window.handleScanKartuSasaran(" + JSONObject.quote(value) + ")"
+        else "window.handleScanKartuDibatalkan && window.handleScanKartuDibatalkan()"
+        val lastCamera = getSharedPreferences("scanner_camera", MODE_PRIVATE).getInt("lens", 0)
+        val facing = if (lastCamera == androidx.camera.core.CameraSelector.LENS_FACING_BACK) "environment" else "user"
+        val cameraScript = "window.handleKameraTerakhir && window.handleKameraTerakhir(" + JSONObject.quote(facing) + ");"
+        webViewInstance?.evaluateJavascript(cameraScript + script, null)
+    }
+
+    fun openCardScanner(facing: String) {
+        runOnUiThread {
+            if (!nativeScannerOpen) {
+                nativeScannerOpen = true
+                cardScanner.launch(Intent(this, CardScannerActivity::class.java).putExtra("facing", facing))
+            }
+        }
+    }
+
+    val appUpdater: AppUpdater by lazy {
+        AppUpdater(this) { script -> runOnUiThread { webViewInstance?.evaluateJavascript(script, null) } }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        appUpdater.lanjutkanSetelahIzin()
+    }
+
     private var lastBackPressTime: Long = 0L
     private var queueSpeaker: TextToSpeech? = null
     @Volatile private var queueSpeakerReady: Boolean = false
@@ -660,6 +694,29 @@ class AndroidAppBridge(
 
     @JavascriptInterface
     fun hentikanClusterNearby() = activity.stopNearbyCluster()
+
+    @JavascriptInterface
+    fun versiAplikasi(): String = activity.appUpdater.infoVersi()
+
+    @JavascriptInterface
+    fun unduhPembaruan(url: String, sha256: String, versionCode: Double): String =
+        activity.appUpdater.mulai(url, sha256, versionCode.toLong())
+
+    @JavascriptInterface
+    fun batalkanPembaruan() = activity.appUpdater.batal()
+
+    @JavascriptInterface
+    fun kameraTerakhir(): String {
+        val prefs = activity.getSharedPreferences("scanner_camera", Context.MODE_PRIVATE)
+        if (!prefs.contains("lens")) return ""
+        return if (prefs.getInt("lens", 0) == androidx.camera.core.CameraSelector.LENS_FACING_BACK) "environment" else "user"
+    }
+
+    @JavascriptInterface
+    fun scanKartuDenganKamera(facing: String): String {
+        activity.openCardScanner(facing)
+        return JSONObject().put("ok", true).toString()
+    }
 
     @JavascriptInterface
     fun scanKartuSasaran(): String {

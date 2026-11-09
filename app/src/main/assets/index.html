@@ -18,6 +18,13 @@
       if (Number.isFinite(height) && height > 0) {
         document.documentElement.style.setProperty('--app-visible-height', height + 'px');
       }
+      // Keyboard HP terbuka: sembunyikan bilah tempel dan bawa kolom aktif ke tengah layar.
+      const keyboardTerbuka = !!viewport && window.innerHeight - viewport.height > 120;
+      document.documentElement.classList.toggle('keyboard-terbuka', keyboardTerbuka);
+      const aktif = document.activeElement;
+      if (keyboardTerbuka && aktif && /^(INPUT|TEXTAREA|SELECT)$/.test(aktif.tagName)) {
+        setTimeout(() => aktif.scrollIntoView({ block: 'center' }), 60);
+      }
     };
     window.addEventListener('resize', updateViewport);
     window.addEventListener('pageshow', updateViewport);
@@ -692,11 +699,140 @@
     to { transform: rotate(360deg); }
   }
 
+  /* Penanda mode latihan/demo dari web: tipis dan selalu di atas layar. */
+  .mode-latihan-banner { flex-shrink:0; display:flex; align-items:center; gap:8px; padding:6px 16px; background:#FEF0C7; color:#7A2E0E; border-bottom:1px solid #FEC84B; font-size:13px; line-height:1.35; }
+  .mode-latihan-banner i { font-size:16px; flex-shrink:0; }
+  .mode-latihan-banner strong { font-weight:800; }
+
+  /* Saat keyboard terbuka ruang layar sempit: bilah tempel tidak boleh menutupi kolom ketik. */
+  .keyboard-terbuka .mode-latihan-banner,
+  .keyboard-terbuka .form-footer { display:none !important; }
+  .keyboard-terbuka .form-header,
+  .keyboard-terbuka .queue-page-header,
+  .keyboard-terbuka .register-header { position:static !important; }
+
+  /* Pembaruan aplikasi dari server. */
+  .pembaruan-layer { z-index:100001; }
+  .pembaruan-card { --notice-accent:#0F6E44; --notice-soft:#E9F3EC; }
+  .pembaruan-card--wajib { --notice-accent:#B54708; --notice-soft:#FFF1D9; }
+  .pembaruan-versi { display:flex; align-items:center; gap:8px; margin-top:10px; font-size:14px; font-weight:800; color:#16211C; }
+  .pembaruan-versi span { padding:4px 9px; border-radius:999px; background:#F1F3F0; }
+  .pembaruan-versi span:last-child { background:var(--notice-soft); color:var(--notice-accent); }
+  .pembaruan-catatan { margin-top:12px; padding:10px 12px; border-radius:12px; background:#F8FAF8; border:1px solid #DCE0DA; font-size:13px; line-height:1.55; color:#34423A; white-space:pre-line; max-height:160px; overflow-y:auto; }
+  .pembaruan-progres { margin-top:16px; height:12px; border-radius:999px; background:#E7EAE5; overflow:hidden; }
+  .pembaruan-progres > div { height:100%; background:var(--notice-accent); transition:width .25s ease; }
+  .pembaruan-progres--berjalan > div { width:35% !important; animation:pembaruan-geser 1.2s ease-in-out infinite; }
+  @keyframes pembaruan-geser { from { transform:translateX(-100%); } to { transform:translateX(300%); } }
+  .pembaruan-info { margin-top:8px; font-size:13px; font-weight:700; color:#4A5750; }
+  .pembaruan-galat { margin-top:12px; padding:10px 12px; border-radius:12px; background:#FFF1F0; border:1px solid #FDA29B; color:#B42318; font-size:13px; font-weight:700; }
+  .pembaruan-aksi { display:flex; flex-wrap:wrap; gap:10px; padding:0 26px 24px; }
+  .pembaruan-aksi button { flex:1 1 160px; min-height:50px; }
+  @media (max-width: 600px) { .pembaruan-aksi { padding:0 18px 18px; } }
+
+  /* Pertanyaan YA/TIDAK pada pendaftaran antrean. */
+  .queue-question { margin-top:16px; padding:12px; border:1px solid #DCE0DA; border-radius:14px; background:#F8FAF8; }
+  .queue-question__label { font-size:14px; font-weight:800; color:#16211C; line-height:1.4; }
+  .queue-question__label span { display:block; font-size:12px; font-weight:600; color:#4A5750; }
+  .queue-question__choices { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .queue-question__choices button { min-height:48px; border-radius:12px; border:2px solid #AEB7B0; background:#FFFFFF; color:#34423A; font-size:15px; font-weight:800; }
+  .queue-question__choices button.active { border-color:#0F6E44; background:#0F6E44; color:#FFFFFF; }
+  .queue-question__error { margin-top:12px; padding:10px 12px; border-radius:12px; background:#FFF1F0; border:1px solid #FDA29B; color:#B42318; font-size:13px; font-weight:700; }
+  .queue-asi { margin-top:6px; font-size:12px; font-weight:700; color:#1D4ED8; }
+  .form-note { display:flex; flex-direction:column; gap:6px; font-size:15px; font-weight:800; color:#16211C; }
+  .form-note span { font-size:12px; font-weight:600; color:#4A5750; }
+  .form-note textarea { width:100%; min-height:64px; resize:vertical; border:2px solid #DCE0DA; border-radius:12px; padding:10px 12px; font:inherit; font-size:15px; font-weight:400; outline:none; }
+  .form-note textarea:focus { border-color:#0F6E44; }
+
+  /* HP portrait: rapikan antrean, statistik, dan riwayat yang semula disusun untuk tablet. */
+  @media (max-width: 600px) {
+    .mode-latihan-banner { padding:5px var(--phone-gutter, 14px); font-size:11px; }
+    .queue-page-header .queue-close-session { min-height:42px !important; padding:0 12px !important; font-size:12px !important; justify-content:center; }
+    .queue-stats { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+    .queue-stats .queue-card:last-child { grid-column:auto !important; }
+    .queue-flow-card { padding:14px !important; }
+    .queue-flow-head { gap:10px !important; margin-bottom:12px !important; }
+    .queue-flow-head > div { min-width:0; }
+    .queue-flow-head h3 { font-size:17px !important; }
+    .queue-flow-head .queue-flow-desc { font-size:12px !important; line-height:1.4; }
+    .queue-flow-head > button { width:100%; justify-content:center; min-height:48px !important; font-size:14px; }
+    .queue-stack-slots { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+    .queue-slot { min-height:104px !important; }
+    .queue-slot strong { font-size:13px; }
+    .queue-list-head { padding:14px !important; }
+    .queue-list-head h3 { font-size:17px !important; }
+    .queue-add-card { padding:16px !important; border-radius:16px !important; }
+    .queue-add-card h3 { font-size:21px !important; }
+    .queue-add-card .queue-add-desc { font-size:13px !important; }
+    .queue-scan-actions { width:100%; flex-direction:column; align-items:stretch !important; }
+    .queue-scan-actions button { width:100%; min-height:52px !important; padding:0 14px !important; font-size:15px !important; }
+    .queue-add-card .queue-fast-note { margin-top:14px !important; font-size:12px !important; }
+    .queue-add-card .queue-divider { margin:18px 0 !important; }
+    .queue-add-card label[for="queue-search"] { font-size:15px !important; }
+    .queue-add-card .queue-search-box { min-height:52px !important; padding:0 12px !important; gap:10px !important; }
+    .queue-add-card .queue-search-box input { font-size:16px !important; }
+    .queue-search-results { margin-top:14px !important; gap:10px !important; }
+    .history-metrics { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+    .form-note textarea { font-size:16px; }
+    .form-dialog-card > * { flex-shrink:0; }
+    /* Tanggal ukur satu baris penuh; pengisi kosong header tidak ikut mendorongnya. */
+    .form-header .form-date { flex:1 1 100% !important; margin-left:0 !important; }
+  }
+
+  /* HP besar/lipat dan tablet kecil portrait: form satu kolom agar nilai tidak tergencet. */
+  @media (min-width: 601px) and (max-width: 900px) and (orientation: portrait) {
+    .form-shell { overflow-y:auto !important; }
+    .form-header { flex-wrap:wrap; }
+    .form-header-previous { display:none !important; }
+    .form-date { margin-left:auto; }
+    .form-body { flex:none !important; min-height:auto !important; flex-direction:column; overflow:visible !important; }
+    .form-fields { overflow:visible !important; }
+    .measure-label { width:42% !important; }
+    .keypad { width:100% !important; }
+    .keypad-grid { flex:none !important; grid-auto-rows:60px !important; }
+    .form-footer { position:sticky; bottom:0; z-index:15; }
+    .form-dialog { position:fixed !important; }
+  }
+
+  /* HP landscape (tinggi pendek): halaman ikut bergulir, tidak terpotong.
+     min-width wajib: keyboard yang terbuka di HP tegak membuat tinggi < lebar
+     dan tidak boleh dianggap landscape. */
+  @media (orientation: landscape) and (max-height: 520px) and (min-width: 601px) {
+    html, body { font-size:15px; }
+    .mode-latihan-banner { padding:4px 14px; font-size:11px; }
+    .app-splash__mark { width:104px; height:104px; border-radius:24px; }
+    .login-art { display:none !important; }
+    .login-panel { width:100% !important; padding:16px 24px !important; }
+    .home-header, .queue-page-header, .register-header, .record-list-header, .history-header { padding-top:8px !important; padding-bottom:8px !important; }
+    .home-header > div:first-child > div:first-child { width:44px !important; height:44px !important; }
+    .home-header h1, .queue-page-header h2, .register-header h2, .record-list-header h2 { font-size:20px !important; }
+    .home-main, .queue-page-main { padding:14px 18px 24px !important; gap:14px !important; }
+    .home-actions > button { min-height:120px !important; padding:16px !important; border-radius:18px !important; }
+    .form-shell { overflow-y:auto !important; }
+    .form-header { flex-wrap:wrap; padding:8px 12px !important; }
+    .form-header-previous { display:none !important; }
+    .form-body { flex:none !important; min-height:auto !important; overflow:visible !important; padding:8px 12px !important; align-items:flex-start; }
+    .form-fields { overflow:visible !important; padding:12px 14px !important; }
+    .measure-row > span:last-child { height:56px !important; }
+    .keypad { width:290px !important; position:sticky; top:8px; }
+    .keypad-grid { flex:none !important; grid-auto-rows:44px !important; }
+    .form-footer { position:sticky; bottom:0; z-index:15; padding:8px 12px !important; }
+    .form-footer > div > div > div:last-child { display:none; }
+    .form-dialog { position:fixed !important; padding:10px !important; }
+    .form-dialog-card { max-height:96% !important; overflow-y:auto !important; padding:16px 18px !important; gap:12px !important; }
+    .form-dialog-card > * { flex-shrink:0; }
+    .notice-layer { padding:10px; }
+    .notice-card { max-height:100%; overflow-y:auto; }
+  }
+
 </style>
 </head>
 <body>
 
 <div id="app">
+  <div v-if="modeLatihanAktif && view !== 'login' && !showSplash" class="mode-latihan-banner" role="status" aria-live="polite">
+    <i class="ph-bold ph-flask" aria-hidden="true"></i>
+    <span><strong>Mode latihan/demo aktif dari web.</strong> Data yang tampil adalah data simulasi, bukan data riil.</span>
+  </div>
   <div v-if="queueNoteDialog" class="notice-layer queue-note-layer" role="dialog" aria-modal="true" aria-labelledby="queue-note-title" @keydown.esc="batalkanCatatanScan">
     <section class="notice-card queue-note-card" @click.stop>
       <div class="notice-accent"></div>
@@ -704,11 +840,26 @@
         <div class="queue-note-heading">
           <div class="notice-symbol" aria-hidden="true"><i class="ph-bold ph-note-pencil"></i></div>
           <div>
-            <h2 id="queue-note-title">Tambahkan catatan?</h2>
-            <p><strong>{{ scannedAnak ? scannedAnak.nama : 'Anak' }}</strong> siap masuk antrean. Catatan akan dibaca petugas pengukuran.</p>
+            <h2 id="queue-note-title">{{ perluTanyaMenyusui(scannedAnak) ? 'Lengkapi pendaftaran' : 'Tambahkan catatan?' }}</h2>
+            <p><strong>{{ scannedAnak ? scannedAnak.nama : 'Anak' }}</strong><template v-if="umurBulanAnak(scannedAnak) !== null"> ({{ umurBulanAnak(scannedAnak) }} bulan)</template> siap masuk antrean. Catatan akan dibaca petugas pengukuran.</p>
           </div>
           <button class="notice-close" type="button" aria-label="Batalkan pendaftaran antrean" @click="batalkanCatatanScan"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
         </div>
+        <div v-if="perluTanyaMenyusui(scannedAnak)" class="queue-question">
+          <div class="queue-question__label" id="q-menyusui">Apakah ibu masih menyusui?<span>Ditanyakan untuk usia 0–23 bulan.</span></div>
+          <div class="queue-question__choices" role="radiogroup" aria-labelledby="q-menyusui">
+            <button type="button" role="radio" :aria-checked="queueMenyusuiDraft === true" :class="{active: queueMenyusuiDraft === true}" @click="pilihMenyusui(true)">YA</button>
+            <button type="button" role="radio" :aria-checked="queueMenyusuiDraft === false" :class="{active: queueMenyusuiDraft === false}" @click="pilihMenyusui(false)">TIDAK</button>
+          </div>
+        </div>
+        <div v-if="perluTanyaAsiEksklusif(scannedAnak)" class="queue-question">
+          <div class="queue-question__label" id="q-asi">Apakah bayi masih ASI eksklusif?<span>Ditanyakan untuk usia 0–6 bulan.</span></div>
+          <div class="queue-question__choices" role="radiogroup" aria-labelledby="q-asi">
+            <button type="button" role="radio" :aria-checked="queueAsiDraft === true" :class="{active: queueAsiDraft === true}" @click="pilihAsiEksklusif(true)">YA</button>
+            <button type="button" role="radio" :aria-checked="queueAsiDraft === false" :class="{active: queueAsiDraft === false}" @click="pilihAsiEksklusif(false)">TIDAK</button>
+          </div>
+        </div>
+        <div v-if="queueDialogError" class="queue-question__error" role="alert">{{ queueDialogError }}</div>
         <label class="queue-note-field" for="queue-note-input">Catatan (opsional)
           <textarea id="queue-note-input" v-model="queueNoteDraft" maxlength="240" placeholder="Contoh: membawa Buku KIA"></textarea>
         </label>
@@ -771,6 +922,31 @@
             Google Scanner
           </button>
         </div>
+      </div>
+    </section>
+  </div>
+
+  <div v-if="pembaruan.terbuka && pembaruan.info" class="notice-layer pembaruan-layer" role="alertdialog" aria-modal="true" aria-labelledby="pembaruan-judul">
+    <section class="notice-card pembaruan-card" :class="{'pembaruan-card--wajib': pembaruan.wajib}" @click.stop>
+      <div class="notice-accent"></div>
+      <div class="notice-content" style="grid-template-columns:58px minmax(0,1fr);">
+        <div class="notice-symbol" aria-hidden="true"><i :class="pembaruan.tahap === 'gagal' || pembaruan.tahap === 'izin-ditolak' ? 'ph-bold ph-warning-circle' : 'ph-bold ph-download-simple'"></i></div>
+        <div class="notice-copy">
+          <h2 id="pembaruan-judul">{{ judulPembaruan }}</h2>
+          <p>{{ pesanPembaruan }}</p>
+          <div class="pembaruan-versi"><span>Versi {{ pembaruan.terpasang ? pembaruan.terpasang.versionName : '?' }}</span><i class="ph-bold ph-arrow-right" aria-hidden="true"></i><span>Versi {{ pembaruan.info.versionName }}</span></div>
+          <div v-if="pembaruan.info.catatan && !pembaruan.tahap" class="pembaruan-catatan">{{ pembaruan.info.catatan }}</div>
+          <template v-if="pembaruan.tahap === 'mengunduh' || pembaruan.tahap === 'memeriksa'">
+            <div class="pembaruan-progres" :class="{'pembaruan-progres--berjalan': pembaruan.persen < 0 || pembaruan.tahap === 'memeriksa'}" role="progressbar" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="Math.max(0, pembaruan.persen)"><div :style="{width: Math.max(0, pembaruan.persen) + '%'}"></div></div>
+            <div class="pembaruan-info" aria-live="polite">{{ pembaruan.tahap === 'memeriksa' ? 'Memeriksa keaslian berkas…' : (pembaruan.persen >= 0 ? pembaruan.persen + '% · ' : '') + formatUkuran(pembaruan.diterima) + ' dari ' + formatUkuran(pembaruan.info.ukuran) }}</div>
+          </template>
+          <div v-if="pembaruan.pesan && (pembaruan.tahap === 'gagal' || pembaruan.tahap === 'izin-ditolak')" class="pembaruan-galat" role="alert">{{ pembaruan.pesan }}</div>
+        </div>
+      </div>
+      <div class="pembaruan-aksi">
+        <button v-if="!pembaruan.wajib && ['', 'gagal', 'izin-ditolak', 'batal'].includes(pembaruan.tahap)" type="button" class="notice-action queue-note-skip" @click="tundaPembaruan">Nanti saja</button>
+        <button v-if="pembaruan.tahap === 'mengunduh'" type="button" class="notice-action queue-note-skip" @click="batalkanUnduhPembaruan">Batalkan</button>
+        <button v-if="['', 'gagal', 'izin-ditolak', 'batal', 'memasang'].includes(pembaruan.tahap)" type="button" class="notice-action" @click="mulaiPembaruan">{{ pembaruan.tahap === '' ? 'Perbarui sekarang' : (pembaruan.tahap === 'memasang' ? 'Buka pemasang lagi' : 'Coba lagi') }}</button>
       </div>
     </section>
   </div>
@@ -976,7 +1152,7 @@
           <button @click="setView('home')" class="btn-outline" style="width:54px; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-arrow-left" style="font-size:25px;"></i></button>
           <div style="flex:1;"><div style="font-size:12px; color:#0F6E44; font-weight:800; letter-spacing:.08em;">LAYANAN POSYANDU</div><h2 style="margin:1px 0 0; font-size:27px; font-weight:800;">Antrean Hari Ini</h2></div>
           <div class="queue-header-user" style="text-align:right;"><div style="font-size:14px; font-weight:800;">{{ periodeSasaran ? periodeSasaran.label : tanggalHariIni }}</div><div style="font-size:13px; color:#4A5750;">{{ periodeSasaran ? totalSasaran + ' sasaran tersedia' : 'Belum ada sasaran aktif' }}</div><div role="status" aria-live="polite" :style="{fontSize:'12px',fontWeight:700,marginTop:'4px',color:queueSyncError?'#B42318':'#14713D'}">{{ isSyncingAntreanPortal ? 'Menyinkronkan antrean…' : (queueSyncError || 'Antrean tersinkron dengan tablet lain') }}</div></div>
-          <button v-if="periodeSasaran && currentUser && currentUser.role === 'admin'" type="button" @click="konfirmasiTutupSesi" :disabled="isClosingSession || sesiSasaranSelesai" class="btn-outline" :style="{color:sesiSasaranSelesai?'#14713D':'#B42318',borderColor:sesiSasaranSelesai?'#8DCEA2':'#FDA29B'}" style="min-height:54px; padding:0 17px; border-radius:14px; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px;"><i :class="sesiSasaranSelesai ? 'ph-fill ph-check-circle' : 'ph-bold ph-door'" style="font-size:20px;"></i>{{ isClosingSession ? 'Menutup sesi…' : (sesiSasaranSelesai ? 'Sesi sudah beres' : 'Konfirmasi beres sesi') }}</button>
+          <button v-if="periodeSasaran && currentUser && currentUser.role === 'admin'" type="button" @click="konfirmasiTutupSesi" :disabled="isClosingSession || sesiSasaranSelesai" class="btn-outline" :style="{color:sesiSasaranSelesai?'#14713D':'#B42318',borderColor:sesiSasaranSelesai?'#8DCEA2':'#FDA29B'}" class="queue-close-session" style="min-height:54px; padding:0 17px; border-radius:14px; font-size:14px; font-weight:800; display:flex; align-items:center; gap:8px;"><i :class="sesiSasaranSelesai ? 'ph-fill ph-check-circle' : 'ph-bold ph-door'" style="font-size:20px;"></i>{{ isClosingSession ? 'Menutup sesi…' : (sesiSasaranSelesai ? 'Sesi sudah beres' : 'Konfirmasi beres sesi') }}</button>
         </header>
 
         <main class="queue-page-main" style="padding:24px 28px 38px; display:flex; flex-direction:column; gap:20px;">
@@ -991,9 +1167,9 @@
             <button type="button" @click="queueTab='list'" class="queue-tab" :class="{active:queueTab==='list'}"><i class="ph-bold ph-list-numbers" style="font-size:23px;"></i> Antrean Aktif <span style="padding:3px 9px; border-radius:999px; background:#E9F3EC; color:#0F6E44; font-size:13px;">{{ antreanAktif.length }}</span></button>
           </nav>
 
-          <section v-if="queueTab === 'list'" class="queue-card" style="padding:20px; background:linear-gradient(145deg,#F2F8F4,#FFFFFF);">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:15px; flex-wrap:wrap;">
-              <div><div style="font-size:12px; color:#0F6E44; font-weight:800; letter-spacing:.08em;">ALUR LAYANAN · 4 SLOT</div><h3 style="font-size:21px; margin:3px 0 0; font-weight:800;">Antrean dalam proses</h3><div style="font-size:13px; color:#4A5750; margin-top:3px;">Slot digunakan saat dipanggil dan diukur. Setelah pengukuran, anak menunggu pemeriksaan KMS di luar slot; statusnya tetap terlihat di bawah.</div></div>
+          <section v-if="queueTab === 'list'" class="queue-card queue-flow-card" style="padding:20px; background:linear-gradient(145deg,#F2F8F4,#FFFFFF);">
+            <div class="queue-flow-head" style="display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:15px; flex-wrap:wrap;">
+              <div><div style="font-size:12px; color:#0F6E44; font-weight:800; letter-spacing:.08em;">ALUR LAYANAN · 4 SLOT</div><h3 style="font-size:21px; margin:3px 0 0; font-weight:800;">Antrean dalam proses</h3><div class="queue-flow-desc" style="font-size:13px; color:#4A5750; margin-top:3px;">Slot digunakan saat dipanggil dan diukur. Setelah pengukuran, anak menunggu pemeriksaan KMS di luar slot; statusnya tetap terlihat di bawah.</div></div>
                   <button type="button" @click="panggilBerikutnya" :disabled="isCallingNext || antreanTerpanggil.length >= 4 || antreanMenunggu.length === 0" class="btn-primary" :style="{opacity:(isCallingNext || antreanTerpanggil.length >= 4 || antreanMenunggu.length === 0) ? .55 : 1}" style="min-height:52px; padding:0 18px; border-radius:13px; font-weight:800; display:flex; align-items:center; gap:9px;"><i class="ph-bold ph-megaphone" style="font-size:21px;"></i>{{ isCallingNext ? 'Menyinkronkan…' : (antreanTerpanggil.length >= 4 ? 'Semua slot penuh' : (antreanMenunggu.length ? 'Panggil berikutnya · ' + formatNomorAntrean(antreanMenunggu[0].number) : 'Tidak ada yang menunggu')) }}</button>
             </div>
             <div class="queue-stack-slots">
@@ -1006,15 +1182,17 @@
                 <template v-else>
                   <div style="font-size:11px; color:#5D6961; font-weight:800; letter-spacing:.06em;">SLOT {{ index + 1 }}</div><div style="color:#5D6961; font-size:14px; font-weight:700; margin:auto 0;">{{ index === antreanTerpanggil.length ? 'Siap diisi' : 'Menunggu giliran' }}</div>
                 </template>
+              </article>
+            </div>
           </section>
 
           <div v-if="queueTab === 'list'" class="queue-layout">
             <section class="queue-card" style="overflow:hidden;">
-              <div style="padding:19px 20px; display:flex; justify-content:space-between; align-items:center; gap:12px;"><div><h3 style="font-size:20px; margin:0; font-weight:800;">Daftar layanan</h3><div style="font-size:13px; color:#4A5750; margin-top:2px;">Urutan tersimpan meskipun aplikasi ditutup.</div></div><span style="font-size:13px; color:#4A5750; font-weight:700;">{{ antreanAktif.length }} aktif</span></div>
+              <div class="queue-list-head" style="padding:19px 20px; display:flex; justify-content:space-between; align-items:center; gap:12px;"><div><h3 style="font-size:20px; margin:0; font-weight:800;">Daftar layanan</h3><div style="font-size:13px; color:#4A5750; margin-top:2px;">Urutan tersimpan meskipun aplikasi ditutup.</div></div><span style="font-size:13px; color:#4A5750; font-weight:700;">{{ antreanAktif.length }} aktif</span></div>
               <div v-if="antreanAktif.length === 0" style="padding:44px 24px; text-align:center; border-top:1px solid #E7EAE5;"><div style="width:58px; height:58px; border-radius:18px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center; margin:0 auto 13px;"><i class="ph-bold ph-users" style="font-size:30px;"></i></div><div style="font-weight:800;">Belum ada anak yang check-in</div><div style="font-size:14px; color:#4A5750; margin-top:4px;">Buka tab Sasaran Belum Dilayani, lalu pindai kartu atau pilih anak yang sudah hadir.</div><button type="button" @click="bukaTambahAntrean" class="btn-primary" style="min-height:48px; margin-top:16px; padding:0 18px; border-radius:12px; font-size:14px; font-weight:800;">Lihat {{ anakBelumBulanIni }} sasaran</button></div>
               <div v-for="item in antreanAktif" :key="item.id" class="queue-row">
                 <div class="queue-number">{{ formatNomorAntrean(item.number) }}</div>
-                <div><div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;"><strong style="font-size:17px;">{{ item.name }}</strong><span class="queue-status" :style="gayaStatusAntrean(item.status)">{{ labelStatusAntrean(item.status) }}</span></div><div style="font-size:13px; color:#4A5750; margin-top:3px;">{{ item.parent }} · RT {{ item.rt }} · hadir {{ formatJam(item.checkedInAt) }}</div><div v-if="item.note" style="font-size:13px; color:#7A4A00; background:#FFF7E6; border-radius:9px; padding:7px 9px; margin-top:7px;"><i class="ph-bold ph-note-pencil"></i> {{ item.note }}</div></div>
+                <div><div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap;"><strong style="font-size:17px;">{{ item.name }}</strong><span class="queue-status" :style="gayaStatusAntrean(item.status)">{{ labelStatusAntrean(item.status) }}</span></div><div style="font-size:13px; color:#4A5750; margin-top:3px;">{{ item.parent }} · RT {{ item.rt }} · hadir {{ formatJam(item.checkedInAt) }}</div><div v-if="item.note" style="font-size:13px; color:#7A4A00; background:#FFF7E6; border-radius:9px; padding:7px 9px; margin-top:7px;"><i class="ph-bold ph-note-pencil"></i> {{ item.note }}</div><div v-if="ringkasanMenyusui(item)" class="queue-asi"><i class="ph-bold ph-baby"></i> {{ ringkasanMenyusui(item) }}</div></div>
                 <div class="queue-actions">
                   <button v-if="['waiting','called','serving'].includes(item.status)" type="button" @click="panggilAntrean(item)" class="queue-small-button" style="background:#1D4ED8; color:#FFFFFF;"><i class="ph-bold ph-megaphone"></i> {{ item.status === 'waiting' ? 'Panggil' : 'Panggil Lagi' }}</button>
                   <button v-if="item.status !== 'serving'" type="button" @click="lewatiAntrean(item)" class="queue-small-button btn-outline">Lewati</button>
@@ -1033,34 +1211,34 @@
 
           </div>
 
-          <section v-else class="queue-card" style="padding:26px 28px;">
+          <section v-else class="queue-card queue-add-card" style="padding:26px 28px;">
             <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap;">
-              <div><div style="font-size:13px; color:#0F6E44; font-weight:800; letter-spacing:.06em;">SASARAN DARI DATABASE PORTAL</div><h3 style="font-size:26px; margin:3px 0 5px;">Belum Dilayani</h3><div style="font-size:16px; color:#4A5750;">{{ anakBelumBulanIni }} anak belum selesai. Hasil pindai kartu langsung masuk antrean dan memperoleh nomor aktif.</div></div>
-              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <div><div style="font-size:13px; color:#0F6E44; font-weight:800; letter-spacing:.06em;">SASARAN DARI DATABASE PORTAL</div><h3 style="font-size:26px; margin:3px 0 5px;">Belum Dilayani</h3><div class="queue-add-desc" style="font-size:16px; color:#4A5750;">{{ anakBelumBulanIni }} anak belum selesai. Hasil pindai kartu langsung masuk antrean dan memperoleh nomor aktif.</div></div>
+              <div class="queue-scan-actions" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <button type="button" @click="mulaiScanKartu" class="btn-primary" style="min-height:64px; padding:0 24px; border-radius:15px; font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:10px;">
                   <i :class="cameraFacing === 'user' ? 'ph-bold ph-user-focus' : 'ph-bold ph-camera'" style="font-size:25px;"></i>
                   Pindai Kartu dengan Kamera ({{ cameraFacing === 'user' ? 'Depan' : 'Belakang' }})
                 </button>
-                <button type="button" @click="gantiKameraLangsung" class="btn-outline" style="min-height:64px; padding:0 18px; border-radius:15px; font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;" :title="'Saat ini: ' + (cameraFacing === 'user' ? 'Kamera Depan' : 'Kamera Belakang') + '. Tekan untuk ganti.'">
+                <button type="button" @click="mulaiScanKartu" class="btn-outline" style="min-height:64px; padding:0 18px; border-radius:15px; font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px;" title="Pilih kamera di layar pemindai">
                   <i class="ph-bold ph-camera-rotate" style="font-size:22px;"></i>
-                  {{ cameraFacing === 'user' ? 'Ganti ke Belakang' : 'Ganti ke Depan' }}
+                  Pilih kamera
                 </button>
               </div>
             </div>
 
-            <div style="margin-top:20px; padding:13px 16px; border:1px solid #A3D9B5; border-radius:13px; background:#F0F9F4; color:#14713D; font-size:14px; font-weight:700;"><i class="ph-fill ph-check-circle" style="margin-right:6px;"></i>Mode cepat aktif: QR yang cocok dengan sasaran langsung diberi nomor antrean. Pemilihan manual tetap tersedia di bawah.</div>
+            <div class="queue-fast-note" style="margin-top:20px; padding:13px 16px; border:1px solid #A3D9B5; border-radius:13px; background:#F0F9F4; color:#14713D; font-size:14px; font-weight:700;"><i class="ph-fill ph-check-circle" style="margin-right:6px;"></i>Mode cepat aktif: QR yang cocok dengan sasaran langsung diberi nomor antrean. Pemilihan manual tetap tersedia di bawah.</div>
 
-            <div style="height:1px; background:#DCE0DA; margin:26px 0;"></div>
+            <div class="queue-divider" style="height:1px; background:#DCE0DA; margin:26px 0;"></div>
             <label for="queue-search" style="font-size:18px; font-weight:800; display:block;">Cari sasaran berdasarkan nama atau NIK</label>
             <div style="font-size:14px; color:#4A5750; margin-top:3px;">Daftar di bawah berasal dari sasaran aktif yang sama dengan Portal. Kosongkan pencarian untuk melihat semuanya.</div>
-            <div style="display:flex; align-items:center; gap:14px; border:2px solid #8D9790; border-radius:16px; padding:0 20px; min-height:68px; margin-top:12px; background:#FFFFFF;"><i class="ph-bold ph-magnifying-glass" style="color:#0F6E44; font-size:27px;"></i><input id="queue-search" v-model="queueSearch" autocomplete="off" placeholder="Contoh: Aisyah atau 3273…" style="width:100%; border:0; outline:0; background:transparent; font:inherit; font-size:20px;"><button v-if="queueSearch" type="button" @click="queueSearch=''" aria-label="Hapus pencarian" style="width:46px; height:46px; border-radius:50%; background:#E7EAE5; color:#4A5750; flex-shrink:0;"><i class="ph-bold ph-x" style="font-size:21px;"></i></button></div>
+            <div class="queue-search-box" style="display:flex; align-items:center; gap:14px; border:2px solid #8D9790; border-radius:16px; padding:0 20px; min-height:68px; margin-top:12px; background:#FFFFFF;"><i class="ph-bold ph-magnifying-glass" style="color:#0F6E44; font-size:27px;"></i><input id="queue-search" v-model="queueSearch" autocomplete="off" placeholder="Contoh: Aisyah atau 3273…" style="width:100%; border:0; outline:0; background:transparent; font:inherit; font-size:20px;"><button v-if="queueSearch" type="button" @click="queueSearch=''" aria-label="Hapus pencarian" style="width:46px; height:46px; border-radius:50%; background:#E7EAE5; color:#4A5750; flex-shrink:0;"><i class="ph-bold ph-x" style="font-size:21px;"></i></button></div>
 
             <div v-if="anakUntukAntrean.length === 0" style="padding:44px 20px; text-align:center; color:#4A5750;"><i class="ph-bold ph-user-minus" style="display:block; font-size:42px; color:#B54708; margin-bottom:8px;"></i><strong style="font-size:17px; color:#16211C;">Sasaran belum tersedia</strong><div style="font-size:14px; margin-top:3px;">Periksa ejaan, status layanan, atau sinkronkan daftar terbaru dari Portal.</div></div>
             <div v-else class="queue-search-results" style="margin-top:20px;">
               <article v-for="anak in anakUntukAntrean" :key="anak.id" class="queue-search-card" :style="{background:sudahDalamAntreanHariIni(anak)?'#F3F5F2':'#FFFFFF'}">
                 <div style="width:64px; height:64px; border-radius:17px; background:#E9F3EC; color:#0F6E44; display:flex; align-items:center; justify-content:center; font-size:21px; font-weight:800;">{{ anak.inisial }}</div>
                 <div style="min-width:0;"><div style="font-size:19px; font-weight:800; line-height:1.25;">{{ anak.nama }}</div><div style="font-size:14px; color:#4A5750; margin-top:4px;">{{ anak.namaOrtu }} · RT {{ anak.rt }} · {{ anak.umurBulan }} bulan</div><div style="font-size:13px; color:#66736C; margin-top:2px;">NIK {{ anak.nik || 'belum tercatat' }}</div><textarea v-if="!sudahDalamAntreanHariIni(anak)" v-model="queueNotes[identitasAnak(anak)]" @click.stop maxlength="240" placeholder="Catatan untuk petugas (opsional)" style="width:100%; min-height:58px; margin-top:10px; resize:vertical; border:1px solid #AEB7B0; border-radius:10px; padding:9px 11px; font:inherit; font-size:14px; outline:none;"></textarea></div>
-                <button type="button" @click="tambahAntrean(anak)" :disabled="sudahDalamAntreanHariIni(anak)" class="queue-search-action" :class="sudahDalamAntreanHariIni(anak)?'btn-outline':'btn-primary'" style="min-height:52px; padding:0 18px; border-radius:13px; font-size:14px; font-weight:800; white-space:nowrap;">{{ sudahDalamAntreanHariIni(anak) ? 'Sudah Antre' : 'Tambahkan' }}</button>
+                <button type="button" @click="pilihUntukAntrean(anak)" :disabled="sudahDalamAntreanHariIni(anak)" class="queue-search-action" :class="sudahDalamAntreanHariIni(anak)?'btn-outline':'btn-primary'" style="min-height:52px; padding:0 18px; border-radius:13px; font-size:14px; font-weight:800; white-space:nowrap;">{{ sudahDalamAntreanHariIni(anak) ? 'Sudah Antre' : 'Tambahkan' }}</button>
               </article>
             </div>
           </section>
@@ -1172,6 +1350,8 @@
               <div v-for="item in historyMeasurements" :key="item.label" style="background:#F6F7F5; border:1px solid #E3E7E2; border-radius:17px; padding:20px;"><div style="font-size:13px; font-weight:800; color:#4A5750;">{{ item.label }}</div><div style="font-size:29px; font-weight:800; color:#16211C; margin-top:7px;">{{ item.value }} <span style="font-size:15px; color:#4A5750;">{{ item.unit }}</span></div></div>
             </div>
             <div style="margin-top:18px; font-size:14px; color:#4A5750;">Cara ukur: <strong>{{ recordBulanTerpilih.caraUkur || 'Belum dicatat' }}</strong> · Revisi: <strong>{{ recordBulanTerpilih.revision || 1 }}</strong></div>
+            <div v-if="recordBulanTerpilih.catatanKhusus" style="margin-top:12px; padding:10px 12px; border-radius:12px; background:#FFF7E6; color:#6B4200; font-size:14px; line-height:1.45;"><strong>Catatan pencatatan:</strong> {{ recordBulanTerpilih.catatanKhusus }}</div>
+            <div v-if="recordBulanTerpilih.catatanKms" style="margin-top:8px; padding:10px 12px; border-radius:12px; background:#F5F1FF; color:#5B21B6; font-size:14px; line-height:1.45;"><strong>Catatan KMS:</strong> {{ recordBulanTerpilih.catatanKms }}</div>
           </div>
           <div v-else style="max-width:720px; margin:70px auto 0; text-align:center; background:#FFFFFF; border:1px solid #DCE0DA; border-radius:24px; padding:44px;"><div style="width:76px; height:76px; margin:0 auto 18px; border-radius:21px; background:#F6F7F5; color:#A8B0A9; display:flex; align-items:center; justify-content:center;"><i class="ph-bold ph-calendar-blank" style="font-size:38px;"></i></div><h3 style="font-size:25px; margin:0 0 7px;">Belum ada pencatatan</h3><p style="font-size:16px; color:#4A5750; margin:0;">Tidak ditemukan pengukuran untuk {{ months[selectedMonthIndex] }} {{ selectedYear }}.</p></div>
         </main>
@@ -1211,10 +1391,10 @@
           <button type="button" @click="bukaRiwayatDariForm" class="btn-outline form-history" style="height:52px; padding:0 15px; border-radius:12px; font-size:15px; font-weight:800; color:#1E4ED8; border-color:#B2CCFF;"><i class="ph-bold ph-calendar-dots"></i> Riwayat</button>
         </header>
 
-        <div v-if="activeQueueForForm" style="flex-shrink:0; margin:8px 28px 0; padding:9px 14px; border:1px solid #F5C66A; border-radius:12px; background:#FFF7E6; color:#6B4200; display:flex; align-items:center; gap:9px; font-size:14px;"><i class="ph-bold ph-note-pencil" style="font-size:20px;"></i><div><strong>{{ formatNomorAntrean(activeQueueForForm.number) }} · Catatan:</strong> {{ activeQueueForForm.note || 'Tidak ada catatan tambahan.' }}</div></div>
+        <div v-if="activeQueueForForm" class="active-queue-note" style="flex-shrink:0; margin:8px 28px 0; padding:9px 14px; border:1px solid #F5C66A; border-radius:12px; background:#FFF7E6; color:#6B4200; display:flex; align-items:center; gap:9px; font-size:14px;"><i class="ph-bold ph-note-pencil" style="font-size:20px;"></i><div><strong>{{ formatNomorAntrean(activeQueueForForm.number) }} · Catatan:</strong> {{ activeQueueForForm.note || 'Tidak ada catatan tambahan.' }}<div v-if="ringkasanMenyusui(activeQueueForForm)" style="font-weight:700; color:#1D4ED8;">{{ ringkasanMenyusui(activeQueueForForm) }}</div></div></div>
 
         <div class="form-body" style="flex:1;min-height:0;display:flex;gap:16px;padding:12px 28px;overflow:hidden">
-          <section class="form-fields" style="flex:1;min-width:0;background:#FFFFFF;border:1px solid #DCE0DA;border-radius:16px;padding:16px 20px;display:flex;flex-direction:column;gap:10px;overflow:hidden">
+          <section class="form-fields" style="flex:1;min-width:0;background:#FFFFFF;border:1px solid #DCE0DA;border-radius:16px;padding:16px 20px;display:flex;flex-direction:column;gap:10px;overflow-y:auto">
             <div class="form-fields-heading" style="display:flex;align-items:baseline;justify-content:space-between">
               <h2 style="margin:0;font-size:21px;font-weight:800">Pengukuran hari ini</h2>
               <span style="font-size:14px;color:#4A5750">Sentuh kolom, lalu ketik di keypad</span>
@@ -1265,6 +1445,12 @@
                 <span style="font-size:29px;font-weight:800;white-space:nowrap">{{ formVals.lika || '—' }} <small style="font-size:16px;color:#4A5750">cm</small></span>
               </button>
             </div>
+
+            <label class="form-note" for="form-catatan-khusus">
+              Catatan / pengamatan khusus
+              <span>Opsional. Terkirim ke web bersama hasil ukur.</span>
+              <textarea id="form-catatan-khusus" v-model="formCatatanKhusus" maxlength="500" rows="2" placeholder="Contoh: anak demam, rewel saat ditimbang, BB turun dari bulan lalu."></textarea>
+            </label>
           </section>
 
           <!-- Keypad -->
@@ -1319,6 +1505,9 @@
                 <span style="font-size:18px;font-weight:600">LIKA</span>
                 <span style="font-size:20px;font-weight:800">{{ formVals.lika ? formVals.lika + ' cm' : 'Belum diisi' }}</span>
               </div>
+              <div v-if="formCatatanKhusus.trim()" style="padding:12px 18px;border-top:1px solid #DCE0DA;background:#FFF7E6;font-size:15px;line-height:1.45;overflow-wrap:anywhere">
+                <strong>Catatan khusus:</strong> {{ formCatatanKhusus.trim() }}
+              </div>
             </div>
             <div style="display:flex;gap:14px">
               <button type="button" @click="bukaDialog = false" class="btn-outline" style="flex:1;height:64px;border-radius:12px;font-size:19px;font-weight:700">Perbaiki dulu</button>
@@ -1339,6 +1528,11 @@
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+  // Catatan KMS berasal dari web; koreksi di tablet tidak boleh menghapusnya dari tampilan.
+  const existingRecordKms = (anak, year, month) => {
+    const record = anak && anak.riwayat && anak.riwayat[year] && anak.riwayat[year][month];
+    return (record && record.catatanKms) || '';
   };
   const tanggalTigaBulanSetelah = iso => {
     if (!iso) return '';
@@ -1573,6 +1767,10 @@
         queueNotes: {},
         queueNoteDialog: false,
         queueNoteDraft: '',
+        queueMenyusuiDraft: null,
+        queueAsiDraft: null,
+        queueDialogError: '',
+        modeLatihanAktif: (typeof localStorage !== 'undefined' && localStorage.getItem('SIMPATIK_MODE_LATIHAN') === '1'),
         isCallingNext: false,
         activeQueueId: null,
         activeRecordingQueueId: null,
@@ -1586,6 +1784,8 @@
 
         // State Form Pengukuran
         formVals: { bb: '', pb: '', lila: '', lika: '' },
+        formCatatanKhusus: '',
+        pembaruan: { info: null, terpasang: null, terbuka: false, wajib: false, tahap: '', persen: 0, diterima: 0, pesan: '' },
         formTambahanSumber: { lila: '', lika: '' },
         formTambahanPerluUkur: { lila: '', lika: '' },
         formTambahanDiwariskan: { lila: false, lika: false },
@@ -1605,6 +1805,26 @@
       }
     },
     computed: {
+      judulPembaruan() {
+        const t = this.pembaruan.tahap;
+        if (t === 'mengunduh') return 'Mengunduh pembaruan';
+        if (t === 'memeriksa') return 'Memeriksa berkas';
+        if (t === 'izin') return 'Izinkan pemasangan';
+        if (t === 'memasang') return 'Pasang pembaruan';
+        if (t === 'gagal' || t === 'izin-ditolak') return 'Pembaruan belum berhasil';
+        return this.pembaruan.wajib ? 'Pembaruan wajib' : 'Pembaruan aplikasi tersedia';
+      },
+      pesanPembaruan() {
+        const t = this.pembaruan.tahap;
+        if (t === 'mengunduh' || t === 'memeriksa') return 'Tetap di aplikasi sampai unduhan selesai. Data di perangkat ini tetap aman.';
+        if (t === 'izin') return 'Aktifkan "Izinkan dari sumber ini" untuk SIMPATIK, lalu kembali. Pemasangan dilanjutkan otomatis.';
+        if (t === 'memasang') return 'Tekan Perbarui pada layar pemasangan Android. Aplikasi akan terbuka kembali dengan data yang sama.';
+        if (t === 'izin-ditolak') return 'Izin pemasangan belum diberikan.';
+        if (t === 'gagal') return 'Unduhan atau pemeriksaan berkas gagal.';
+        return this.pembaruan.wajib
+          ? 'Versi aplikasi ini sudah tidak didukung server. Perbarui sekarang agar data tetap dapat tersinkron.'
+          : 'Versi baru tersedia dari server Posyandu. Data yang tersimpan di perangkat tidak terhapus.';
+      },
       adaGoogleScanner() {
         return !!(typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.scanKartuSasaran === 'function');
       },
@@ -1802,6 +2022,7 @@
         await this.muatDataDariSupabase(false);
         await this.sinkronkanAntreanPortal();
         this.kirimSnapshotCluster();
+        this.periksaModeLatihan();
       },
       async akhiriSplashMinimal(mulaiPada) {
         const sisaDurasi = Math.max(0, 3000 - (Date.now() - mulaiPada));
@@ -2075,6 +2296,8 @@ const connected = await this.ujiKoneksiPortal(true);
       akhiriSesiPortalTidakBerlaku() {
         localStorage.removeItem('SIMPATIK_SESSION');
         localStorage.removeItem('SIMPATIK_CURRENT_USER');
+        localStorage.removeItem('SIMPATIK_MODE_LATIHAN');
+        this.modeLatihanAktif = false;
         this.currentUser = null;
         this.loginData.password = '';
         this.showLoginPassword = false;
@@ -2095,6 +2318,11 @@ const connected = await this.ujiKoneksiPortal(true);
         }
       },
       handleAndroidBack() {
+        if (this.pembaruan.terbuka) {
+          // Pembaruan wajib atau yang sedang berjalan tidak ditutup oleh tombol Kembali.
+          if (!this.pembaruan.wajib && ['', 'gagal', 'izin-ditolak'].includes(this.pembaruan.tahap)) this.tundaPembaruan();
+          return 'handled';
+        }
         if (this.cameraScannerActive) {
           this.tutupCameraScanner();
           return 'handled';
@@ -2143,6 +2371,8 @@ const connected = await this.ujiKoneksiPortal(true);
         this.nearbyWorkspaceId = '';
         localStorage.removeItem('SIMPATIK_SESSION');
         localStorage.removeItem('SIMPATIK_CURRENT_USER');
+        localStorage.removeItem('SIMPATIK_MODE_LATIHAN');
+        this.modeLatihanAktif = false;
         this.currentUser = null;
         this.loginData.username = '';
         this.loginData.password = '';
@@ -2345,7 +2575,7 @@ const connected = await this.ujiKoneksiPortal(true);
               namaPerangkat,
               jenisPerangkat: 'android',
               modeKoneksi: this.informasiKoneksiPortal().mode === 'otomatis' ? 'tidak_diketahui' : this.informasiKoneksiPortal().mode,
-              versiAplikasi: 'v1.12.8',
+              versiAplikasi: this.versiTerpasang() ? 'v' + this.versiTerpasang().versionName : 'tidak diketahui',
               antreanTertunda: this.totalPendingCount || 0
             })
           });
@@ -2390,6 +2620,8 @@ const connected = await this.ujiKoneksiPortal(true);
           calledAt: row.calledAt,
           completedAt: row.completedAt,
           note: row.catatan || '',
+          masihMenyusui: typeof row.masihMenyusui === 'boolean' ? row.masihMenyusui : null,
+          asiEksklusif: typeof row.asiEksklusif === 'boolean' ? row.asiEksklusif : null,
           updatedAt: row.updatedAt
         };
       },
@@ -2422,7 +2654,8 @@ const connected = await this.ujiKoneksiPortal(true);
               const waktuLokal = Date.parse(localItem.updatedAt || localItem.checkedInAt || 0);
               const waktuServer = Date.parse(rowServer.updatedAt || rowServer.checkedInAt || 0);
               if (!localItem._queueDirty || !Number.isFinite(waktuLokal) || waktuServer >= waktuLokal) {
-                Object.assign(localItem, rowServer, { _queueDirty: false });
+                const jawabanLokal = localItem._menyusuiPending ? this.jawabanMenyusuiUntukServer(localItem) : {};
+                Object.assign(localItem, rowServer, { _queueDirty: false }, jawabanLokal);
               } else {
                 localItem.serverId = serverId;
               }
@@ -2436,9 +2669,10 @@ const connected = await this.ujiKoneksiPortal(true);
             if (!serverId && Number.isSafeInteger(sasaranId) && sasaranId > 0) {
               const response = await this.fetchDenganBatas(url + '/antrean', {
                 method: 'POST', headers: this.apiHeaders(true),
-                body: JSON.stringify({ periodeId, sasaranId, tanggal, catatan: localItem.note || null })
+                body: JSON.stringify({ periodeId, sasaranId, tanggal, catatan: localItem.note || null, ...this.jawabanMenyusuiUntukServer(localItem) })
               });
               if (!response.ok) throw new Error('Gagal mengirim check-in (HTTP ' + response.status + ')');
+              localItem._menyusuiPending = false;
               const saved = (await response.json()).item;
               const canonical = this.ubahItemAntreanDariServer(saved);
               const desiredStatus = localItem.status;
@@ -2451,6 +2685,15 @@ const connected = await this.ujiKoneksiPortal(true);
               }
               serverById.set(canonical.serverId, canonical);
               serverBySasaran.set(String(canonical.sasaranId), canonical);
+            }
+            if (serverId && localItem._menyusuiPending && Number.isSafeInteger(sasaranId) && sasaranId > 0) {
+              // Check-in ulang memakai POST yang sama (idempoten) agar jawaban YA/TIDAK ikut tersimpan.
+              const response = await this.fetchDenganBatas(url + '/antrean', {
+                method: 'POST', headers: this.apiHeaders(true),
+                body: JSON.stringify({ periodeId, sasaranId, tanggal, catatan: localItem.note || null, ...this.jawabanMenyusuiUntukServer(localItem) })
+              });
+              if (!response.ok) throw new Error('Gagal mengirim data pendaftaran (HTTP ' + response.status + ')');
+              localItem._menyusuiPending = false;
             }
             if (serverId && localItem._queueDirty) {
               const response = await this.fetchDenganBatas(url + '/antrean/' + encodeURIComponent(serverId), {
@@ -2519,6 +2762,10 @@ const connected = await this.ujiKoneksiPortal(true);
         setTimeout(() => document.getElementById('queue-search')?.focus(), 100);
       },
       mulaiScanKartu() {
+        if (typeof window !== 'undefined' && typeof window.AndroidBridge?.scanKartuDenganKamera === 'function') {
+          const result = JSON.parse(window.AndroidBridge.scanKartuDenganKamera(this.cameraFacing));
+          return !!result.ok;
+        }
         // Jika di lingkungan pengujian tanpa kamera atau browser tanpa WebRTC, fallback ke Google Scanner
         if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.scanKartuSasaran === 'function') {
@@ -2634,6 +2881,10 @@ const connected = await this.ujiKoneksiPortal(true);
         await this.sinkronkanAntreanPortal();
       },
       async bukaCameraScanner(facing) {
+        if (typeof window !== 'undefined' && typeof window.AndroidBridge?.scanKartuDenganKamera === 'function') {
+          window.AndroidBridge.scanKartuDenganKamera(facing || this.cameraFacing);
+          return;
+        }
         if (facing) this.cameraFacing = facing;
         this.cameraScannerActive = true;
         this.cameraScannerLoading = true;
@@ -2820,25 +3071,198 @@ const connected = await this.ujiKoneksiPortal(true);
           alert('[Antrean Sudah Ada]\n\n' + matchedChild.nama + ' sudah terdaftar dalam antrean hari ini.');
           return false;
         }
-        this.scannedAnak = matchedChild;
-        this.queueSearch = '';
-        this.queueNoteDraft = String(this.queueNotes[this.identitasAnak(matchedChild)] || '');
-        this.queueNoteDialog = true;
-        return true;
+        return this.bukaDialogPendaftaran(matchedChild);
       },
       batalkanCatatanScan() {
         this.queueNoteDialog = false;
         this.queueNoteDraft = '';
+        this.queueMenyusuiDraft = null;
+        this.queueAsiDraft = null;
+        this.queueDialogError = '';
         this.scannedAnak = null;
+      },
+      umurBulanAnak(anak) {
+        if (!anak) return null;
+        const umur = Number(anak.umurBulan);
+        if (anak.umurBulan !== undefined && anak.umurBulan !== null && anak.umurBulan !== '' && Number.isFinite(umur)) return Math.max(0, Math.floor(umur));
+        if (!anak.tglLahir) return null;
+        const lahir = new Date(anak.tglLahir + 'T00:00:00');
+        if (Number.isNaN(lahir.getTime())) return null;
+        const hari = new Date(this.tanggalHariIniISO + 'T00:00:00');
+        let bulan = (hari.getFullYear() - lahir.getFullYear()) * 12 + (hari.getMonth() - lahir.getMonth());
+        if (hari.getDate() < lahir.getDate()) bulan -= 1;
+        return Math.max(0, bulan);
+      },
+      // Permintaan lapangan: tanya menyusui untuk 0-23 bulan, ASI eksklusif untuk 0-6 bulan.
+      perluTanyaMenyusui(anak) {
+        const umur = this.umurBulanAnak(anak);
+        return umur !== null && umur <= 23;
+      },
+      perluTanyaAsiEksklusif(anak) {
+        const umur = this.umurBulanAnak(anak);
+        return umur !== null && umur <= 6;
+      },
+      pilihMenyusui(nilai) {
+        this.queueMenyusuiDraft = nilai;
+        // Tidak menyusui berarti otomatis bukan ASI eksklusif.
+        if (nilai === false && this.perluTanyaAsiEksklusif(this.scannedAnak)) this.queueAsiDraft = false;
+        this.queueDialogError = '';
+      },
+      pilihAsiEksklusif(nilai) {
+        this.queueAsiDraft = nilai;
+        if (nilai === true) this.queueMenyusuiDraft = true;
+        this.queueDialogError = '';
+      },
+      ringkasanMenyusui(item) {
+        if (!item) return '';
+        const label = nilai => nilai === true ? 'Ya' : 'Tidak';
+        const bagian = [];
+        if (typeof item.masihMenyusui === 'boolean') bagian.push('Menyusui: ' + label(item.masihMenyusui));
+        if (typeof item.asiEksklusif === 'boolean') bagian.push('ASI eksklusif: ' + label(item.asiEksklusif));
+        return bagian.join(' · ');
+      },
+      jawabanMenyusuiUntukServer(item) {
+        // Hanya YA/TIDAK yang dikirim; null tidak boleh menimpa jawaban dari tablet lain.
+        const body = {};
+        if (typeof item?.masihMenyusui === 'boolean') body.masihMenyusui = item.masihMenyusui;
+        if (typeof item?.asiEksklusif === 'boolean') body.asiEksklusif = item.asiEksklusif;
+        return body;
+      },
+      bukaDialogPendaftaran(anak) {
+        this.scannedAnak = anak;
+        this.queueSearch = '';
+        this.queueNoteDraft = String(this.queueNotes[this.identitasAnak(anak)] || '');
+        this.queueMenyusuiDraft = null;
+        this.queueAsiDraft = null;
+        this.queueDialogError = '';
+        this.queueNoteDialog = true;
+        return true;
+      },
+      pilihUntukAntrean(anak) {
+        if (this.sudahDalamAntreanHariIni(anak)) return this.tambahAntrean(anak);
+        // Anak 0-23 bulan wajib melewati pertanyaan menyusui sebelum mendapat nomor.
+        if (this.perluTanyaMenyusui(anak)) return this.bukaDialogPendaftaran(anak);
+        return this.tambahAntrean(anak);
+      },
+      versiTerpasang() {
+        try {
+          if (typeof window === 'undefined' || typeof window.AndroidBridge?.versiAplikasi !== 'function') return null;
+          const info = JSON.parse(window.AndroidBridge.versiAplikasi());
+          return Number.isFinite(Number(info.versionCode)) ? { versionCode: Number(info.versionCode), versionName: String(info.versionName || '') } : null;
+        } catch (error) {
+          return null;
+        }
+      },
+      formatUkuran(byte) {
+        const n = Number(byte) || 0;
+        return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB';
+      },
+      async periksaPembaruan() {
+        const terpasang = this.versiTerpasang();
+        // Hanya APK yang dapat memasang pembaruan; jangan ganggu saat proses berjalan.
+        if (!terpasang || ['mengunduh', 'memeriksa', 'izin', 'memasang'].includes(this.pembaruan.tahap)) return null;
+        try {
+          const response = await this.fetchDenganBatas(this.normalisasiAlamatPortal() + '/aplikasi/versi', {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+          });
+          if (!response.ok) return null;
+          const info = await response.json();
+          const kode = Number(info.versionCode);
+          if (!Number.isSafeInteger(kode) || !info.unduh || !/^[a-f0-9]{64}$/.test(String(info.sha256 || ''))) return null;
+          if (kode <= terpasang.versionCode) {
+            this.pembaruan.terbuka = false;
+            return false;
+          }
+          const wajib = terpasang.versionCode < Number(info.minVersionCode || 0);
+          let ditunda = 0;
+          try { ditunda = Number(JSON.parse(localStorage.getItem('SIMPATIK_PEMBARUAN_DITUNDA') || 'null')?.[kode] || 0); } catch (_) {}
+          const masihDitunda = !wajib && Date.now() - ditunda < 6 * 3600 * 1000;
+          Object.assign(this.pembaruan, { info, terpasang, wajib });
+          if (!masihDitunda) this.pembaruan.terbuka = true;
+          return true;
+        } catch (error) {
+          return null;
+        }
+      },
+      tundaPembaruan() {
+        if (this.pembaruan.wajib) return;
+        const kode = Number(this.pembaruan.info?.versionCode);
+        try { localStorage.setItem('SIMPATIK_PEMBARUAN_DITUNDA', JSON.stringify({ [kode]: Date.now() })); } catch (_) {}
+        this.pembaruan.terbuka = false;
+        this.pembaruan.tahap = '';
+      },
+      mulaiPembaruan() {
+        const info = this.pembaruan.info;
+        if (!info || typeof window.AndroidBridge?.unduhPembaruan !== 'function') return false;
+        const url = this.normalisasiAlamatPortal() + info.unduh;
+        Object.assign(this.pembaruan, { tahap: 'mengunduh', persen: 0, diterima: 0, pesan: '' });
+        const hasil = JSON.parse(window.AndroidBridge.unduhPembaruan(url, info.sha256, Number(info.versionCode)));
+        if (!hasil.ok) Object.assign(this.pembaruan, { tahap: 'gagal', pesan: hasil.error || 'Pembaruan tidak dapat dimulai.' });
+        return !!hasil.ok;
+      },
+      batalkanUnduhPembaruan() {
+        if (typeof window.AndroidBridge?.batalkanPembaruan === 'function') window.AndroidBridge.batalkanPembaruan();
+      },
+      terapkanStatusPembaruan(raw) {
+        let data;
+        try { data = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (_) { return; }
+        if (!data || !data.tahap) return;
+        this.pembaruan.terbuka = true;
+        this.pembaruan.tahap = data.tahap === 'batal' ? '' : data.tahap;
+        if (data.tahap === 'mengunduh') {
+          this.pembaruan.persen = Number.isFinite(Number(data.persen)) ? Number(data.persen) : -1;
+          this.pembaruan.diterima = Number(data.diterima) || 0;
+        }
+        this.pembaruan.pesan = data.pesan || '';
+      },
+      async periksaModeLatihan() {
+        if (!localStorage.getItem('SIMPATIK_SESSION')) {
+          this.modeLatihanAktif = false;
+          return null;
+        }
+        try {
+          const response = await this.fetchDenganBatas(this.normalisasiAlamatPortal() + '/pelatihan/status', {
+            headers: this.apiHeaders(false)
+          });
+          if (response.ok) {
+            const body = await response.json();
+            this.modeLatihanAktif = !!(body && body.aktif);
+          } else if (response.status === 503 || response.status === 404) {
+            // Fitur pelatihan tidak aktif di server berarti data riil.
+            this.modeLatihanAktif = false;
+          } else {
+            return null;
+          }
+          localStorage.setItem('SIMPATIK_MODE_LATIHAN', this.modeLatihanAktif ? '1' : '0');
+          return this.modeLatihanAktif;
+        } catch (error) {
+          // Offline: pertahankan status terakhir agar penanda tidak hilang.
+          return null;
+        }
       },
       masukkanScanKeAntrean(simpanCatatan) {
         const anak = this.scannedAnak;
         if (!anak) { this.queueNoteDialog = false; return false; }
         const identity = this.identitasAnak(anak);
+        const tanyaMenyusui = this.perluTanyaMenyusui(anak);
+        const tanyaAsi = this.perluTanyaAsiEksklusif(anak);
+        if ((tanyaMenyusui && this.queueMenyusuiDraft === null) || (tanyaAsi && this.queueAsiDraft === null)) {
+          this.queueDialogError = tanyaAsi
+            ? 'Pilih YA atau TIDAK untuk status menyusui dan ASI eksklusif.'
+            : 'Pilih YA atau TIDAK untuk status menyusui.';
+          return false;
+        }
+        const menyusui = {
+          masihMenyusui: tanyaMenyusui ? this.queueMenyusuiDraft : null,
+          asiEksklusif: tanyaAsi ? this.queueAsiDraft : null
+        };
         if (simpanCatatan && String(this.queueNoteDraft || '').trim()) this.queueNotes[identity] = String(this.queueNoteDraft).trim().slice(0, 240);
         else delete this.queueNotes[identity];
         this.queueNoteDialog = false;
-        const added = this.tambahAntrean(anak);
+        this.queueMenyusuiDraft = null;
+        this.queueAsiDraft = null;
+        this.queueDialogError = '';
+        const added = this.tambahAntrean(anak, menyusui);
         if (!added) return false;
         const queueItem = this.antreanHariIni.find(item => item.childIdentity === identity && item.status !== 'cancelled');
         const confirmation = (queueItem ? this.formatNomorAntrean(queueItem.number) + ' · ' : '') + anak.nama + ' masuk antrean';
@@ -2872,7 +3296,18 @@ const connected = await this.ujiKoneksiPortal(true);
         const identity = this.identitasAnak(anak);
         return this.antreanHariIni.some(item => item.childIdentity === identity && item.status !== 'cancelled');
       },
-      tambahAntrean(anak) {
+      // Sama dengan server: nomor batal dikembalikan dan dipakai pendaftar berikutnya,
+      // nomor anak lain tidak diubah. Urutan panggil tetap mengikuti waktu datang.
+      nomorAntreanKosong(kecuali = null) {
+        const dipakai = new Set(this.antreanHariIni
+          .filter(item => item !== kecuali && item.status !== 'cancelled')
+          .map(item => Number(item.number))
+          .filter(Number.isFinite));
+        let nomor = 1;
+        while (dipakai.has(nomor)) nomor += 1;
+        return nomor;
+      },
+      tambahAntrean(anak, menyusui = {}) {
         if (!this.adalahSasaranAktif(anak) || this.sesiSasaranSelesai || ['selesai', 'tidak_hadir', 'pindah', 'batal'].includes(anak.statusSasaran)) {
           alert('[Sasaran Tidak Aktif]\n\nAnak ini tidak lagi berstatus menunggu pada periode sasaran aktif.');
           return false;
@@ -2889,11 +3324,12 @@ const connected = await this.ujiKoneksiPortal(true);
           return false;
         }
         const cancelled = this.antreanHariIni.find(item => item.childIdentity === identity && item.status === 'cancelled');
-        const maxNumber = this.antreanHariIni.reduce((max, item) => Math.max(max, Number(item.number) || 0), 0);
         const maxOrder = this.antreanHariIni.reduce((max, item) => Math.max(max, Number(item.sortOrder) || Number(item.number) || 0), 0);
         const now = new Date().toISOString();
         const periodeId = Number(this.periodeSasaran?.periode?.id || this.periodeSasaran?.periodeId || this.periodeSasaran?.id);
         if (cancelled) {
+          // Nomor lamanya bisa sudah dipakai anak lain; ambil nomor kosong terkecil.
+          cancelled.number = this.nomorAntreanKosong(cancelled);
           cancelled.status = 'waiting';
           cancelled.checkedInAt = now;
           cancelled.updatedAt = now;
@@ -2903,12 +3339,15 @@ const connected = await this.ujiKoneksiPortal(true);
           cancelled.note = note;
           cancelled.sasaranId = Number(anak.idSasaran);
           cancelled.periodeId = periodeId;
+          cancelled.masihMenyusui = typeof menyusui.masihMenyusui === 'boolean' ? menyusui.masihMenyusui : null;
+          cancelled.asiEksklusif = typeof menyusui.asiEksklusif === 'boolean' ? menyusui.asiEksklusif : null;
+          cancelled._menyusuiPending = !!cancelled.serverId && Object.keys(this.jawabanMenyusuiUntukServer(cancelled)).length > 0;
           cancelled._queueDirty = !!cancelled.serverId;
         } else {
           this.queueEntries.push({
             id: `antrean_${this.tanggalHariIniISO.replace(/-/g, '')}_${identity.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
             date: this.tanggalHariIniISO,
-            number: maxNumber + 1,
+            number: this.nomorAntreanKosong(),
             sortOrder: maxOrder + 1,
             childIdentity: identity,
             sasaranId: Number(anak.idSasaran),
@@ -2923,6 +3362,8 @@ const connected = await this.ujiKoneksiPortal(true);
             calledAt: null,
             completedAt: null,
             note: note,
+            masihMenyusui: typeof menyusui.masihMenyusui === 'boolean' ? menyusui.masihMenyusui : null,
+            asiEksklusif: typeof menyusui.asiEksklusif === 'boolean' ? menyusui.asiEksklusif : null,
             _queuePending: true
           });
         }
@@ -3255,6 +3696,8 @@ const connected = await this.ujiKoneksiPortal(true);
                 lika: p.lika || 'N/A',
                 caraUkur: p.jenis_ukur || 'Terlentang',
                 statusKehadiran: p.status_kehadiran || 'Hadir',
+                catatanKhusus: p.catatan_khusus || '',
+                catatanKms: p.catatan_kms || '',
                 syncStatus: 'synced'
               };
 
@@ -3420,6 +3863,7 @@ const connected = await this.ujiKoneksiPortal(true);
           lila: isiLilaSebelumnya && !isiLilaSebelumnya.perluUkurUlang ? String(isiLilaSebelumnya.nilai).replace('.', ',') : '',
           lika: isiLikaSebelumnya && !isiLikaSebelumnya.perluUkurUlang ? String(isiLikaSebelumnya.nilai).replace('.', ',') : ''
         };
+        this.formCatatanKhusus = existing ? String(existing.catatanKhusus || '') : '';
         this.aktif = 'bb';
         this.metode = existing && existing.caraUkur
           ? (String(existing.caraUkur).toLowerCase().includes('berdiri') ? 'berdiri' : 'terlentang')
@@ -3567,7 +4011,8 @@ const connected = await this.ujiKoneksiPortal(true);
           lila: this.formVals.lila && !this.formTambahanDiwariskan.lila ? String(this.formVals.lila).replace(',', '.') : 'N/A',
           lika: this.formVals.lika && !this.formTambahanDiwariskan.lika ? String(this.formVals.lika).replace(',', '.') : 'N/A',
           ntob: 'N',
-          status_kehadiran: 'Hadir'
+          status_kehadiran: 'Hadir',
+          catatan_khusus: String(this.formCatatanKhusus || '').trim().slice(0, 500)
         };
       },
       simpanPengukuranKeAndroid(payload) {
@@ -3723,6 +4168,8 @@ const connected = await this.ujiKoneksiPortal(true);
             lika: payload.lika,
             caraUkur: payload.jenis_ukur,
             statusKehadiran: 'Hadir',
+            catatanKhusus: payload.catatan_khusus || '',
+            catatanKms: existingRecordKms(this.activeAnak, year, month),
             syncStatus: 'pending',
             pendataanSusulan: false,
             pendataanSusulanPending: isSusulan,
@@ -3765,6 +4212,14 @@ const connected = await this.ujiKoneksiPortal(true);
       window.handleNearbyStatus = status => { this.nearbyStatus = String(status || ''); this.kirimSnapshotCluster(); };
       window.handleNearbySnapshot = snapshot => this.terapkanSnapshotCluster(snapshot);
       window.handleScanKartuSasaran = value => this.prosesHasilScanKartu(value);
+      window.handleKameraTerakhir = facing => {
+        if (facing !== 'user' && facing !== 'environment') return;
+        this.cameraFacing = facing;
+        localStorage.setItem('SIMPATIK_CAMERA_FACING', facing);
+      };
+      if (typeof window.AndroidBridge?.kameraTerakhir === 'function') {
+        window.handleKameraTerakhir(window.AndroidBridge.kameraTerakhir());
+      }
       window.handleScanKartuDibatalkan = () => {};
       window.handleIzinKameraDiberikan = granted => {
         if (granted && this.cameraScannerActive && this.cameraScannerError) this.bukaCameraScanner();
@@ -3811,6 +4266,13 @@ const connected = await this.ujiKoneksiPortal(true);
       // Saat website dinyalakan kembali, aplikasi memulihkan koneksi dan
       // mengirim antrean lokal tanpa meminta kader membuka pengaturan.
       setInterval(() => { this.kirimSnapshotCluster(); this.pulihkanKoneksiDanSinkronkan(); }, 15000);
+      // Pembaruan APK dari server: periksa saat dibuka lalu berkala.
+      window.handleStatusPembaruan = data => this.terapkanStatusPembaruan(data);
+      setTimeout(() => this.periksaPembaruan(), 6000);
+      setInterval(() => this.periksaPembaruan(), 15 * 60 * 1000);
+      // Penanda mode latihan/demo mengikuti status sesi pelatihan di web.
+      setTimeout(() => this.periksaModeLatihan(), 4000);
+      setInterval(() => this.periksaModeLatihan(), 30000);
       setInterval(() => {
         const sedangDiAntrean = this.view === 'queue' ||
           (this.view === 'list' && this.listMode === 'record' && this.recordListTab === 'queue');

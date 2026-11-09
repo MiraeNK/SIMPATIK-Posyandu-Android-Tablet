@@ -142,6 +142,7 @@ test('device heartbeat is authenticated and does not claim an account or RW from
   h.context.fetch = async () => { throw Error('No heartbeat before login'); };
   assert.equal(await h.app.kirimHeartbeat(), false);
   h.storage.set('SIMPATIK_SESSION', JSON.stringify({ token: 'token-uji-perangkat' }));
+  h.context.window.AndroidBridge = { versiAplikasi: () => JSON.stringify({ versionCode: 36, versionName: '1.14.0' }) };
   let body;
   h.context.fetch = async (url, request) => {
     assert.equal(url, portalApiBawaan + '/heartbeat');
@@ -152,7 +153,7 @@ test('device heartbeat is authenticated and does not claim an account or RW from
   assert.equal(await h.app.kirimHeartbeat(), true);
   assert.equal(body.jenisPerangkat, 'android');
   assert.equal(body.modeKoneksi, 'online');
-  assert.equal(body.versiAplikasi, 'v1.12.8');
+  assert.equal(body.versiAplikasi, 'v1.14.0', 'versi heartbeat dibaca dari APK terpasang');
   assert.equal(body.posyanduId, undefined);
   assert.equal(body.penggunaId, undefined);
 });
@@ -949,4 +950,234 @@ test('measurement sync gracefully handles 409 conflict as already recorded witho
   const res = await h.app.sinkronkanSatuPengukuran(payload);
   assert.equal(res.ok, true);
   assert.equal(h.app.ambilAntreanPengukuran().length, 0);
+});
+
+test('Android camera scan uses the switchable native scanner before Google fallback', () => {
+  const h = harness({ SIMPATIK_CAMERA_FACING: 'environment' });
+  const calls = [];
+  h.context.window.AndroidBridge = {
+    scanKartuDenganKamera: facing => { calls.push(facing); return '{"ok":true}'; },
+    scanKartuSasaran: () => { throw new Error('Google fallback must not be used'); }
+  };
+  assert.equal(h.app.mulaiScanKartu(), true);
+  assert.deepEqual(calls, ['environment']);
+  assert.equal(h.app.cameraScannerActive, false);
+});
+
+function anakSasaran(umurBulan, extra = {}) {
+  const nik = '32730101012200' + String(umurBulan).padStart(2, '0');
+  return { id: nik, nik, idSasaran: 500 + umurBulan, sourceId: 50 + umurBulan, nama: 'Anak ' + umurBulan + ' Bulan', inisial: 'AB', umurBulan, namaOrtu: 'Ibu Uji', rt: '01', statusSasaran: 'menunggu', riwayat: {}, ...extra };
+}
+
+test('registration asks breastfeeding (0-23 mo) and exclusive breastfeeding (0-6 mo) before a queue number', () => {
+  const h = harness();
+  const bayi = anakSasaran(4);
+  h.app.daftarAnak = [bayi];
+  h.app.queueEntries = [];
+  assert.equal(h.app.perluTanyaMenyusui(bayi), true);
+  assert.equal(h.app.perluTanyaAsiEksklusif(bayi), true);
+  assert.equal(h.app.prosesHasilScanKartu(bayi.nik), true);
+  assert.equal(h.app.masukkanScanKeAntrean(false), false);
+  assert.match(h.app.queueDialogError, /ASI eksklusif/);
+  assert.equal(h.app.antreanAktif.length, 0);
+  h.app.pilihAsiEksklusif(true);
+  assert.equal(h.app.queueMenyusuiDraft, true, 'ASI eksklusif YA berarti ibu masih menyusui');
+  assert.equal(h.app.masukkanScanKeAntrean(false), true);
+  const item = h.app.antreanAktif[0];
+  assert.equal(item.masihMenyusui, true);
+  assert.equal(item.asiEksklusif, true);
+  assert.equal(h.app.ringkasanMenyusui(item), 'Menyusui: Ya · ASI eksklusif: Ya');
+});
+
+test('answering not breastfeeding marks exclusive breastfeeding as no; older babies skip the ASI question', () => {
+  const h = harness();
+  const bayi = anakSasaran(5);
+  const batita = anakSasaran(12);
+  h.app.daftarAnak = [bayi, batita];
+  h.app.queueEntries = [];
+  h.app.prosesHasilScanKartu(bayi.nik);
+  h.app.pilihMenyusui(false);
+  assert.equal(h.app.queueAsiDraft, false);
+  assert.equal(h.app.masukkanScanKeAntrean(true), true);
+  assert.equal(h.app.pilihUntukAntrean(batita), true);
+  assert.equal(h.app.queueNoteDialog, true, 'pilihan manual 0-23 bulan membuka dialog pendaftaran');
+  assert.equal(h.app.perluTanyaAsiEksklusif(batita), false);
+  h.app.pilihMenyusui(true);
+  assert.equal(h.app.masukkanScanKeAntrean(false), true);
+  const item = h.app.antreanAktif.find(q => q.childIdentity === batita.nik);
+  assert.equal(item.masihMenyusui, true);
+  assert.equal(item.asiEksklusif, null);
+});
+
+test('children 24 months or older are added directly without breastfeeding questions', () => {
+  const h = harness();
+  const anak = anakSasaran(30);
+  h.app.daftarAnak = [anak];
+  h.app.queueEntries = [];
+  assert.equal(h.app.pilihUntukAntrean(anak), true);
+  assert.equal(h.app.queueNoteDialog, false);
+  assert.equal(h.app.antreanAktif[0].masihMenyusui, null);
+  assert.equal(h.app.ringkasanMenyusui(h.app.antreanAktif[0]), '');
+});
+
+test('age falls back to birth date when the roster has no month count', () => {
+  const h = harness();
+  const lahir = new Date(h.app.tanggalHariIniISO + 'T00:00:00');
+  lahir.setMonth(lahir.getMonth() - 3);
+  const iso = lahir.getFullYear() + '-' + String(lahir.getMonth() + 1).padStart(2, '0') + '-' + String(lahir.getDate()).padStart(2, '0');
+  assert.equal(h.app.umurBulanAnak({ tglLahir: iso }), 3);
+  assert.equal(h.app.umurBulanAnak({}), null);
+  assert.equal(h.app.perluTanyaMenyusui({}), false);
+});
+
+test('queue sync sends YA/TIDAK answers with the existing check-in request', async () => {
+  const h = harness({ SIMPATIK_SESSION: JSON.stringify({ token: 'session-token' }) });
+  h.app.registryConfig.portalApi.url = 'https://contoh.test/api/v1';
+  h.app.periodeSasaran = { periode: { id: 9 }, ringkasan: { menunggu: 1 } };
+  const bayi = anakSasaran(2);
+  h.app.daftarAnak = [bayi];
+  h.app.queueEntries = [];
+  h.app.prosesHasilScanKartu(bayi.nik);
+  h.app.pilihMenyusui(true);
+  h.app.pilihAsiEksklusif(false);
+  h.app.isSyncingAntreanPortal = true; // cegah sinkron otomatis dari persistAntrean
+  assert.equal(h.app.masukkanScanKeAntrean(false), true);
+  h.app.isSyncingAntreanPortal = false;
+  const requests = [];
+  h.context.fetch = async (url, options = {}) => {
+    requests.push({ url, options });
+    if (!options.method) return { ok: true, status: 200, json: async () => ({ items: [] }) };
+    const body = JSON.parse(options.body);
+    return { ok: true, status: 201, json: async () => ({ item: {
+      id: 'antrean_1', sasaranId: body.sasaranId, periodeId: body.periodeId, tanggal: body.tanggal, nomor: 1, urutan: 1,
+      childIdentity: bayi.nik, nama: bayi.nama, status: 'waiting', catatan: null,
+      masihMenyusui: body.masihMenyusui, asiEksklusif: body.asiEksklusif, updatedAt: new Date().toISOString(),
+    } }) };
+  };
+  assert.equal(await h.app.sinkronkanAntreanPortal(), true);
+  const post = requests.find(r => r.options.method === 'POST');
+  assert.ok(post.url.endsWith('/antrean'), 'endpoint check-in tidak berubah');
+  const body = JSON.parse(post.options.body);
+  assert.equal(body.masihMenyusui, true);
+  assert.equal(body.asiEksklusif, false);
+  assert.equal(h.app.queueEntries[0].asiEksklusif, false);
+});
+
+test('measurement payload carries the special observation note and restores it for corrections', () => {
+  const h = harness();
+  const anak = anakSasaran(14, { tglLahir: '2025-09-01' });
+  h.app.bukaFormPengukuran(anak, h.app.tanggalHariIniISO);
+  assert.equal(h.app.formCatatanKhusus, '');
+  h.app.formVals = { bb: '9,1', pb: '76', lila: '', lika: '' };
+  h.app.formCatatanKhusus = '  Anak demam sejak kemarin  ';
+  const payload = h.app.buatPayloadPengukuran();
+  assert.equal(payload.catatan_khusus, 'Anak demam sejak kemarin');
+  const date = new Date(h.app.tanggalHariIniISO + 'T00:00:00');
+  anak.riwayat = { [date.getFullYear()]: { [date.getMonth()]: { idPengukuran: 'ukur_x', tanggalUkur: h.app.tanggalHariIniISO, bb: '9.1', pb: '76', catatanKhusus: 'Rewel' } } };
+  h.app.bukaFormPengukuran(anak, h.app.tanggalHariIniISO);
+  assert.equal(h.app.formCatatanKhusus, 'Rewel');
+});
+
+test('training/demo notice follows the web training status without new endpoints', async () => {
+  const h = harness({ SIMPATIK_SESSION: JSON.stringify({ token: 'session-token' }) });
+  h.app.registryConfig.portalApi.url = 'https://contoh.test/api/v1';
+  const urls = [];
+  h.context.fetch = async url => { urls.push(url); return { ok: true, status: 200, json: async () => ({ aktif: true }) }; };
+  assert.equal(await h.app.periksaModeLatihan(), true);
+  assert.equal(h.app.modeLatihanAktif, true);
+  assert.equal(urls[0], 'https://contoh.test/api/v1/pelatihan/status');
+  assert.equal(h.storage.get('SIMPATIK_MODE_LATIHAN'), '1');
+  h.context.fetch = async () => { throw new Error('offline'); };
+  assert.equal(await h.app.periksaModeLatihan(), null);
+  assert.equal(h.app.modeLatihanAktif, true, 'status terakhir dipertahankan saat offline');
+  h.context.fetch = async () => ({ ok: false, status: 503, json: async () => ({}) });
+  assert.equal(await h.app.periksaModeLatihan(), false);
+  assert.equal(h.app.modeLatihanAktif, false);
+  h.app.modeLatihanAktif = true;
+  h.app.doLogout();
+  assert.equal(h.app.modeLatihanAktif, false);
+  assert.equal(h.storage.has('SIMPATIK_MODE_LATIHAN'), false);
+});
+
+test('APK has no training button; the notice is read-only', () => {
+  assert.doesNotMatch(html, /<button[^>]*>[^<]*[Ll]atihan/);
+  assert.match(html, /class="mode-latihan-banner" role="status"/);
+});
+
+test('cancelled queue numbers are returned to the next registration without renumbering others', () => {
+  const h = harness();
+  h.context.window.AndroidBridge = { simpanAntrean: () => JSON.stringify({ ok: true }) };
+  const anak = [30, 31, 32, 33].map(umur => anakSasaran(umur));
+  h.app.daftarAnak = anak;
+  h.app.queueEntries = [];
+  anak.slice(0, 3).forEach(a => assert.equal(h.app.tambahAntrean(a), true));
+  const nomor = a => h.app.antreanHariIni.find(q => q.childIdentity === a.nik).number;
+  assert.deepEqual(anak.slice(0, 3).map(nomor), [1, 2, 3]);
+  h.app.batalkanAntrean(h.app.antreanHariIni.find(q => q.childIdentity === anak[1].nik));
+  assert.equal(h.app.tambahAntrean(anak[3]), true);
+  assert.equal(nomor(anak[3]), 2, 'A02 yang dibatalkan dipakai lagi');
+  assert.equal(nomor(anak[0]), 1);
+  assert.equal(nomor(anak[2]), 3, 'nomor yang sudah dipegang tidak berubah');
+  const urutan = h.app.antreanAktif.map(q => q.childIdentity);
+  assert.deepEqual(urutan, [anak[0].nik, anak[2].nik, anak[3].nik], 'urutan panggil tetap sesuai waktu datang');
+  assert.equal(h.app.tambahAntrean(anak[1]), true);
+  assert.equal(nomor(anak[1]), 4, 'anak yang batal lalu datang lagi memperoleh nomor kosong berikutnya');
+});
+
+function harnessPembaruan(versionCode, versi) {
+  const h = harness();
+  const calls = [];
+  h.context.window.AndroidBridge = {
+    versiAplikasi: () => JSON.stringify({ versionCode, versionName: '1.13.' + (versionCode - 34) }),
+    unduhPembaruan: (url, sha, code) => { calls.push({ url, sha, code }); return '{"ok":true}'; },
+    batalkanPembaruan: () => calls.push('batal'),
+  };
+  h.context.fetch = async url => {
+    assert.ok(url.endsWith('/aplikasi/versi'));
+    return { ok: true, status: 200, json: async () => versi };
+  };
+  return { h, calls };
+}
+const RILIS = { versionCode: 36, versionName: '1.14.0', minVersionCode: 34, ukuran: 37000000, sha256: 'a'.repeat(64), catatan: 'Perbaikan', unduh: '/aplikasi/unduh/SIMPATIK-1.14.0-36.apk' };
+
+test('server update prompt appears for older APKs and downloads from the server release', async () => {
+  const { h, calls } = harnessPembaruan(35, RILIS);
+  assert.equal(await h.app.periksaPembaruan(), true);
+  assert.equal(h.app.pembaruan.terbuka, true);
+  assert.equal(h.app.pembaruan.wajib, false);
+  assert.equal(h.app.mulaiPembaruan(), true);
+  assert.equal(calls[0].url, h.app.normalisasiAlamatPortal() + RILIS.unduh);
+  assert.equal(calls[0].sha, RILIS.sha256);
+  assert.equal(calls[0].code, 36);
+  h.app.terapkanStatusPembaruan(JSON.stringify({ tahap: 'mengunduh', persen: 42, diterima: 1000 }));
+  assert.equal(h.app.pembaruan.persen, 42);
+  assert.equal(h.app.judulPembaruan, 'Mengunduh pembaruan');
+  h.app.terapkanStatusPembaruan(JSON.stringify({ tahap: 'gagal', pesan: 'Checksum berkas tidak cocok.' }));
+  assert.equal(h.app.pembaruan.tahap, 'gagal');
+  assert.match(h.app.pembaruan.pesan, /Checksum/);
+});
+
+test('optional updates can be postponed; versions below the minimum are mandatory', async () => {
+  const opsional = harnessPembaruan(35, RILIS);
+  await opsional.h.app.periksaPembaruan();
+  assert.equal(opsional.h.app.handleAndroidBack(), 'handled');
+  assert.equal(opsional.h.app.pembaruan.terbuka, false, 'Kembali menunda pembaruan opsional');
+  await opsional.h.app.periksaPembaruan();
+  assert.equal(opsional.h.app.pembaruan.terbuka, false, 'tidak muncul lagi selama masa tunda');
+
+  const wajib = harnessPembaruan(34 - 1, RILIS);
+  await wajib.h.app.periksaPembaruan();
+  assert.equal(wajib.h.app.pembaruan.wajib, true);
+  wajib.h.app.tundaPembaruan();
+  assert.equal(wajib.h.app.handleAndroidBack(), 'handled');
+  assert.equal(wajib.h.app.pembaruan.terbuka, true, 'pembaruan wajib tidak dapat ditutup');
+});
+
+test('no prompt when the APK is already current or when running outside Android', async () => {
+  const terbaru = harnessPembaruan(36, RILIS);
+  assert.equal(await terbaru.h.app.periksaPembaruan(), false);
+  assert.equal(terbaru.h.app.pembaruan.terbuka, false);
+  const browser = harness();
+  browser.context.fetch = async () => { throw new Error('tidak boleh memanggil server'); };
+  assert.equal(await browser.app.periksaPembaruan(), null);
 });

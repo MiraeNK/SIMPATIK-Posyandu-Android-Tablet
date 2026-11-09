@@ -264,3 +264,33 @@ Dokumen ini harus diperbarui setiap kali satu tahap verifikasi atau integrasi se
 - Sasaran bulanan dan total anak tetap memakai pemisahan v1.12.7.
 - Regresi kapasitas menguji anak kelima menunggu dan dapat dipanggil setelah satu anak masuk pemeriksaan KMS.
 - Validasi selesai: 53 tes JavaScript lulus; testDebugUnitTest, lintDebug, assembleDebug berhasil. APK: SIMPATIK-1.12.8-debug.apk. Belum diuji langsung di perangkat fisik.
+
+## 2026-10-31 — v1.12.9: pemindai Android dengan pilihan kamera
+- Pemindaian QR memakai CameraX dan ML Kit yang dibundel, sehingga tidak bergantung pada getUserMedia pada halaman file:// atau tampilan Google Scanner.
+- Tombol Kamera Depan/Kamera Belakang selalu tersedia; kamera yang tidak tersedia dinonaktifkan.
+- Kamera terakhir disimpan setelah berhasil dibuka, dipulihkan setelah pemindai/aplikasi dibuka ulang, dan diselaraskan dengan label WebView.
+- Hasil QR tetap masuk ke alur pop-up catatan yang sama.
+- Validasi: 57 regresi JavaScript, unit test Android, lintDebug, assembleDebug lulus. Uji instrumentasi HP uji (Android 16): depan → belakang → recreate → tutup/buka lulus. Pemeriksaan visual portrait dan pergantian kamera dilakukan langsung di S23.
+- APK: app/build/outputs/apk/debug/SIMPATIK-1.12.9-debug.apk (versionCode 33).
+- connectedDebugAndroidTest melakukan uninstall otomatis setelah pengujian. Untuk perangkat operasional, gunakan -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true dan pastikan salinan data lokal sebelum instrumentasi. Pembaruan APK menggunakan adb install -r.
+
+## 2026-11-09 — v1.13.0: tata letak HP, penanda latihan, menyusui/ASI, catatan khusus
+- HP portrait/landscape dan 601–900 px portrait dirapikan; form ukur dapat digulir di layar pendek.
+- Penanda mode latihan/demo membaca `GET /pelatihan/status` (endpoint lama). Tidak ada tombol latihan di APK.
+- Pendaftaran antrean menanyakan menyusui (0–23 bln) dan ASI eksklusif (0–6 bln); form ukur menambah catatan/pengamatan khusus. Field opsional pada `POST /antrean` dan `POST /pengukuran`; web perlu migrasi 031.
+- Validasi: 65 regresi JavaScript, testDebugUnitTest, assembleDebug lulus. Tampilan diperiksa di browser 360×780, 375×812, 800×360, 768×1024, 1280×800. Belum diuji di perangkat fisik.
+- APK: app/build/outputs/apk/debug/SIMPATIK-1.13.0-debug.apk (versionCode 34), SHA-256 [dihapus].
+
+
+## 2026-11-09 — v1.13.1: keyboard HP dan nomor antrean
+- Aturan landscape tidak lagi aktif saat keyboard terbuka di HP tegak (penyebab keypad 290 px); tanggal ukur selebar satu baris.
+- Nomor antrean batal dikembalikan ke pendaftar berikutnya; server (migrasi 032) dan tablet memakai aturan nomor kosong terkecil.
+- Saat keyboard terbuka, banner dan bilah Simpan disembunyikan sementara dan kolom aktif digulir ke tengah.
+- Validasi: 66 regresi JavaScript dan assembleDebug lulus. Diuji langsung di HP uji via adb: form ukur, keyboard pada kolom catatan, dan dialog pendaftaran (tanpa menyimpan data).
+- APK: app/build/outputs/apk/debug/SIMPATIK-1.13.1-debug.apk (versionCode 35), SHA-256 [dihapus].
+
+
+## 2026-11-09 — v1.14.0/1.14.1: pembaruan dari server
+- Endpoint versi/unduh/rilis di server (commit dbaf8a1) aktif di VM; rilis disimpan di ~/simpatik-rilis/android.
+- Diuji di HP uji: 1.14.0 (adb) mendeteksi rilis 1.14.1 di server, mengunduh, verifikasi SHA-256, lalu terpasang via layar pemasang Android; sesi login dan data lokal tetap.
+- Validasi: 69 regresi JavaScript, testDebugUnitTest, lintDebug, assembleDebug lulus.

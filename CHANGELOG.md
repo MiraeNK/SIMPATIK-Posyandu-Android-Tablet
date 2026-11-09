@@ -1,3 +1,33 @@
+# 1.14.1 (37) — 9 November 2026
+
+- Rilis uji pertama yang dipasang melalui pembaruan dari server (tanpa adb/Play Store).
+
+# 1.14.0 (36) — 9 November 2026
+
+- Pembaruan aplikasi dari server SIMPATIK: aplikasi memeriksa `GET /aplikasi/versi` saat dibuka dan tiap 15 menit, menampilkan popup (opsional bisa ditunda 6 jam; di bawah `minVersionCode` wajib), mengunduh APK dengan progres, memverifikasi SHA-256, nama paket, dan versi, lalu membuka layar pemasang Android.
+- Izin "instal dari sumber ini" diminta sekali; pemasangan lanjut otomatis setelah kembali ke aplikasi.
+- Versi pada heartbeat perangkat dibaca dari APK terpasang.
+- Rilis diterbitkan di VM dengan `npm run rilis:apk -- --apk <berkas> --versi-kode <n> --versi-nama <x.y.z> [--min <n>]`.
+- 1.14.0 perlu dipasang manual sekali per perangkat; pembaruan berikutnya lewat server.
+
+# 1.13.1 (35) — 9 November 2026
+
+- Memperbaiki tampilan form ukur dan pendaftaran di HP saat keyboard terbuka: aturan landscape kini hanya aktif bila lebar layar di atas 600 px, sehingga keypad tidak lagi menyempit ke 290 px.
+- Tanggal ukur di HP tampil satu baris penuh, tidak lagi terdorong ke kanan.
+- Saat keyboard terbuka, banner latihan dan bilah Simpan disembunyikan sementara, dan kolom yang sedang diketik digulir ke tengah layar agar tidak tertutup.
+- Nomor antrean yang dibatalkan dikembalikan dan dipakai pendaftar berikutnya (nomor kosong terkecil). Nomor anak lain yang sudah terdaftar tidak berubah; urutan panggil tetap sesuai waktu datang. Server dan tablet memakai aturan yang sama sehingga nomor tidak lagi berubah setelah sinkron.
+- Perlu migrasi server `032_nomor_antrean_dapat_dipakai_ulang.sql`.
+
+# 1.13.0 (34) — 9 November 2026
+
+- Tata letak HP dirapikan: statistik antrean tiga kolom sejajar, slot panggilan dua kolom, tombol pindai selebar layar, dan metrik riwayat dua kolom.
+- HP landscape dan HP besar/lipat portrait: halaman pengukuran kini bisa digulir sehingga kolom, keypad, dan tombol Simpan tidak terpotong; dialog konfirmasi ikut menggulir.
+- Penanda kecil di atas layar saat web sedang menjalankan sesi latihan/demo. Status dibaca dari `GET /pelatihan/status` yang sudah ada; tidak ada endpoint baru. APK tidak memiliki tombol latihan.
+- Pendaftaran antrean (pindai kartu atau pilih manual) menanyakan YA/TIDAK: ibu masih menyusui (0–23 bulan) dan ASI eksklusif (0–6 bulan). Jawaban ikut `POST /antrean` dan tampil di daftar antrean, form ukur, serta layar KMS web.
+- Form pengukuran memiliki kolom Catatan/pengamatan khusus yang dikirim sebagai `catatan_khusus` pada `POST /pengukuran`. Riwayat menampilkan catatan pencatatan dan catatan KMS dari web.
+- Perlu server dengan migrasi `031_menyusui_dan_catatan_khusus.sql`. Server lama mengabaikan field baru tanpa error.
+- Tag penutup slot antrean yang hilang diperbaiki.
+
 # 1.12.5 (29) — 23 Oktober 2026
 
 - REST API menggunakan web yang sudah dipindahkan ke VM Ubuntu melalui Cloudflare HTTPS.

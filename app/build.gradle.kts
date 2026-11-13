@@ -36,8 +36,8 @@ android {
         applicationId = "id.simpatik.posyandu"
         minSdk = 24
         targetSdk = 37
-        versionCode = 40
-        versionName = "1.16.0"
+        versionCode = 41
+        versionName = "1.16.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "PORTAL_API_URL", "\"${nilaiServer("portalApiUrl")}\"")

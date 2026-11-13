@@ -1,3 +1,7 @@
+# 1.16.1 (41) — 13 November 2026
+
+- Server kembar dengan domain tetap menjadi server cadangan bawaan. Bila server utama tidak terjangkau, aplikasi berpindah otomatis tanpa logout.
+
 # 1.16.0 (40) — 13 November 2026
 
 - Aplikasi menyimpan daftar server (utama + kembar/cadangan) dan otomatis berpindah ke server yang hidup bila server aktif tidak terjangkau. Sesi login tetap berlaku karena semua server memakai database yang sama.

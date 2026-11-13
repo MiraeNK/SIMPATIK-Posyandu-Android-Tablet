@@ -702,6 +702,16 @@ class AndroidAppBridge(
     @JavascriptInterface
     fun alamatServerBawaan(): String = BuildConfig.PORTAL_API_URL
 
+    /** Server utama + kembar/cadangan dari konfigurasi build, sebagai JSON array. */
+    @JavascriptInterface
+    fun daftarServerBawaan(): String = JSONArray(daftarServerBuild()).toString()
+
+    private fun daftarServerBuild(): List<String> =
+        (listOf(BuildConfig.PORTAL_API_URL) + BuildConfig.PORTAL_API_CADANGAN.split(','))
+            .map { it.trim().trimEnd('/') }
+            .filter { Regex("^https?://[^/]+/api/v1$").matches(it) }
+            .distinct()
+
     @JavascriptInterface
     fun unduhPembaruan(url: String, sha256: String, versionCode: Double): String =
         activity.appUpdater.mulai(url, sha256, versionCode.toLong())
@@ -831,32 +841,34 @@ class AndroidAppBridge(
 
                 var serverFoundJson: String? = null
 
-                // 1. Prioritaskan API publik agar tablet dapat tersambung dari jaringan mana pun.
+                // 1. Prioritaskan API publik: server utama lalu server kembar/cadangan.
                 // Alamat disuntikkan saat build dari server.properties (tidak disimpan di repo).
-                val cloudflareApiUrl = BuildConfig.PORTAL_API_URL.trimEnd('/')
-                val cloudflareHost = runCatching { URL(cloudflareApiUrl).host }.getOrDefault("")
-                try {
-                    check(cloudflareHost.isNotEmpty()) { "Alamat API online belum dikonfigurasi saat build" }
-                    val connection = (URL("$cloudflareApiUrl/kesehatan").openConnection() as HttpURLConnection).apply {
-                        connectTimeout = 7000
-                        readTimeout = 7000
-                        requestMethod = "GET"
-                    }
-                    if (connection.responseCode == 200) {
-                        val body = connection.inputStream.bufferedReader().use { it.readText() }
-                        if (body.contains("\"status\":\"siap\"")) {
-                            serverFoundJson = JSONObject().apply {
-                                put("ok", true)
-                                put("ip", cloudflareHost)
-                                put("port", 443)
-                                put("apiUrl", cloudflareApiUrl)
-                                put("metode", "cloudflare_quick_tunnel")
-                            }.toString()
+                for (onlineApiUrl in daftarServerBuild()) {
+                    if (serverFoundJson != null) break
+                    val onlineHost = runCatching { URL(onlineApiUrl).host }.getOrDefault("")
+                    if (onlineHost.isEmpty()) continue
+                    try {
+                        val connection = (URL("$onlineApiUrl/kesehatan").openConnection() as HttpURLConnection).apply {
+                            connectTimeout = 7000
+                            readTimeout = 7000
+                            requestMethod = "GET"
                         }
+                        if (connection.responseCode == 200) {
+                            val body = connection.inputStream.bufferedReader().use { it.readText() }
+                            if (body.contains("\"status\":\"siap\"")) {
+                                serverFoundJson = JSONObject().apply {
+                                    put("ok", true)
+                                    put("ip", onlineHost)
+                                    put("port", 443)
+                                    put("apiUrl", onlineApiUrl)
+                                    put("metode", "online")
+                                }.toString()
+                            }
+                        }
+                        connection.disconnect()
+                    } catch (error: Exception) {
+                        Log.d("Discovery", "Server online $onlineHost unavailable: ${error.message}")
                     }
-                    connection.disconnect()
-                } catch (error: Exception) {
-                    Log.d("Discovery", "Cloudflare Quick Tunnel unavailable: ${error.message}")
                 }
 
                 // 2. Jika server publik tidak tersedia, coba UDP di jaringan lokal yang sama.

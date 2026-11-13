@@ -36,11 +36,13 @@ android {
         applicationId = "id.simpatik.posyandu"
         minSdk = 24
         targetSdk = 37
-        versionCode = 38
-        versionName = "1.15.0"
+        versionCode = 40
+        versionName = "1.16.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "PORTAL_API_URL", "\"${nilaiServer("portalApiUrl")}\"")
+        // Server cadangan/kembar (dipisah koma). Aplikasi berpindah otomatis bila server utama mati.
+        buildConfigField("String", "PORTAL_API_CADANGAN", "\"${nilaiServer("portalApiCadangan")}\"")
         buildConfigField("String", "TAILSCALE_API_URL", "\"${nilaiServer("tailscaleApiUrl")}\"")
     }
 

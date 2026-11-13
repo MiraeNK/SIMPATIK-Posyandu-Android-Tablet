@@ -810,7 +810,8 @@ test('VM deployment migrates the saved laptop API without deleting session or of
 
 test('native discovery and WebView read the same build-time server address', () => {
   const native = fs.readFileSync(path.join(__dirname,'../app/src/main/java/com/example/simpatikposyandu/MainActivity.kt'),'utf8');
-  assert.match(native, /val cloudflareApiUrl = BuildConfig\.PORTAL_API_URL/);
+  assert.match(native, /for \(onlineApiUrl in daftarServerBuild\(\)\)/);
+  assert.match(native, /listOf\(BuildConfig\.PORTAL_API_URL\) \+ BuildConfig\.PORTAL_API_CADANGAN/);
   assert.match(native, /fun alamatServerBawaan\(\): String = BuildConfig\.PORTAL_API_URL/);
   assert.doesNotMatch(native, /trycloudflare\.com"|\.ts\.net"/, 'host server tidak boleh tertulis di kode');
   assert.match(html, /AndroidBridge\.alamatServerBawaan\(\)/);
@@ -1184,4 +1185,52 @@ test('no prompt when the APK is already current or when running outside Android'
   const browser = harness();
   browser.context.fetch = async () => { throw new Error('tidak boleh memanggil server'); };
   assert.equal(await browser.app.periksaPembaruan(), null);
+});
+
+test('connection fails over to a healthy twin server and keeps the session', async () => {
+  const h = harness({ SIMPATIK_SESSION: JSON.stringify({ token: 'sesi-sama' }) });
+  const utama = 'https://utama.simpatik.example/api/v1';
+  const kembar = 'https://kembar.simpatik.example/api/v1';
+  h.context.window.AndroidBridge = { daftarServerBawaan: () => JSON.stringify([utama, kembar]) };
+  h.app.registryConfig.portalApi.url = utama;
+  const dipanggil = [];
+  h.context.fetch = async url => {
+    dipanggil.push(url);
+    if (url.startsWith(utama)) throw new Error('server utama mati');
+    return { ok: true, status: 200, json: async () => ({ status: 'siap', database: 'terhubung' }) };
+  };
+  assert.equal(await h.app.ujiKoneksiPortal(true), true);
+  assert.equal(h.app.registryConfig.portalApi.url, kembar);
+  assert.equal(h.app.registryConfig.portalApi.status, 'API & database siap');
+  assert.equal(h.storage.get('SIMPATIK_SESSION'), JSON.stringify({ token: 'sesi-sama' }), 'sesi login tidak dihapus saat berpindah server');
+  assert.ok(dipanggil.includes(kembar + '/kesehatan'));
+});
+
+test('no healthy server keeps the current address and reports disconnected', async () => {
+  const h = harness();
+  const utama = 'https://utama.simpatik.example/api/v1';
+  h.context.window.AndroidBridge = { daftarServerBawaan: () => JSON.stringify([utama, 'https://kembar.simpatik.example/api/v1']) };
+  h.app.registryConfig.portalApi.url = utama;
+  h.context.fetch = async () => { throw new Error('semua mati'); };
+  assert.equal(await h.app.ujiKoneksiPortal(true), false);
+  assert.equal(h.app.registryConfig.portalApi.url, utama);
+  assert.equal(h.app.registryConfig.portalApi.status, 'Tidak terhubung');
+});
+
+test('server list learned from the server survives a future address change', async () => {
+  const h = harness();
+  const lama = 'https://lama.simpatik.example/api/v1';
+  const domain = 'https://simpatik.domain.example/api/v1';
+  h.app.registryConfig.portalApi.url = lama;
+  h.context.fetch = async url => {
+    assert.equal(url, lama + '/aplikasi/server');
+    return { ok: true, status: 200, json: async () => ({ server: [domain, 'javascript:alert(1)', 'https://tanpa-api.example'] }) };
+  };
+  assert.equal(JSON.stringify(await h.app.pelajariServerLain()), JSON.stringify([domain]));
+  h.context.fetch = async url => {
+    if (url.startsWith(lama)) throw new Error('tunnel lama hilang');
+    return { ok: true, status: 200, json: async () => ({ status: 'siap', database: 'terhubung' }) };
+  };
+  assert.equal(await h.app.ujiKoneksiPortal(true), true);
+  assert.equal(h.app.registryConfig.portalApi.url, domain);
 });

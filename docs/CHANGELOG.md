@@ -1,3 +1,9 @@
+# 1.16.0 (40) — 13 November 2026
+
+- Aplikasi menyimpan daftar server (utama + kembar/cadangan) dan otomatis berpindah ke server yang hidup bila server aktif tidak terjangkau. Sesi login tetap berlaku karena semua server memakai database yang sama.
+- Daftar server dipelajari dari `GET /aplikasi/server`, sehingga pergantian alamat tunnel berikutnya tidak memerlukan pemasangan ulang selama salah satu server masih terjangkau.
+- Alamat server bawaan diperbarui setelah server dimulai ulang.
+
 # 1.15.0 (38) — 9 November 2026
 
 - APK rilis ditandatangani kunci rilis SIMPATIK; nama paket berubah menjadi `id.simpatik.posyandu`.

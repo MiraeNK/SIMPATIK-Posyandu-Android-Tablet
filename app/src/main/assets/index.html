@@ -2032,6 +2032,7 @@
         await this.sinkronkanAntreanPortal();
         this.kirimSnapshotCluster();
         this.periksaModeLatihan();
+        this.pelajariServerLain();
       },
       async akhiriSplashMinimal(mulaiPada) {
         const sisaDurasi = Math.max(0, 3000 - (Date.now() - mulaiPada));
@@ -2529,6 +2530,12 @@ const connected = await this.ujiKoneksiPortal(true);
           }
           return true;
         } catch (error) {
+          // Server aktif tidak terjangkau: coba server kembar/cadangan sebelum menyerah.
+          const pengganti = await this.alihkanKeServerAktif();
+          if (pengganti) {
+            if (!tanpaAlert) alert('[Koneksi Dialihkan]\n\nServer sebelumnya tidak terjangkau. Aplikasi kini memakai server cadangan.');
+            return true;
+          }
           this.registryConfig.portalApi.status = 'Tidak terhubung';
           this.simpanRegistryConfig();
           if (!tanpaAlert) {
@@ -2537,6 +2544,70 @@ const connected = await this.ujiKoneksiPortal(true);
           return false;
         } finally {
           this.isTestingPortal = false;
+        }
+      },
+      normalisasiAlamatServer(alamat) {
+        const teks = String(alamat || '').trim().replace(/\/+$/, '');
+        return /^https?:\/\/[^/\s]+\/api\/v1$/.test(teks) ? teks : '';
+      },
+      // Urutan: server aktif, server bawaan build (utama lalu kembar), lalu server yang dipelajari dari server.
+      daftarServerKandidat() {
+        let dariBuild = [];
+        try {
+          if (typeof window.AndroidBridge?.daftarServerBawaan === 'function') dariBuild = JSON.parse(window.AndroidBridge.daftarServerBawaan());
+        } catch (_) {}
+        let dipelajari = [];
+        try { dipelajari = JSON.parse(localStorage.getItem('SIMPATIK_SERVER_DIKETAHUI') || '[]'); } catch (_) {}
+        const semua = [this.registryConfig?.portalApi?.url, ...(Array.isArray(dariBuild) ? dariBuild : []), PORTAL_API_BAWAAN, ...(Array.isArray(dipelajari) ? dipelajari : [])];
+        return [...new Set(semua.map(alamat => this.normalisasiAlamatServer(alamat)).filter(Boolean))]
+          .filter(alamat => alamat !== PORTAL_API_CONTOH);
+      },
+      async serverSehat(alamat) {
+        try {
+          const response = await this.fetchDenganBatas(alamat + '/kesehatan', { headers: { 'ngrok-skip-browser-warning': 'true' } });
+          if (!response.ok) return false;
+          const health = await response.json();
+          return health.status === 'siap' && health.database === 'terhubung';
+        } catch (_) {
+          return false;
+        }
+      },
+      async alihkanKeServerAktif() {
+        if (this._sedangAlihServer) return null;
+        this._sedangAlihServer = true;
+        try {
+          const aktif = this.normalisasiAlamatServer(this.registryConfig?.portalApi?.url);
+          for (const alamat of this.daftarServerKandidat()) {
+            if (alamat === aktif) continue;
+            if (!(await this.serverSehat(alamat))) continue;
+            // Semua server kembar memakai database dan sesi yang sama, jadi login tetap berlaku.
+            this.registryConfig.portalApi.url = alamat;
+            this.registryConfig.connectionMode = this.informasiKoneksiPortal(alamat).mode;
+            this.registryConfig.portalApi.status = 'API & database siap';
+            this.simpanRegistryConfig();
+            return alamat;
+          }
+          return null;
+        } finally {
+          this._sedangAlihServer = false;
+        }
+      },
+      async pelajariServerLain() {
+        try {
+          const response = await this.fetchDenganBatas(this.normalisasiAlamatPortal() + '/aplikasi/server', {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+          });
+          if (!response.ok) return [];
+          const body = await response.json();
+          const baru = (Array.isArray(body.server) ? body.server : []).map(alamat => this.normalisasiAlamatServer(alamat)).filter(Boolean);
+          if (!baru.length) return [];
+          let lama = [];
+          try { lama = JSON.parse(localStorage.getItem('SIMPATIK_SERVER_DIKETAHUI') || '[]'); } catch (_) {}
+          const gabung = [...new Set([...baru, ...(Array.isArray(lama) ? lama : [])])].slice(0, 10);
+          localStorage.setItem('SIMPATIK_SERVER_DIKETAHUI', JSON.stringify(gabung));
+          return gabung;
+        } catch (_) {
+          return [];
         }
       },
       temukanServerOtomatis() {

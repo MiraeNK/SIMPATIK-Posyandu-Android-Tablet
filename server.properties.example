@@ -1,5 +1,7 @@
 # Salin menjadi server.properties (tidak masuk repo), lalu isi alamat server Anda.
 # portalApiUrl: REST API Portal SIMPATIK (wajib, berakhiran /api/v1)
 portalApiUrl=https://simpatik.example/api/v1
+# portalApiCadangan: server cadangan/kembar, dipisah koma (opsional)
+portalApiCadangan=https://cadangan.simpatik.example/api/v1
 # tailscaleApiUrl: cadangan jaringan privat (opsional, boleh kosong)
 tailscaleApiUrl=

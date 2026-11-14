@@ -453,6 +453,7 @@ test('published card waits for a note decision before creating an active queue n
   assert.equal(h.app.scannedAnak, child);
   assert.equal(h.app.antreanAktif.length, 0);
   h.app.queueNoteDraft = 'Bawa Buku KIA';
+  h.app.pilihKb(false);
   assert.equal(h.app.masukkanScanKeAntrean(true), true);
   assert.equal(h.app.scannedAnak, null);
   assert.equal(h.app.antreanAktif.length, 1);
@@ -471,6 +472,7 @@ test('printed SPT fallback code finds the same child as the QR payload', () => {
   h.app.daftarAnak = [child];
   assert.equal(h.app.prosesHasilScanKartu('SPT-00000023'), true);
   assert.equal(h.app.queueNoteDialog, true);
+  h.app.pilihKb(false);
   assert.equal(h.app.masukkanScanKeAntrean(false), true);
   assert.equal(h.app.antreanAktif.length, 1);
   assert.equal(h.app.antreanAktif[0].childIdentity, child.nik);
@@ -484,6 +486,7 @@ test('skipping a scan note discards the draft and repeated confirmation cannot d
   assert.equal(h.app.prosesHasilScanKartu('SIMPATIK:SASARAN:1:923'), true);
   assert.equal(h.app.antreanAktif.length, 0);
   h.app.queueNoteDraft = 'Draf tidak boleh tersimpan';
+  h.app.pilihKb(false);
   assert.equal(h.app.masukkanScanKeAntrean(false), true);
   assert.equal(h.app.antreanAktif.length, 1);
   assert.equal(h.app.antreanAktif[0].note, '');
@@ -987,11 +990,12 @@ test('registration asks breastfeeding (0-23 mo) and exclusive breastfeeding (0-6
   assert.equal(h.app.antreanAktif.length, 0);
   h.app.pilihAsiEksklusif(true);
   assert.equal(h.app.queueMenyusuiDraft, true, 'ASI eksklusif YA berarti ibu masih menyusui');
+  h.app.pilihKb(false);
   assert.equal(h.app.masukkanScanKeAntrean(false), true);
   const item = h.app.antreanAktif[0];
   assert.equal(item.masihMenyusui, true);
   assert.equal(item.asiEksklusif, true);
-  assert.equal(h.app.ringkasanMenyusui(item), 'Menyusui: Ya · ASI eksklusif: Ya');
+  assert.equal(h.app.ringkasanMenyusui(item), 'Menyusui: Ya · ASI eksklusif: Ya · Ibu KB: Tidak');
 });
 
 test('answering not breastfeeding marks exclusive breastfeeding as no; older babies skip the ASI question', () => {
@@ -1003,26 +1007,63 @@ test('answering not breastfeeding marks exclusive breastfeeding as no; older bab
   h.app.prosesHasilScanKartu(bayi.nik);
   h.app.pilihMenyusui(false);
   assert.equal(h.app.queueAsiDraft, false);
+  h.app.pilihKb(false);
   assert.equal(h.app.masukkanScanKeAntrean(true), true);
   assert.equal(h.app.pilihUntukAntrean(batita), true);
   assert.equal(h.app.queueNoteDialog, true, 'pilihan manual 0-23 bulan membuka dialog pendaftaran');
   assert.equal(h.app.perluTanyaAsiEksklusif(batita), false);
   h.app.pilihMenyusui(true);
+  h.app.pilihKb(false);
   assert.equal(h.app.masukkanScanKeAntrean(false), true);
   const item = h.app.antreanAktif.find(q => q.childIdentity === batita.nik);
   assert.equal(item.masihMenyusui, true);
   assert.equal(item.asiEksklusif, null);
 });
 
-test('children 24 months or older are added directly without breastfeeding questions', () => {
+test('children 24 months or older skip breastfeeding questions but still answer the KB question', () => {
   const h = harness();
   const anak = anakSasaran(30);
   h.app.daftarAnak = [anak];
   h.app.queueEntries = [];
   assert.equal(h.app.pilihUntukAntrean(anak), true);
-  assert.equal(h.app.queueNoteDialog, false);
+  assert.equal(h.app.queueNoteDialog, true, 'semua anak melewati dialog pendaftaran untuk pertanyaan KB');
+  assert.equal(h.app.perluTanyaMenyusui(anak), false);
+  h.app.pilihKb(false);
+  assert.equal(h.app.masukkanScanKeAntrean(false), true);
   assert.equal(h.app.antreanAktif[0].masihMenyusui, null);
-  assert.equal(h.app.ringkasanMenyusui(h.app.antreanAktif[0]), '');
+  assert.equal(h.app.antreanAktif[0].ikutKb, false);
+  assert.equal(h.app.ringkasanMenyusui(h.app.antreanAktif[0]), 'Ibu KB: Tidak');
+});
+
+test('KB answer is required and YES requires the kader to type the KB type', () => {
+  const h = harness();
+  const anak = anakSasaran(30);
+  h.app.daftarAnak = [anak];
+  h.app.queueEntries = [];
+  h.app.pilihUntukAntrean(anak);
+  assert.equal(h.app.masukkanScanKeAntrean(false), false);
+  assert.match(h.app.queueDialogError, /KB/);
+  h.app.pilihKb(true);
+  h.app.queueJenisKbDraft = '   ';
+  assert.equal(h.app.masukkanScanKeAntrean(false), false);
+  assert.match(h.app.queueDialogError, /jenis KB/);
+  assert.equal(h.app.antreanAktif.length, 0);
+  h.app.queueJenisKbDraft = ' Suntik 3 bulan ';
+  assert.equal(h.app.masukkanScanKeAntrean(false), true);
+  const item = h.app.antreanAktif[0];
+  assert.equal(item.ikutKb, true);
+  assert.equal(item.jenisKb, 'Suntik 3 bulan');
+  assert.equal(h.app.ringkasanMenyusui(item), 'Ibu KB: Ya (Suntik 3 bulan)');
+  assert.deepEqual(JSON.parse(JSON.stringify(h.app.jawabanMenyusuiUntukServer(item))), { ikutKb: true, jenisKb: 'Suntik 3 bulan' });
+});
+
+test('switching KB to NO discards the typed KB type', () => {
+  const h = harness();
+  h.app.pilihKb(true);
+  h.app.queueJenisKbDraft = 'Pil';
+  h.app.pilihKb(false);
+  assert.equal(h.app.queueJenisKbDraft, '');
+  assert.deepEqual(JSON.parse(JSON.stringify(h.app.jawabanMenyusuiUntukServer({ ikutKb: false, jenisKb: 'Pil' }))), { ikutKb: false, jenisKb: null });
 });
 
 test('age falls back to birth date when the roster has no month count', () => {
@@ -1045,6 +1086,8 @@ test('queue sync sends YA/TIDAK answers with the existing check-in request', asy
   h.app.prosesHasilScanKartu(bayi.nik);
   h.app.pilihMenyusui(true);
   h.app.pilihAsiEksklusif(false);
+  h.app.pilihKb(true);
+  h.app.queueJenisKbDraft = 'Implan';
   h.app.isSyncingAntreanPortal = true; // cegah sinkron otomatis dari persistAntrean
   assert.equal(h.app.masukkanScanKeAntrean(false), true);
   h.app.isSyncingAntreanPortal = false;
@@ -1056,7 +1099,8 @@ test('queue sync sends YA/TIDAK answers with the existing check-in request', asy
     return { ok: true, status: 201, json: async () => ({ item: {
       id: 'antrean_1', sasaranId: body.sasaranId, periodeId: body.periodeId, tanggal: body.tanggal, nomor: 1, urutan: 1,
       childIdentity: bayi.nik, nama: bayi.nama, status: 'waiting', catatan: null,
-      masihMenyusui: body.masihMenyusui, asiEksklusif: body.asiEksklusif, updatedAt: new Date().toISOString(),
+      masihMenyusui: body.masihMenyusui, asiEksklusif: body.asiEksklusif, ikutKb: body.ikutKb, jenisKb: body.jenisKb,
+      updatedAt: new Date().toISOString(),
     } }) };
   };
   assert.equal(await h.app.sinkronkanAntreanPortal(), true);
@@ -1065,7 +1109,10 @@ test('queue sync sends YA/TIDAK answers with the existing check-in request', asy
   const body = JSON.parse(post.options.body);
   assert.equal(body.masihMenyusui, true);
   assert.equal(body.asiEksklusif, false);
+  assert.equal(body.ikutKb, true);
+  assert.equal(body.jenisKb, 'Implan');
   assert.equal(h.app.queueEntries[0].asiEksklusif, false);
+  assert.equal(h.app.queueEntries[0].jenisKb, 'Implan', 'jawaban KB dari server tetap tersimpan di tablet');
 });
 
 test('measurement payload carries the special observation note and restores it for corrections', () => {

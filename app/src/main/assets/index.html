@@ -210,6 +210,9 @@
   .queue-note-heading p { margin:0; font-size:14px; line-height:1.5; color:#4A5750; overflow-wrap:anywhere; }
   .queue-note-field { display:block; margin-top:18px; font-size:14px; font-weight:700; color:#16211C; }
   .queue-note-field textarea { display:block; width:100%; min-height:96px; margin-top:8px; resize:vertical; border:1px solid #AEB7B0; border-radius:12px; padding:12px; font:inherit; font-size:16px; font-weight:400; }
+  .queue-kb-field { display:block; margin-top:12px; font-size:14px; font-weight:700; color:#16211C; }
+  .queue-kb-field input { display:block; width:100%; min-height:48px; margin-top:6px; border:1px solid #AEB7B0; border-radius:12px; padding:10px 12px; font:inherit; font-size:16px; font-weight:400; }
+  .queue-kb-field input:focus { outline:3px solid rgba(29,78,216,.25); border-color:#1D4ED8; }
   .queue-note-footer { display:flex; flex-wrap:wrap; gap:10px; flex-shrink:0; padding:0 22px 22px; }
   .queue-note-footer button { flex:1 1 200px; min-height:48px; padding:12px 16px; font-size:14px; line-height:1.3; }
   .queue-note-skip { background:#FFFFFF; color:#34423A; border:1px solid #AEB7B0; }
@@ -840,7 +843,7 @@
         <div class="queue-note-heading">
           <div class="notice-symbol" aria-hidden="true"><i class="ph-bold ph-note-pencil"></i></div>
           <div>
-            <h2 id="queue-note-title">{{ perluTanyaMenyusui(scannedAnak) ? 'Lengkapi pendaftaran' : 'Tambahkan catatan?' }}</h2>
+            <h2 id="queue-note-title">Lengkapi pendaftaran</h2>
             <p><strong>{{ scannedAnak ? scannedAnak.nama : 'Anak' }}</strong><template v-if="umurBulanAnak(scannedAnak) !== null"> ({{ umurBulanAnak(scannedAnak) }} bulan)</template> siap masuk antrean. Catatan akan dibaca petugas pengukuran.</p>
           </div>
           <button class="notice-close" type="button" aria-label="Batalkan pendaftaran antrean" @click="batalkanCatatanScan"><i class="ph-bold ph-x" aria-hidden="true"></i></button>
@@ -858,6 +861,16 @@
             <button type="button" role="radio" :aria-checked="queueAsiDraft === true" :class="{active: queueAsiDraft === true}" @click="pilihAsiEksklusif(true)">YA</button>
             <button type="button" role="radio" :aria-checked="queueAsiDraft === false" :class="{active: queueAsiDraft === false}" @click="pilihAsiEksklusif(false)">TIDAK</button>
           </div>
+        </div>
+        <div class="queue-question">
+          <div class="queue-question__label" id="q-kb">Apakah ibu ber-KB?<span>Bila YA, ketik jenis KB-nya.</span></div>
+          <div class="queue-question__choices" role="radiogroup" aria-labelledby="q-kb">
+            <button type="button" role="radio" :aria-checked="queueKbDraft === true" :class="{active: queueKbDraft === true}" @click="pilihKb(true)">YA</button>
+            <button type="button" role="radio" :aria-checked="queueKbDraft === false" :class="{active: queueKbDraft === false}" @click="pilihKb(false)">TIDAK</button>
+          </div>
+          <label v-if="queueKbDraft === true" class="queue-kb-field" for="queue-kb-input">Jenis KB
+            <input id="queue-kb-input" v-model="queueJenisKbDraft" type="text" maxlength="80" autocomplete="off" placeholder="Contoh: suntik 3 bulan, pil, implan, IUD" @input="queueDialogError = ''">
+          </label>
         </div>
         <div v-if="queueDialogError" class="queue-question__error" role="alert">{{ queueDialogError }}</div>
         <label class="queue-note-field" for="queue-note-input">Catatan (opsional)
@@ -1778,6 +1791,8 @@
         queueNoteDraft: '',
         queueMenyusuiDraft: null,
         queueAsiDraft: null,
+        queueKbDraft: null,
+        queueJenisKbDraft: '',
         queueDialogError: '',
         modeLatihanAktif: (typeof localStorage !== 'undefined' && localStorage.getItem('SIMPATIK_MODE_LATIHAN') === '1'),
         isCallingNext: false,
@@ -2702,6 +2717,8 @@ const connected = await this.ujiKoneksiPortal(true);
           note: row.catatan || '',
           masihMenyusui: typeof row.masihMenyusui === 'boolean' ? row.masihMenyusui : null,
           asiEksklusif: typeof row.asiEksklusif === 'boolean' ? row.asiEksklusif : null,
+          ikutKb: typeof row.ikutKb === 'boolean' ? row.ikutKb : null,
+          jenisKb: row.jenisKb || null,
           updatedAt: row.updatedAt
         };
       },
@@ -3158,6 +3175,8 @@ const connected = await this.ujiKoneksiPortal(true);
         this.queueNoteDraft = '';
         this.queueMenyusuiDraft = null;
         this.queueAsiDraft = null;
+        this.queueKbDraft = null;
+        this.queueJenisKbDraft = '';
         this.queueDialogError = '';
         this.scannedAnak = null;
       },
@@ -3193,12 +3212,24 @@ const connected = await this.ujiKoneksiPortal(true);
         if (nilai === true) this.queueMenyusuiDraft = true;
         this.queueDialogError = '';
       },
+      fokusJenisKb() {
+        // Tunggu kolom jenis KB dirender sebelum memberi fokus.
+        setTimeout(() => { try { document.getElementById('queue-kb-input')?.focus(); } catch (_) {} }, 0);
+      },
+      pilihKb(nilai) {
+        this.queueKbDraft = nilai;
+        if (nilai === false) this.queueJenisKbDraft = '';
+        this.queueDialogError = '';
+        if (nilai === true) this.fokusJenisKb();
+      },
       ringkasanMenyusui(item) {
         if (!item) return '';
         const label = nilai => nilai === true ? 'Ya' : 'Tidak';
         const bagian = [];
         if (typeof item.masihMenyusui === 'boolean') bagian.push('Menyusui: ' + label(item.masihMenyusui));
         if (typeof item.asiEksklusif === 'boolean') bagian.push('ASI eksklusif: ' + label(item.asiEksklusif));
+        if (item.ikutKb === true) bagian.push('Ibu KB: Ya' + (item.jenisKb ? ' (' + item.jenisKb + ')' : ''));
+        else if (item.ikutKb === false) bagian.push('Ibu KB: Tidak');
         return bagian.join(' · ');
       },
       jawabanMenyusuiUntukServer(item) {
@@ -3206,6 +3237,10 @@ const connected = await this.ujiKoneksiPortal(true);
         const body = {};
         if (typeof item?.masihMenyusui === 'boolean') body.masihMenyusui = item.masihMenyusui;
         if (typeof item?.asiEksklusif === 'boolean') body.asiEksklusif = item.asiEksklusif;
+        if (typeof item?.ikutKb === 'boolean') {
+          body.ikutKb = item.ikutKb;
+          body.jenisKb = item.ikutKb ? (String(item.jenisKb || '').trim() || null) : null;
+        }
         return body;
       },
       bukaDialogPendaftaran(anak) {
@@ -3214,15 +3249,17 @@ const connected = await this.ujiKoneksiPortal(true);
         this.queueNoteDraft = String(this.queueNotes[this.identitasAnak(anak)] || '');
         this.queueMenyusuiDraft = null;
         this.queueAsiDraft = null;
+        this.queueKbDraft = null;
+        this.queueJenisKbDraft = '';
         this.queueDialogError = '';
         this.queueNoteDialog = true;
         return true;
       },
       pilihUntukAntrean(anak) {
         if (this.sudahDalamAntreanHariIni(anak)) return this.tambahAntrean(anak);
-        // Anak 0-23 bulan wajib melewati pertanyaan menyusui sebelum mendapat nomor.
-        if (this.perluTanyaMenyusui(anak)) return this.bukaDialogPendaftaran(anak);
-        return this.tambahAntrean(anak);
+        // Semua anak melewati dialog pendaftaran: KB ibu untuk semua usia,
+        // menyusui untuk 0-23 bulan, ASI eksklusif untuk 0-6 bulan.
+        return this.bukaDialogPendaftaran(anak);
       },
       versiTerpasang() {
         try {
@@ -3332,15 +3369,29 @@ const connected = await this.ujiKoneksiPortal(true);
             : 'Pilih YA atau TIDAK untuk status menyusui.';
           return false;
         }
+        if (this.queueKbDraft === null) {
+          this.queueDialogError = 'Pilih YA atau TIDAK untuk status KB ibu.';
+          return false;
+        }
+        const jenisKb = String(this.queueJenisKbDraft || '').trim().slice(0, 80);
+        if (this.queueKbDraft === true && !jenisKb) {
+          this.queueDialogError = 'Ketik jenis KB yang dipakai ibu.';
+          this.fokusJenisKb();
+          return false;
+        }
         const menyusui = {
           masihMenyusui: tanyaMenyusui ? this.queueMenyusuiDraft : null,
-          asiEksklusif: tanyaAsi ? this.queueAsiDraft : null
+          asiEksklusif: tanyaAsi ? this.queueAsiDraft : null,
+          ikutKb: this.queueKbDraft,
+          jenisKb: this.queueKbDraft ? jenisKb : null
         };
         if (simpanCatatan && String(this.queueNoteDraft || '').trim()) this.queueNotes[identity] = String(this.queueNoteDraft).trim().slice(0, 240);
         else delete this.queueNotes[identity];
         this.queueNoteDialog = false;
         this.queueMenyusuiDraft = null;
         this.queueAsiDraft = null;
+        this.queueKbDraft = null;
+        this.queueJenisKbDraft = '';
         this.queueDialogError = '';
         const added = this.tambahAntrean(anak, menyusui);
         if (!added) return false;
@@ -3421,6 +3472,8 @@ const connected = await this.ujiKoneksiPortal(true);
           cancelled.periodeId = periodeId;
           cancelled.masihMenyusui = typeof menyusui.masihMenyusui === 'boolean' ? menyusui.masihMenyusui : null;
           cancelled.asiEksklusif = typeof menyusui.asiEksklusif === 'boolean' ? menyusui.asiEksklusif : null;
+          cancelled.ikutKb = typeof menyusui.ikutKb === 'boolean' ? menyusui.ikutKb : null;
+          cancelled.jenisKb = menyusui.ikutKb === true ? (menyusui.jenisKb || null) : null;
           cancelled._menyusuiPending = !!cancelled.serverId && Object.keys(this.jawabanMenyusuiUntukServer(cancelled)).length > 0;
           cancelled._queueDirty = !!cancelled.serverId;
         } else {
@@ -3444,6 +3497,8 @@ const connected = await this.ujiKoneksiPortal(true);
             note: note,
             masihMenyusui: typeof menyusui.masihMenyusui === 'boolean' ? menyusui.masihMenyusui : null,
             asiEksklusif: typeof menyusui.asiEksklusif === 'boolean' ? menyusui.asiEksklusif : null,
+            ikutKb: typeof menyusui.ikutKb === 'boolean' ? menyusui.ikutKb : null,
+            jenisKb: menyusui.ikutKb === true ? (menyusui.jenisKb || null) : null,
             _queuePending: true
           });
         }
